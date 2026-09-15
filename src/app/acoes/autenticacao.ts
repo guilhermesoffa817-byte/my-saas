@@ -46,12 +46,16 @@ export async function criarConta(
     };
   }
 
+  // A primeira conta criada é a da administração, que confere os Pix recebidos.
+  const primeiraConta = (await prisma.usuario.count()) === 0;
+
   const usuario = await prisma.usuario.create({
     data: {
       nome,
       nomeNegocio,
       email,
       telefone: telefone || null,
+      papel: primeiraConta ? "admin" : "dona",
       senhaHash: await bcrypt.hash(senha, 10),
       assinatura: {
         create: {

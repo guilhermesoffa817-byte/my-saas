@@ -12,7 +12,7 @@ import {
 } from "@/lib/formato";
 import { confirmarPagamento, darCortesia, recusarPagamento } from "./acoes";
 
-export const metadata = { title: "Pagamentos — Ateliê" };
+export const metadata = { title: "Pagamentos — Agenda Online" };
 export const dynamic = "force-dynamic";
 
 const rotuloStatus = {

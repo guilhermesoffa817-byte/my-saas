@@ -4,7 +4,7 @@ import { Marca } from "@/componentes/marca";
 import { usuarioAtual } from "@/lib/sessao";
 import { FormularioEntrar } from "./formulario";
 
-export const metadata = { title: "Entrar — Ateliê" };
+export const metadata = { title: "Entrar — Agenda Online" };
 
 export default async function PaginaEntrar() {
   const usuario = await usuarioAtual();

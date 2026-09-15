@@ -24,7 +24,7 @@ async function main() {
     update: { papel: "admin" },
     create: {
       nome: "Administração",
-      nomeNegocio: "Ateliê",
+      nomeNegocio: "Agenda Online",
       email: emailAdmin,
       senhaHash: await bcrypt.hash(senhaAdmin, 10),
       papel: "admin",

@@ -1,4 +1,4 @@
-# Ateliê — sistema para estúdios de estética
+# Agenda Online — sistema para estúdios de estética
 
 Um SaaS simples e acolhedor para quem cuida de pessoas: agenda, ficha das clientes,
 serviços, faturamento do mês e uma assinatura mensal de **R$ 260,00** paga por **Pix**.
@@ -16,25 +16,54 @@ serviços, faturamento do mês e uma assinatura mensal de **R$ 260,00** paga por
 - **Área de administração** para conferir os Pix recebidos, liberar mais 30 dias de
   acesso e dar cortesia quando fizer sentido.
 
+> A **primeira conta criada** no sistema vira automaticamente a conta de administração
+> — é ela que vê a aba **Pagamentos** e libera o acesso de quem pagou. Crie a sua
+> assim que o site subir.
+
+## Colocar no ar na Vercel (de graça)
+
+1. Entre em **vercel.com** e crie uma conta usando o seu GitHub.
+2. Clique em **Add New → Project** e importe o repositório `my-saas`, escolhendo a
+   branch `claude/saas-estetica-assinatura-ga3h1v`.
+3. Antes de publicar, abra a aba **Storage → Create Database → Postgres** e conecte
+   esse banco ao projeto. A Vercel cria a variável `DATABASE_URL` sozinha.
+4. Em **Settings → Environment Variables**, acrescente:
+
+   | Nome                        | Valor                                          |
+   | --------------------------- | ---------------------------------------------- |
+   | `SESSAO_SEGREDO`            | uma frase longa e aleatória, só sua             |
+   | `PIX_CHAVE`                 | `66992513501`                                   |
+   | `PIX_NOME`                  | o nome que aparece no seu Pix                   |
+   | `ASSINATURA_VALOR_CENTAVOS` | `26000` (R$ 260,00)                             |
+
+5. Clique em **Deploy**. O próprio build cria as tabelas do banco.
+6. Em **Settings → Domains**, troque o endereço para o nome que quiser —
+   por exemplo `agenda-online`, que vira **https://agenda-online.vercel.app**.
+7. Abra o site, clique em **Começar agora** e crie a sua conta: ela será a
+   administração.
+
+Quando quiser um domínio próprio (`agendaonline.com.br`), registre em registro.br e
+aponte para a Vercel na mesma tela de **Domains** — o endereço `.vercel.app` continua
+funcionando junto.
+
 ## Como rodar na sua máquina
+
+Precisa de um PostgreSQL rodando (local ou o mesmo da Vercel).
 
 ```bash
 npm install                 # instala tudo e gera o cliente do banco
-cp .env.example .env        # ajuste as variáveis (principalmente SESSAO_SEGREDO)
-npx prisma migrate deploy   # cria o banco
-npm run seed                # cria a conta de administração e um estúdio de exemplo
+cp .env.example .env        # ajuste DATABASE_URL e SESSAO_SEGREDO
+npx prisma migrate deploy   # cria as tabelas
+npm run seed                # opcional: cria um estúdio de exemplo para você olhar
 npm run dev                 # abre em http://localhost:3000
 ```
 
-Contas criadas pelo `npm run seed`:
+Contas criadas pelo `npm run seed` (só para testar):
 
 | Acesso          | E-mail                    | Senha              |
 | --------------- | ------------------------- | ------------------ |
 | Administração   | `admin@meuestudio.com.br` | `mudeessasenha123` |
 | Estúdio exemplo | `demo@meuestudio.com.br`  | `demo12345`        |
-
-> Troque essas senhas antes de colocar no ar. O e-mail e a senha da administração saem
-> das variáveis `ADMIN_EMAIL` e `ADMIN_SENHA`.
 
 ## Como funciona a cobrança
 
@@ -50,7 +79,7 @@ cobrança. Se a assinatura vence, o acesso fica limitado à tela de assinatura, 
 
 ### Mudar o valor ou a chave Pix
 
-Está tudo no `.env`:
+Está tudo nas variáveis de ambiente:
 
 ```env
 PIX_CHAVE="66992513501"
@@ -64,13 +93,13 @@ ASSINATURA_VALOR_CENTAVOS="26000"   # 26000 centavos = R$ 260,00
 
 ## Comandos
 
-| Comando         | Para que serve                                  |
-| --------------- | ----------------------------------------------- |
-| `npm run dev`   | Sobe o sistema em modo de desenvolvimento       |
-| `npm run build` | Gera a versão de produção                        |
-| `npm run start` | Roda a versão de produção                        |
-| `npm run lint`  | Confere o padrão do código                       |
-| `npm run seed`  | Cria/atualiza a conta de administração e o exemplo |
+| Comando         | Para que serve                                       |
+| --------------- | ---------------------------------------------------- |
+| `npm run dev`   | Sobe o sistema em modo de desenvolvimento            |
+| `npm run build` | Gera a versão de produção                             |
+| `npm run start` | Roda a versão de produção                             |
+| `npm run lint`  | Confere o padrão do código                            |
+| `npm run seed`  | Cria um estúdio de exemplo para testar                |
 
 ## Como está organizado
 
@@ -86,5 +115,4 @@ src/lib/               sessão, regras da assinatura, Pix e formatação
 src/componentes/       botões, avisos e marca
 ```
 
-Feito com Next.js, Prisma e SQLite. Para usar outro banco (PostgreSQL, por exemplo),
-troque o `provider` no `prisma/schema.prisma` e o `DATABASE_URL` no `.env`.
+Feito com Next.js, Prisma e PostgreSQL.

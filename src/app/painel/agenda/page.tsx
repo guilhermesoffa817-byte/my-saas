@@ -17,7 +17,7 @@ import {
 import { FormularioAgendamento } from "./formulario";
 import { excluirAgendamento, mudarStatus } from "./acoes";
 
-export const metadata = { title: "Agenda — Ateliê" };
+export const metadata = { title: "Agenda — Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAgenda({

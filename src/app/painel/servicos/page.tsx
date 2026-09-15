@@ -6,7 +6,7 @@ import { emReais } from "@/lib/formato";
 import { FormularioServico } from "./formulario";
 import { alternarServico, removerServico } from "./acoes";
 
-export const metadata = { title: "Serviços — Ateliê" };
+export const metadata = { title: "Serviços — Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaServicos() {

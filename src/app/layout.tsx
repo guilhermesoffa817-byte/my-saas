@@ -16,7 +16,7 @@ const texto = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "Ateliê — o sistema do seu estúdio de estética",
+  title: "Agenda Online — o sistema do seu estúdio de estética",
   description:
     "Agenda, ficha das clientes, serviços e faturamento num lugar só. Feito para quem cuida de pessoas e não quer perder tempo com papelada.",
 };

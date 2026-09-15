@@ -6,7 +6,7 @@ import { DIAS_DE_TESTE, PLANO } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
 import { FormularioCriarConta } from "./formulario";
 
-export const metadata = { title: "Criar conta — Ateliê" };
+export const metadata = { title: "Criar conta — Agenda Online" };
 
 export default async function PaginaCriarConta() {
   const usuario = await usuarioAtual();

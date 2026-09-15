@@ -12,7 +12,7 @@ import {
 } from "@/lib/formato";
 import { FormularioAvisoDePagamento } from "./formulario";
 
-export const metadata = { title: "Assinatura — Ateliê" };
+export const metadata = { title: "Assinatura — Agenda Online" };
 export const dynamic = "force-dynamic";
 
 const rotuloStatus = {
@@ -44,7 +44,7 @@ export default async function PaginaAssinatura() {
     chave: PLANO.pixChave,
     nome: PLANO.pixNome,
     valorCentavos: PLANO.valorCentavos,
-    identificador: "ATELIE",
+    identificador: "AGENDA",
   });
 
   const qrCode = await QRCode.toString(copiaECola, {

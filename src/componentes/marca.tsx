@@ -18,7 +18,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
           claro ? "text-white" : "text-carvao"
         }`}
       >
-        Ateliê
+        Agenda Online
       </span>
     </Link>
   );

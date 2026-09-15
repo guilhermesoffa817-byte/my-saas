@@ -6,7 +6,7 @@ import { dataCurta, paraDataLocal, telefoneBonito } from "@/lib/formato";
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
 
-export const metadata = { title: "Clientes — Ateliê" };
+export const metadata = { title: "Clientes — Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaClientes({
@@ -24,9 +24,9 @@ export default async function PaginaClientes({
       ...(termo
         ? {
             OR: [
-              { nome: { contains: termo } },
+              { nome: { contains: termo, mode: "insensitive" } },
               { telefone: { contains: termo } },
-              { email: { contains: termo } },
+              { email: { contains: termo, mode: "insensitive" } },
             ],
           }
         : {}),
