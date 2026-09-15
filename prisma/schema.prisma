@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id          String   @id @default(cuid())
+  nome        String
+  email       String   @unique
+  senhaHash   String
+  nomeNegocio String
+  telefone    String?
+  papel       String   @default("dona")
+  criadoEm    DateTime @default(now())
+
+  assinatura   Assinatura?
+  clientes     Cliente[]
+  servicos     Servico[]
+  agendamentos Agendamento[]
+  pagamentos   Pagamento[]
+}
+
+model Assinatura {
+  id          String   @id @default(cuid())
+  usuarioId   String   @unique
+  status      String   @default("teste")
+  validaAte   DateTime
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+model Pagamento {
+  id            String    @id @default(cuid())
+  usuarioId     String
+  valorCentavos Int       @default(26000)
+  competencia   String
+  status        String    @default("aguardando")
+  observacao    String?
+  criadoEm      DateTime  @default(now())
+  respondidoEm  DateTime?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([status])
+}
+
+model Cliente {
+  id          String   @id @default(cuid())
+  usuarioId   String
+  nome        String
+  telefone    String
+  email       String?
+  nascimento  DateTime?
+  observacoes String?
+  criadoEm    DateTime @default(now())
+
+  usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  agendamentos Agendamento[]
+
+  @@index([usuarioId])
+}
+
+model Servico {
+  id            String   @id @default(cuid())
+  usuarioId     String
+  nome          String
+  precoCentavos Int
+  duracaoMin    Int      @default(60)
+  descricao     String?
+  ativo         Boolean  @default(true)
+  criadoEm      DateTime @default(now())
+
+  usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  agendamentos Agendamento[]
+
+  @@index([usuarioId])
+}
+
+model Agendamento {
+  id          String   @id @default(cuid())
+  usuarioId   String
+  clienteId   String
+  servicoId   String
+  inicio      DateTime
+  status      String   @default("agendado")
+  observacoes String?
+  criadoEm    DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  servico Servico @relation(fields: [servicoId], references: [id], onDelete: Restrict)
+
+  @@index([usuarioId, inicio])
+  @@index([clienteId])
+}
