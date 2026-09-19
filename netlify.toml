@@ -1,0 +1,15 @@
+# Publicação na Netlify.
+#
+# O comando padrão (`npm run build`) NÃO cria as tabelas do banco. Sem as
+# migrações o site sobe, mas quebra na hora de criar a primeira conta.
+# Por isso o build aqui roda `prisma migrate deploy` antes do `next build`.
+
+[build]
+  command = "npx prisma generate && npx prisma migrate deploy && npx next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
