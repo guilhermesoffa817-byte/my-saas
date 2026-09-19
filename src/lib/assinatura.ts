@@ -6,8 +6,8 @@ export const DIAS_POR_CICLO = 30;
 export const PLANO = {
   nome: "Plano Estúdio",
   valorCentavos: Number(process.env.ASSINATURA_VALOR_CENTAVOS ?? 26000),
-  pixChave: process.env.PIX_CHAVE ?? "66992513501",
-  pixNome: process.env.PIX_NOME ?? "Estúdio de Estética",
+  pixChave: process.env.PIX_CHAVE ?? "",
+  pixNome: process.env.PIX_NOME ?? "",
 };
 
 export type StatusAssinatura = "teste" | "aguardando" | "ativa" | "expirada";

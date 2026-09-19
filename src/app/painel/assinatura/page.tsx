@@ -40,18 +40,26 @@ export default async function PaginaAssinatura() {
 
   const jaAvisou = pagamentos.some((pagamento) => pagamento.status === "aguardando");
 
-  const copiaECola = pixCopiaECola({
-    chave: PLANO.pixChave,
-    nome: PLANO.pixNome,
-    valorCentavos: PLANO.valorCentavos,
-    identificador: "AGENDA",
-  });
+  // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
+  // e a cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
+  const pixConfigurado = PLANO.pixChave.trim().length > 0;
 
-  const qrCode = await QRCode.toString(copiaECola, {
-    type: "svg",
-    margin: 1,
-    color: { dark: "#2f2722", light: "#ffffff" },
-  });
+  const copiaECola = pixConfigurado
+    ? pixCopiaECola({
+        chave: PLANO.pixChave,
+        nome: PLANO.pixNome,
+        valorCentavos: PLANO.valorCentavos,
+        identificador: "AGENDA",
+      })
+    : "";
+
+  const qrCode = pixConfigurado
+    ? await QRCode.toString(copiaECola, {
+        type: "svg",
+        margin: 1,
+        color: { dark: "#2f2722", light: "#ffffff" },
+      })
+    : "";
 
   return (
     <div className="space-y-8">
@@ -117,31 +125,39 @@ export default async function PaginaAssinatura() {
             Aponte a câmera do banco para o QR Code ou copie a chave abaixo.
           </p>
 
-          <div className="mt-5 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
-            <div
-              className="mx-auto w-40 rounded-2xl border border-areia-escura bg-white p-3 [&>svg]:h-full [&>svg]:w-full"
-              dangerouslySetInnerHTML={{ __html: qrCode }}
-            />
+          {pixConfigurado ? (
+            <div className="mt-5 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
+              <div
+                className="mx-auto w-40 rounded-2xl border border-areia-escura bg-white p-3 [&>svg]:h-full [&>svg]:w-full"
+                dangerouslySetInnerHTML={{ __html: qrCode }}
+              />
 
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-areia-escura bg-creme px-4 py-3">
-                <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
-                  Chave Pix (telefone)
-                </p>
-                <p className="mt-1 font-display text-xl font-semibold text-carvao select-all">
-                  {PLANO.pixChave}
-                </p>
-                <p className="mt-1 text-xs text-carvao-suave">
-                  Em nome de {PLANO.pixNome} · {emReais(PLANO.valorCentavos)}
-                </p>
-              </div>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-areia-escura bg-creme px-4 py-3">
+                  <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
+                    Chave Pix
+                  </p>
+                  <p className="mt-1 font-display text-xl font-semibold text-carvao select-all">
+                    {PLANO.pixChave}
+                  </p>
+                  <p className="mt-1 text-xs text-carvao-suave">
+                    Em nome de {PLANO.pixNome || "—"} · {emReais(PLANO.valorCentavos)}
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap gap-2">
-                <BotaoCopiar texto={PLANO.pixChave} rotulo="Copiar chave" />
-                <BotaoCopiar texto={copiaECola} rotulo="Copiar código Pix" />
+                <div className="flex flex-wrap gap-2">
+                  <BotaoCopiar texto={PLANO.pixChave} rotulo="Copiar chave" />
+                  <BotaoCopiar texto={copiaECola} rotulo="Copiar código Pix" />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <p className="mt-5 rounded-2xl border border-areia-escura bg-creme px-4 py-3 text-sm text-carvao-suave">
+              A chave Pix ainda não foi configurada, então o QR Code não pode ser
+              gerado. Defina <code>PIX_CHAVE</code> e <code>PIX_NOME</code> nas
+              variáveis de ambiente do site.
+            </p>
+          )}
 
           <div className="mt-6 border-t border-areia-escura/60 pt-5">
             <FormularioAvisoDePagamento jaAvisou={jaAvisou} />
