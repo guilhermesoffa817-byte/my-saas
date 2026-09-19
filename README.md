@@ -24,7 +24,7 @@ serviços, faturamento do mês e uma assinatura mensal de **R$ 260,00** paga por
 
 1. Entre em **vercel.com** e crie uma conta usando o seu GitHub.
 2. Clique em **Add New → Project** e importe o repositório `my-saas`, escolhendo a
-   branch `claude/saas-estetica-assinatura-ga3h1v`.
+   branch `claude/exciting-hopper-m3pxwv`.
 3. Antes de publicar, abra a aba **Storage → Create Database → Postgres** e conecte
    esse banco ao projeto. A Vercel cria a variável `DATABASE_URL` sozinha.
 4. Em **Settings → Environment Variables**, acrescente:
