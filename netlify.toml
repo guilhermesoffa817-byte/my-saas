@@ -3,6 +3,10 @@
 # O comando padrão (`npm run build`) NÃO cria as tabelas do banco. Sem as
 # migrações o site sobe, mas quebra na hora de criar a primeira conta.
 # Por isso o build aqui roda `prisma migrate deploy` antes do `next build`.
+#
+# O runtime do Next.js não é declarado aqui de propósito: a Netlify detecta
+# o Next sozinha e instala a versão compatível. Fixar o plugin à mão pode
+# trazer uma versão que não acompanha o Next 16.
 
 [build]
   command = "npx prisma generate && npx prisma migrate deploy && npx next build"
@@ -10,6 +14,3 @@
 
 [build.environment]
   NODE_VERSION = "20"
-
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
