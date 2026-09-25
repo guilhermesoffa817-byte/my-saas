@@ -1,9 +1,18 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { usuarioAtual, type UsuarioLogado } from "@/lib/sessao";
 import { avaliarAssinatura, type SituacaoAssinatura } from "@/lib/assinatura";
+
+/** Também guardado durante a montagem: contorno e página perguntam o mesmo. */
+const pixAvisado = cache(async (usuarioId: string) =>
+  prisma.pagamento.findFirst({
+    where: { usuarioId, status: "aguardando" },
+    select: { id: true },
+  }),
+);
 
 export async function exigirUsuario(): Promise<UsuarioLogado> {
   const usuario = await usuarioAtual();
@@ -21,9 +30,7 @@ export async function situacaoDoUsuario(
   const situacao = avaliarAssinatura(usuario.assinatura);
   if (situacao.liberada) return situacao;
 
-  const pendente = await prisma.pagamento.findFirst({
-    where: { usuarioId: usuario.id, status: "aguardando" },
-  });
+  const pendente = await pixAvisado(usuario.id);
   if (!pendente) return situacao;
 
   return {

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
@@ -52,14 +54,22 @@ async function idDaSessao() {
   }
 }
 
+/**
+ * `cache` guarda o resultado durante a montagem de uma página: o contorno e a
+ * página pedem o usuário, e o banco é consultado uma vez só. Cada consulta
+ * evitada economiza uma viagem de ida e volta até São Paulo.
+ */
+const buscarUsuario = cache(async (id: string) =>
+  prisma.usuario.findUnique({
+    where: { id },
+    include: { assinatura: true },
+  }),
+);
+
 export async function usuarioAtual() {
   const id = await idDaSessao();
   if (!id) return null;
-
-  return prisma.usuario.findUnique({
-    where: { id },
-    include: { assinatura: true },
-  });
+  return buscarUsuario(id);
 }
 
 export type UsuarioLogado = NonNullable<Awaited<ReturnType<typeof usuarioAtual>>>;
