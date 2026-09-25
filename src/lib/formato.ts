@@ -215,3 +215,45 @@ export function cpfBonito(cpf: string | null) {
   if (numeros.length !== 11) return cpf ?? "";
   return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
 }
+
+/** Confere os dígitos verificadores do CNPJ. */
+export function cnpjValido(cnpj: string) {
+  const numeros = apenasDigitos(cnpj);
+  if (numeros.length !== 14) return false;
+  if (/^(\d)\1{13}$/.test(numeros)) return false;
+
+  const digito = (pesos: number[]) => {
+    const soma = pesos.reduce((total, peso, i) => total + Number(numeros[i]) * peso, 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+
+  const primeiro = digito([5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const segundo = digito([6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+
+  return primeiro === Number(numeros[12]) && segundo === Number(numeros[13]);
+}
+
+
+/** Aceita CPF de quem trabalha sozinha e CNPJ de quem já abriu empresa. */
+export function documentoValido(documento: string) {
+  const numeros = apenasDigitos(documento);
+  if (numeros.length === 11) return cpfValido(numeros);
+  if (numeros.length === 14) return cnpjValido(numeros);
+  return false;
+}
+
+export function documentoBonito(documento: string | null) {
+  const n = documento ? apenasDigitos(documento) : "";
+  if (n.length === 11) return cpfBonito(n);
+  if (n.length === 14) {
+    return `${n.slice(0, 2)}.${n.slice(2, 5)}.${n.slice(5, 8)}/${n.slice(8, 12)}-${n.slice(12)}`;
+  }
+  return documento ?? "";
+}
+
+export function cepBonito(cep: string | null) {
+  const n = cep ? apenasDigitos(cep) : "";
+  if (n.length !== 8) return cep ?? "";
+  return `${n.slice(0, 5)}-${n.slice(5)}`;
+}

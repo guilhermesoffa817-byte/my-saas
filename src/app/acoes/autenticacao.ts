@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { criarSessao, encerrarSessao } from "@/lib/sessao";
 import { DIAS_DE_TESTE } from "@/lib/assinatura";
-import { somarDias } from "@/lib/formato";
+import { apenasDigitos, documentoValido, somarDias } from "@/lib/formato";
 
 export type EstadoFormulario = { erro?: string } | null;
 
@@ -27,13 +27,24 @@ export async function criarConta(
   const nomeNegocio = texto(dados, "nomeNegocio");
   const email = texto(dados, "email").toLowerCase();
   const telefone = texto(dados, "telefone");
+  const documento = texto(dados, "documento");
+  const cep = texto(dados, "cep");
+  const endereco = texto(dados, "endereco");
   const senha = texto(dados, "senha");
 
-  if (!nome || !nomeNegocio || !email || !senha) {
+  if (!nome || !nomeNegocio || !email || !telefone || !documento || !senha) {
     return { erro: "Faltou preencher algum campo. Dá uma conferida, por favor?" };
   }
   if (!EMAIL_VALIDO.test(email)) {
     return { erro: "Esse e-mail parece incompleto. Pode escrever de novo?" };
+  }
+  if (apenasDigitos(telefone).length < 10) {
+    return { erro: "O WhatsApp precisa ter DDD e número, como (66) 99251-3501." };
+  }
+  if (!documentoValido(documento)) {
+    return {
+      erro: "Esse CPF ou CNPJ não confere. Pode checar os números?",
+    };
   }
   if (senha.length < 8) {
     return { erro: "Para ficar seguro, a senha precisa de pelo menos 8 caracteres." };
@@ -54,7 +65,10 @@ export async function criarConta(
       nome,
       nomeNegocio,
       email,
-      telefone: telefone || null,
+      telefone,
+      documento: apenasDigitos(documento),
+      cep: cep ? apenasDigitos(cep) : null,
+      endereco: endereco || null,
       papel: primeiraConta ? "admin" : "dona",
       senhaHash: await bcrypt.hash(senha, 10),
       assinatura: {

@@ -16,6 +16,10 @@ model Usuario {
   senhaHash   String
   nomeNegocio String
   telefone    String?
+  /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
+  documento   String?
+  cep         String?
+  endereco    String?
   papel       String   @default("dona")
   criadoEm    DateTime @default(now())
 

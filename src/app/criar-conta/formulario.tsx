@@ -58,17 +58,63 @@ export function FormularioCriarConta() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="rotulo" htmlFor="telefone">
-            WhatsApp <span className="font-normal">(opcional)</span>
+            WhatsApp
           </label>
           <input
             id="telefone"
             name="telefone"
+            required
             className="campo"
             placeholder="(66) 99251-3501"
             autoComplete="tel"
           />
         </div>
 
+        <div>
+          <label className="rotulo" htmlFor="documento">
+            CPF ou CNPJ
+          </label>
+          <input
+            id="documento"
+            name="documento"
+            required
+            inputMode="numeric"
+            className="campo"
+            placeholder="000.000.000-00"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,10rem)_1fr]">
+        <div>
+          <label className="rotulo" htmlFor="cep">
+            CEP <span className="font-normal">(opcional)</span>
+          </label>
+          <input
+            id="cep"
+            name="cep"
+            inputMode="numeric"
+            className="campo"
+            placeholder="78000-000"
+            autoComplete="postal-code"
+          />
+        </div>
+
+        <div>
+          <label className="rotulo" htmlFor="endereco">
+            Endereço do estúdio <span className="font-normal">(opcional)</span>
+          </label>
+          <input
+            id="endereco"
+            name="endereco"
+            className="campo"
+            placeholder="Rua das Flores, 120 — Centro, Cuiabá/MT"
+            autoComplete="street-address"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="rotulo" htmlFor="senha">
             Crie uma senha
@@ -93,8 +139,9 @@ export function FormularioCriarConta() {
       </BotaoEnviar>
 
       <p className="text-center text-xs leading-relaxed text-carvao-suave">
-        Ao criar a conta você começa no período de teste. Só vamos pedir o Pix quando ele
-        terminar — e nunca sem avisar.
+        O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Seus dados
+        ficam só com a gente. Ao criar a conta você começa no período de teste — o pagamento
+        só é pedido quando ele terminar, e nunca sem avisar.
       </p>
     </form>
   );
