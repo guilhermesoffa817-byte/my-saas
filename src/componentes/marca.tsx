@@ -5,7 +5,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
     <Link href={href} className="inline-flex items-center gap-2.5">
       <span
         className={`flex h-9 w-9 items-center justify-center rounded-2xl ${
-          claro ? "bg-white text-terracota" : "bg-terracota text-white"
+          claro ? "bg-superficie text-terracota" : "bg-terracota text-acento-texto"
         }`}
         aria-hidden
       >
@@ -15,7 +15,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
       </span>
       <span
         className={`font-display text-xl font-semibold tracking-tight ${
-          claro ? "text-white" : "text-carvao"
+          claro ? "text-inverso-texto" : "text-carvao"
         }`}
       >
         Agenda Online

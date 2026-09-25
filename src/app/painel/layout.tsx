@@ -4,6 +4,7 @@ import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
 import { primeiroNome } from "@/lib/formato";
 import { sair } from "@/app/acoes/autenticacao";
 import { Navegacao } from "./navegacao";
+import { BotaoTema } from "@/componentes/tema";
 
 export default async function LayoutPainel({
   children,
@@ -15,13 +16,14 @@ export default async function LayoutPainel({
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-areia-escura/60 bg-white/80 backdrop-blur">
+      <header className="border-b border-areia-escura/60 bg-superficie/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
           <Marca href="/painel" />
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-carvao-suave sm:block">
               Oi, {primeiroNome(usuario.nome)}
             </span>
+            <BotaoTema />
             <form action={sair}>
               <button type="submit" className="botao-suave px-4 py-2 text-xs">
                 Sair

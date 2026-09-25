@@ -1,17 +1,26 @@
 @import "tailwindcss";
 
+/*
+  Os nomes das cores continuam os mesmos de antes (terracota, creme, areia...)
+  para que nenhuma tela precise ser reescrita. O que mudou foram os valores:
+  agora a paleta é verde, e cada cor tem uma versão clara e uma escura.
+*/
 @theme {
-  --color-creme: #fdf8f3;
-  --color-areia: #f4e7dc;
-  --color-areia-escura: #e6d3c4;
-  --color-terracota: #b4674f;
-  --color-terracota-escura: #8f4d39;
-  --color-rose: #e4b7a8;
-  --color-oliva: #6f7d5c;
-  --color-carvao: #2f2722;
-  --color-carvao-suave: #6b5f57;
+  --color-creme: #f5f8f5;
+  --color-superficie: #ffffff;
+  --color-areia: #e7f0e9;
+  --color-areia-escura: #cfe0d4;
+  --color-terracota: #15795a;
+  --color-terracota-escura: #0f5c45;
+  --color-acento-texto: #ffffff;
+  --color-rose: #dceee3;
+  --color-oliva: #3c7d62;
+  --color-carvao: #0e1f17;
+  --color-carvao-suave: #576c61;
+  --color-inverso: #0e1f17;
+  --color-inverso-texto: #f2f7f3;
 
-  --font-display: var(--fonte-display), Georgia, "Times New Roman", serif;
+  --font-display: var(--fonte-display), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--fonte-texto), ui-sans-serif, system-ui, sans-serif;
 
   --radius-xl2: 1.75rem;
@@ -19,6 +28,44 @@
 
 :root {
   color-scheme: light;
+}
+
+/* Tema escuro: vale quando o aparelho está no escuro e o visitante não escolheu claro. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    color-scheme: dark;
+    --color-creme: #0a120e;
+    --color-superficie: #111c17;
+    --color-areia: #18271f;
+    --color-areia-escura: #274034;
+    --color-terracota: #3acb92;
+    --color-terracota-escura: #2fb47f;
+    --color-acento-texto: #05130d;
+    --color-rose: #162e23;
+    --color-oliva: #6bd3a6;
+    --color-carvao: #e7f1ea;
+    --color-carvao-suave: #94ac9e;
+    --color-inverso: #16281f;
+    --color-inverso-texto: #eaf3ed;
+  }
+}
+
+/* E vale também quando o visitante escolhe escuro no botão, mesmo de dia. */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
+  --color-creme: #0a120e;
+  --color-superficie: #111c17;
+  --color-areia: #18271f;
+  --color-areia-escura: #274034;
+  --color-terracota: #3acb92;
+  --color-terracota-escura: #2fb47f;
+  --color-acento-texto: #05130d;
+  --color-rose: #162e23;
+  --color-oliva: #6bd3a6;
+  --color-carvao: #e7f1ea;
+  --color-carvao-suave: #94ac9e;
+  --color-inverso: #16281f;
+  --color-inverso-texto: #eaf3ed;
 }
 
 body {
@@ -30,9 +77,9 @@ body {
 
 @layer components {
   .campo {
-    @apply w-full rounded-2xl border border-areia-escura bg-white px-4 py-3 text-carvao
+    @apply w-full rounded-xl border border-areia-escura bg-superficie px-4 py-3 text-carvao
       placeholder:text-carvao-suave/60 outline-none transition
-      focus:border-terracota focus:ring-2 focus:ring-terracota/20;
+      focus:border-terracota focus:ring-2 focus:ring-terracota/25;
   }
 
   .rotulo {
@@ -40,20 +87,21 @@ body {
   }
 
   .botao {
-    @apply inline-flex items-center justify-center gap-2 rounded-full bg-terracota px-6 py-3
-      text-sm font-semibold text-white shadow-sm transition
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-terracota px-6 py-3
+      text-sm font-semibold text-acento-texto shadow-sm transition
       hover:bg-terracota-escura focus-visible:outline-2 focus-visible:outline-offset-2
       focus-visible:outline-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .botao-suave {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-areia-escura
-      bg-white px-5 py-2.5 text-sm font-semibold text-carvao transition
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-areia-escura
+      bg-superficie px-5 py-2.5 text-sm font-semibold text-carvao transition
       hover:border-terracota hover:text-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .cartao {
-    @apply rounded-3xl border border-areia-escura/70 bg-white p-6 shadow-[0_10px_40px_-24px_rgba(47,39,34,0.45)];
+    @apply rounded-2xl border border-areia-escura/70 bg-superficie p-6
+      shadow-[0_10px_40px_-28px_rgba(14,31,23,0.5)];
   }
 
   .etiqueta {

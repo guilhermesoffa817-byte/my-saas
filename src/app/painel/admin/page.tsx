@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
 import { Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
-import { avaliarAssinatura, PLANO } from "@/lib/assinatura";
+import { avaliarAssinatura, DIAS_DE_TESTE, PLANO } from "@/lib/assinatura";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -189,7 +189,7 @@ export default async function PaginaAdmin() {
                   {assinante.assinatura ? (
                     <form action={darCortesia} className="mt-4">
                       <input type="hidden" name="usuarioId" value={assinante.id} />
-                      <BotaoEnviar variante="suave">Dar 7 dias de cortesia</BotaoEnviar>
+                      <BotaoEnviar variante="suave">Dar {DIAS_DE_TESTE} dias de cortesia</BotaoEnviar>
                     </form>
                   ) : null}
                 </li>

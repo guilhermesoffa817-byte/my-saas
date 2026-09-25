@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Marca } from "@/componentes/marca";
 import { BotaoCopiar } from "@/componentes/botoes";
 import { PLANO, DIAS_DE_TESTE } from "@/lib/assinatura";
+import { BotaoTema } from "@/componentes/tema";
 import { emReais } from "@/lib/formato";
 import { usuarioAtual } from "@/lib/sessao";
 
@@ -78,6 +79,7 @@ export default async function PaginaInicial() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
         <Marca />
         <nav className="flex items-center gap-3">
+          <BotaoTema />
           <Link
             href="/entrar"
             className="rounded-full px-4 py-2 text-sm font-semibold text-carvao-suave transition hover:text-terracota"
@@ -159,7 +161,7 @@ export default async function PaginaInicial() {
           </div>
         </section>
 
-        <section className="border-y border-areia-escura/60 bg-white/70">
+        <section className="border-y border-areia-escura/60 bg-superficie/70">
           <div className="mx-auto max-w-6xl px-5 py-16">
             <h2 className="font-display text-3xl font-semibold text-carvao md:text-4xl">
               Tudo o que você anota em três lugares diferentes, aqui num só
@@ -197,7 +199,7 @@ export default async function PaginaInicial() {
         </section>
 
         <section id="plano" className="mx-auto max-w-6xl scroll-mt-8 px-5 py-16">
-          <div className="grid gap-8 rounded-xl2 border border-areia-escura/70 bg-white p-8 shadow-[0_20px_60px_-40px_rgba(47,39,34,0.6)] md:grid-cols-2 md:p-12">
+          <div className="grid gap-8 rounded-xl2 border border-areia-escura/70 bg-superficie p-8 shadow-[0_20px_60px_-40px_rgba(14,31,23,0.55)] md:grid-cols-2 md:p-12">
             <div>
               <span className="etiqueta border border-areia-escura bg-areia/60 text-carvao-suave">
                 Um plano só, sem pegadinha
@@ -240,7 +242,7 @@ export default async function PaginaInicial() {
                 chave abaixo e avisa com um clique no painel. Simples assim.
               </p>
 
-              <div className="mt-5 rounded-2xl border border-areia-escura bg-white p-5">
+              <div className="mt-5 rounded-2xl border border-areia-escura bg-superficie p-5">
                 <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
                   Chave Pix (telefone)
                 </p>
@@ -285,17 +287,17 @@ export default async function PaginaInicial() {
         </section>
 
         <section className="mx-auto max-w-6xl px-5 pb-20">
-          <div className="rounded-xl2 bg-carvao px-8 py-14 text-center md:px-16">
-            <h2 className="font-display text-3xl font-semibold text-white md:text-4xl">
+          <div className="rounded-xl2 bg-inverso px-8 py-14 text-center md:px-16">
+            <h2 className="font-display text-3xl font-semibold text-inverso-texto md:text-4xl">
               Seu estúdio organizado ainda hoje
             </h2>
-            <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white/70">
+            <p className="mx-auto mt-4 max-w-xl leading-relaxed text-inverso-texto/75">
               Crie a conta, teste {DIAS_DE_TESTE} dias e veja se a sua rotina fica mais leve.
               Se não ficar, é só não assinar — sem ressentimento.
             </p>
             <Link
               href="/criar-conta"
-              className="mt-8 inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
+              className="mt-8 inline-flex items-center justify-center rounded-xl bg-superficie px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
             >
               Começar de graça
             </Link>

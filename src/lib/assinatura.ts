@@ -1,6 +1,6 @@
 import { somarDias } from "@/lib/formato";
 
-export const DIAS_DE_TESTE = 7;
+export const DIAS_DE_TESTE = 3;
 export const DIAS_POR_CICLO = 30;
 
 export const PLANO = {

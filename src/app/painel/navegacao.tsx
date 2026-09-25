@@ -28,7 +28,7 @@ export function Navegacao({ admin }: { admin: boolean }) {
             aria-current={ativo ? "page" : undefined}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
               ativo
-                ? "bg-terracota text-white"
+                ? "bg-terracota text-acento-texto"
                 : "text-carvao-suave hover:bg-areia/70 hover:text-carvao"
             }`}
           >
