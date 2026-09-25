@@ -7,6 +7,7 @@ import {
   dataPorExtenso,
   deDataLocal,
   diaDaSemana,
+  inicioDaSemana,
   emReais,
   hora,
   paraDataLocal,
@@ -15,6 +16,7 @@ import {
   telefoneBonito,
 } from "@/lib/formato";
 import { FormularioAgendamento } from "./formulario";
+import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
 
 export const metadata = { title: "Agenda — Agenda Online" };
@@ -32,8 +34,10 @@ export default async function PaginaAgenda({
   const diaEscolhido = (dia ? deDataLocal(dia) : null) ?? deDataLocal(paraDataLocal(agora))!;
   const diaSeguinte = somarDias(diaEscolhido, 1);
   const chaveDoDia = paraDataLocal(diaEscolhido);
+  const segunda = inicioDaSemana(diaEscolhido);
+  const fimDaSemana = somarDias(segunda, 7);
 
-  const [clientes, servicos, agendamentos] = await Promise.all([
+  const [clientes, servicos, daSemana] = await Promise.all([
     prisma.cliente.findMany({
       where: { usuarioId: usuario.id },
       orderBy: { nome: "asc" },
@@ -47,18 +51,41 @@ export default async function PaginaAgenda({
     prisma.agendamento.findMany({
       where: {
         usuarioId: usuario.id,
-        inicio: { gte: diaEscolhido, lt: diaSeguinte },
+        inicio: { gte: segunda, lt: fimDaSemana },
       },
-      include: { cliente: true, servico: true },
+      select: {
+        id: true,
+        inicio: true,
+        status: true,
+        observacoes: true,
+        cliente: { select: { nome: true, telefone: true } },
+        servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
+      },
       orderBy: { inicio: "asc" },
     }),
   ]);
+
+  const agendamentosDoDia = daSemana.filter(
+    (item) => item.inicio >= diaEscolhido && item.inicio < diaSeguinte,
+  );
+
+  const dias: DiaDaSemana[] = Array.from({ length: 7 }, (_, posicao) => {
+    const data = somarDias(segunda, posicao);
+    const chave = paraDataLocal(data);
+    return {
+      data,
+      chave,
+      atendimentos: daSemana.filter(
+        (item) => paraDataLocal(item.inicio) === chave && item.status !== "cancelado",
+      ).length,
+    };
+  });
 
   const podeAgendar = clientes.length > 0 && servicos.length > 0;
   const sugestao = paraHorarioLocal(
     new Date(diaEscolhido.getTime() + 9 * 60 * 60 * 1000),
   );
-  const previsto = agendamentos
+  const previsto = agendamentosDoDia
     .filter((item) => item.status !== "cancelado")
     .reduce((soma, item) => soma + item.servico.precoCentavos, 0);
 
@@ -120,48 +147,40 @@ export default async function PaginaAgenda({
               {dataPorExtenso(diaEscolhido)}
             </h2>
             <p className="text-sm text-carvao-suave">
-              {agendamentos.length === 0
+              {agendamentosDoDia.length === 0
                 ? "Nenhum atendimento nesse dia."
-                : `${agendamentos.length} ${agendamentos.length === 1 ? "atendimento" : "atendimentos"} · ${emReais(previsto)} previstos`}
+                : `${agendamentosDoDia.length} ${agendamentosDoDia.length === 1 ? "atendimento" : "atendimentos"} · ${emReais(previsto)} previstos`}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/painel/agenda?dia=${paraDataLocal(somarDias(diaEscolhido, -1))}`}
-              className="botao-suave"
-            >
-              Dia anterior
-            </Link>
-            <form className="flex gap-2">
-              <input
-                type="date"
-                name="dia"
-                defaultValue={chaveDoDia}
-                className="campo py-2"
-                aria-label="Escolher dia"
-              />
-              <button type="submit" className="botao-suave">
-                Ver
-              </button>
-            </form>
-            <Link
-              href={`/painel/agenda?dia=${paraDataLocal(somarDias(diaEscolhido, 1))}`}
-              className="botao-suave"
-            >
-              Próximo dia
-            </Link>
-          </div>
+          <form className="flex gap-2">
+            <input
+              type="date"
+              name="dia"
+              defaultValue={chaveDoDia}
+              className="campo py-2"
+              aria-label="Escolher outro dia"
+            />
+            <button type="submit" className="botao-suave">
+              Ver
+            </button>
+          </form>
         </div>
 
-        {agendamentos.length === 0 ? (
+        <DockDaSemana
+          dias={dias}
+          selecionado={chaveDoDia}
+          hoje={paraDataLocal(agora)}
+        />
+
+        {agendamentosDoDia.length === 0 ? (
           <Vazio
             titulo="Dia livre por aqui"
             texto="Aproveite para organizar o estúdio, ou marque um horário no formulário acima."
           />
         ) : (
           <ul className="space-y-3">
-            {agendamentos.map((item) => {
+            {agendamentosDoDia.map((item) => {
               const fim = new Date(
                 item.inicio.getTime() + item.servico.duracaoMin * 60 * 1000,
               );

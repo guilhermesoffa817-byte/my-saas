@@ -10,6 +10,8 @@ export type ClienteDoFormulario = {
   nome: string;
   telefone: string;
   email: string | null;
+  cpf: string | null;
+  endereco: string | null;
   nascimento: string | null;
   observacoes: string | null;
 };
@@ -91,6 +93,35 @@ export function FormularioCliente({
             type="date"
             defaultValue={cliente?.nascimento ?? ""}
             className="campo"
+          />
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className="rotulo" htmlFor={`cpf-${cliente?.id ?? "nova"}`}>
+            CPF <span className="font-normal">(opcional)</span>
+          </label>
+          <input
+            id={`cpf-${cliente?.id ?? "nova"}`}
+            name="cpf"
+            inputMode="numeric"
+            defaultValue={cliente?.cpf ?? ""}
+            className="campo"
+            placeholder="000.000.000-00"
+          />
+        </div>
+
+        <div>
+          <label className="rotulo" htmlFor={`endereco-${cliente?.id ?? "nova"}`}>
+            Endereço <span className="font-normal">(opcional)</span>
+          </label>
+          <input
+            id={`endereco-${cliente?.id ?? "nova"}`}
+            name="endereco"
+            defaultValue={cliente?.endereco ?? ""}
+            className="campo"
+            placeholder="Rua das Flores, 120 — Centro"
           />
         </div>
       </div>

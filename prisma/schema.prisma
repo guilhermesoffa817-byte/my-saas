@@ -60,6 +60,8 @@ model Cliente {
   nome        String
   telefone    String
   email       String?
+  cpf         String?
+  endereco    String?
   nascimento  DateTime?
   observacoes String?
   criadoEm    DateTime @default(now())

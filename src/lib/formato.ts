@@ -53,6 +53,31 @@ export function diaDaSemana(data: Date) {
   return data.toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "long" });
 }
 
+/** "seg", "ter"... sem o ponto que o navegador às vezes acrescenta. */
+export function diaDaSemanaCurto(data: Date) {
+  return data
+    .toLocaleDateString("pt-BR", { timeZone: FUSO, weekday: "short" })
+    .replace(".", "")
+    .slice(0, 3);
+}
+
+/** O número do dia no mês, respeitando o fuso do estúdio. */
+export function diaDoMes(data: Date) {
+  return Number(paraDataLocal(data).slice(8, 10));
+}
+
+/** Segunda-feira da semana em que a data cai. */
+export function inicioDaSemana(data: Date) {
+  const local = deDataLocal(paraDataLocal(data)) ?? data;
+  const sigla = new Intl.DateTimeFormat("en-US", {
+    timeZone: FUSO,
+    weekday: "short",
+  }).format(local);
+  const ordem = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(sigla);
+  return somarDias(local, ordem > 0 ? -ordem : 0);
+}
+
+
 function partesNoFuso(data: Date) {
   const partes = new Intl.DateTimeFormat("en-US", {
     timeZone: FUSO,
@@ -160,4 +185,33 @@ export function competenciaPorExtenso(competencia: string) {
     year: "numeric",
   });
   return nome.charAt(0).toUpperCase() + nome.slice(1);
+}
+
+/** Guarda só os 11 dígitos; a máscara é coisa de tela. */
+export function apenasDigitos(texto: string) {
+  return texto.replace(/\D/g, "");
+}
+
+/** Confere os dois dígitos verificadores do CPF. */
+export function cpfValido(cpf: string) {
+  const numeros = apenasDigitos(cpf);
+  if (numeros.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(numeros)) return false;
+
+  const digito = (ate: number) => {
+    let soma = 0;
+    for (let i = 0; i < ate; i++) {
+      soma += Number(numeros[i]) * (ate + 1 - i);
+    }
+    const resto = (soma * 10) % 11;
+    return resto === 10 ? 0 : resto;
+  };
+
+  return digito(9) === Number(numeros[9]) && digito(10) === Number(numeros[10]);
+}
+
+export function cpfBonito(cpf: string | null) {
+  const numeros = cpf ? apenasDigitos(cpf) : "";
+  if (numeros.length !== 11) return cpf ?? "";
+  return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
 }

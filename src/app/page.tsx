@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Marca } from "@/componentes/marca";
 import {
   PLANOS,
@@ -9,7 +8,6 @@ import {
 } from "@/lib/assinatura";
 import { BotaoTema } from "@/componentes/tema";
 import { emReais } from "@/lib/formato";
-import { usuarioAtual } from "@/lib/sessao";
 
 const recursos = [
   {
@@ -74,10 +72,7 @@ const perguntas = [
   },
 ];
 
-export default async function PaginaInicial() {
-  const usuario = await usuarioAtual();
-  if (usuario) redirect("/painel");
-
+export default function PaginaInicial() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">

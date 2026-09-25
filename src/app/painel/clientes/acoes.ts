@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirAcesso } from "@/lib/guardas";
-import { deDataLocal } from "@/lib/formato";
+import { apenasDigitos, cpfValido, deDataLocal } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -16,6 +16,8 @@ function validar(dados: FormData) {
   const nome = texto(dados, "nome");
   const telefone = texto(dados, "telefone");
   const email = texto(dados, "email");
+  const cpf = texto(dados, "cpf");
+  const endereco = texto(dados, "endereco");
   const nascimento = texto(dados, "nascimento");
   const observacoes = texto(dados, "observacoes");
 
@@ -25,6 +27,9 @@ function validar(dados: FormData) {
   }
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
     return { erro: "Esse e-mail parece incompleto. Pode conferir?" } as const;
+  }
+  if (cpf && !cpfValido(cpf)) {
+    return { erro: "Esse CPF não confere. Pode checar os números?" } as const;
   }
 
   const dataNascimento = nascimento ? deDataLocal(nascimento) : null;
@@ -37,6 +42,8 @@ function validar(dados: FormData) {
       nome,
       telefone,
       email: email || null,
+      cpf: cpf ? apenasDigitos(cpf) : null,
+      endereco: endereco || null,
       nascimento: dataNascimento,
       observacoes: observacoes || null,
     },

@@ -1,5 +1,5 @@
-import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
+import { qrCodeSvg } from "@/lib/qrcode";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
 import { Aviso, Etiqueta } from "@/componentes/avisos";
 import {
@@ -78,11 +78,7 @@ export default async function PaginaAssinatura() {
             dias: plano.dias,
             vantagens: vantagens[plano.codigo] ?? [],
             copiaECola,
-            qrCode: await QRCode.toString(copiaECola, {
-              type: "svg",
-              margin: 1,
-              color: { dark: "#2f2722", light: "#ffffff" },
-            }),
+            qrCode: await qrCodeSvg(copiaECola),
           };
         }),
       )

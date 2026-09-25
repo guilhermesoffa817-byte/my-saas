@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { exigirAcesso } from "@/lib/guardas";
 import { Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar } from "@/componentes/botoes";
-import { dataCurta, paraDataLocal, telefoneBonito } from "@/lib/formato";
+import { cpfBonito, dataCurta, paraDataLocal, telefoneBonito } from "@/lib/formato";
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
 
@@ -27,6 +27,7 @@ export default async function PaginaClientes({
               { nome: { contains: termo, mode: "insensitive" } },
               { telefone: { contains: termo } },
               { email: { contains: termo, mode: "insensitive" } },
+              { cpf: { contains: termo.replace(/\D/g, "") } },
             ],
           }
         : {}),
@@ -105,10 +106,27 @@ export default async function PaginaClientes({
                   </span>
                 </div>
 
-                {cliente.nascimento ? (
-                  <p className="mt-3 text-sm text-carvao-suave">
-                    Aniversário em {dataCurta(cliente.nascimento)}
-                  </p>
+                {cliente.cpf || cliente.endereco || cliente.nascimento ? (
+                  <dl className="mt-3 space-y-1 text-sm text-carvao-suave">
+                    {cliente.cpf ? (
+                      <div className="flex gap-2">
+                        <dt className="shrink-0 font-medium">CPF:</dt>
+                        <dd>{cpfBonito(cliente.cpf)}</dd>
+                      </div>
+                    ) : null}
+                    {cliente.endereco ? (
+                      <div className="flex gap-2">
+                        <dt className="shrink-0 font-medium">Endereço:</dt>
+                        <dd>{cliente.endereco}</dd>
+                      </div>
+                    ) : null}
+                    {cliente.nascimento ? (
+                      <div className="flex gap-2">
+                        <dt className="shrink-0 font-medium">Aniversário:</dt>
+                        <dd>{dataCurta(cliente.nascimento)}</dd>
+                      </div>
+                    ) : null}
+                  </dl>
                 ) : null}
 
                 {cliente.observacoes ? (
@@ -129,6 +147,8 @@ export default async function PaginaClientes({
                           nome: cliente.nome,
                           telefone: cliente.telefone,
                           email: cliente.email,
+                          cpf: cliente.cpf,
+                          endereco: cliente.endereco,
                           nascimento: cliente.nascimento
                             ? paraDataLocal(cliente.nascimento)
                             : null,
