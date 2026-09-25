@@ -122,7 +122,8 @@ export default async function PaginaAssinatura() {
             Pagar com Pix
           </h2>
           <p className="mt-1 text-sm text-carvao-suave">
-            Aponte a câmera do banco para o QR Code ou copie a chave abaixo.
+            Aponte a câmera do banco para o QR Code, ou copie o código e cole no
+            Pix Copia e Cola do seu aplicativo.
           </p>
 
           {pixConfigurado ? (
@@ -135,20 +136,17 @@ export default async function PaginaAssinatura() {
               <div className="space-y-4">
                 <div className="rounded-2xl border border-areia-escura bg-creme px-4 py-3">
                   <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
-                    Chave Pix
+                    Pix Copia e Cola
                   </p>
-                  <p className="mt-1 font-display text-xl font-semibold text-carvao select-all">
-                    {PLANO.pixChave}
+                  <p className="mt-2 font-mono text-xs leading-relaxed break-all text-carvao-suave select-all">
+                    {copiaECola}
                   </p>
-                  <p className="mt-1 text-xs text-carvao-suave">
+                  <p className="mt-2 text-xs text-carvao-suave">
                     Em nome de {PLANO.pixNome || "—"} · {emReais(PLANO.valorCentavos)}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <BotaoCopiar texto={PLANO.pixChave} rotulo="Copiar chave" />
-                  <BotaoCopiar texto={copiaECola} rotulo="Copiar código Pix" />
-                </div>
+                <BotaoCopiar texto={copiaECola} rotulo="Copiar código Pix" />
               </div>
             </div>
           ) : (
