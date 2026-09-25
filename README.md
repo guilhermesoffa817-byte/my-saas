@@ -1,7 +1,7 @@
 # Agenda Online — sistema para estúdios de estética
 
 Um SaaS simples e acolhedor para quem cuida de pessoas: agenda, ficha das clientes,
-serviços, faturamento do mês e uma assinatura mensal de **R$ 97,00** paga por **Pix**.
+serviços, faturamento do mês e assinatura de **R$ 169,00 ao mês** ou **R$ 1.690,00 ao ano** paga por **Pix**.
 
 ## O que já está pronto
 
@@ -34,7 +34,8 @@ serviços, faturamento do mês e uma assinatura mensal de **R$ 97,00** paga por 
    | `SESSAO_SEGREDO`            | uma frase longa e aleatória, só sua             |
    | `PIX_CHAVE`                 | `66992513501`                                   |
    | `PIX_NOME`                  | o nome que aparece no seu Pix                   |
-   | `ASSINATURA_VALOR_CENTAVOS` | `9700` (R$ 97,00)                               |
+   | `ASSINATURA_VALOR_CENTAVOS` | `16900` (R$ 169,00 ao mês)                      |
+   | `ASSINATURA_ANUAL_CENTAVOS` | `169000` (R$ 1.690,00 ao ano)                   |
 
 5. Clique em **Deploy**. O próprio build cria as tabelas do banco.
 6. Em **Settings → Domains**, troque o endereço para o nome que quiser —
@@ -84,7 +85,8 @@ Está tudo nas variáveis de ambiente:
 ```env
 PIX_CHAVE="66992513501"
 PIX_NOME="Estúdio de Estética"
-ASSINATURA_VALOR_CENTAVOS="9700"    # 9700 centavos = R$ 97,00
+ASSINATURA_VALOR_CENTAVOS="16900"   # R$ 169,00 ao mês
+ASSINATURA_ANUAL_CENTAVOS="169000"  # R$ 1.690,00 ao ano
 ```
 
 > A chave entra no QR Code exatamente como estiver escrita aqui. Use o mesmo formato

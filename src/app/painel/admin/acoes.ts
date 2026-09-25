@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
-import { novaValidade, DIAS_DE_TESTE } from "@/lib/assinatura";
+import { novaValidade, planoPorCodigo, DIAS_DE_TESTE } from "@/lib/assinatura";
 import { somarDias } from "@/lib/formato";
 
 function idDo(dados: FormData) {
@@ -22,7 +22,13 @@ export async function confirmarPagamento(dados: FormData) {
   if (!pagamento || pagamento.status !== "aguardando") return;
 
   const agora = new Date();
-  const validaAte = novaValidade(pagamento.usuario.assinatura?.validaAte ?? null, agora);
+  // Quem pagou o anual ganha 365 dias, não os 30 do mensal.
+  const plano = planoPorCodigo(pagamento.plano);
+  const validaAte = novaValidade(
+    pagamento.usuario.assinatura?.validaAte ?? null,
+    agora,
+    plano.dias,
+  );
 
   await prisma.$transaction([
     prisma.pagamento.update({

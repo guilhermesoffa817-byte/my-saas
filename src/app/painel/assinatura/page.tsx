@@ -2,15 +2,21 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
 import { Aviso, Etiqueta } from "@/componentes/avisos";
-import { BotaoCopiar } from "@/componentes/botoes";
-import { PLANO, pixCopiaECola } from "@/lib/assinatura";
+import {
+  MESES_DE_BRINDE,
+  PIX_CHAVE,
+  PIX_NOME,
+  PLANOS,
+  ECONOMIA_ANUAL_CENTAVOS,
+  pixCopiaECola,
+} from "@/lib/assinatura";
 import {
   competenciaPorExtenso,
   dataCurta,
   dataEHora,
   emReais,
 } from "@/lib/formato";
-import { FormularioAvisoDePagamento } from "./formulario";
+import { PagamentoPix, type OpcaoDePlano } from "./escolha";
 
 export const metadata = { title: "Assinatura — Agenda Online" };
 export const dynamic = "force-dynamic";
@@ -42,32 +48,54 @@ export default async function PaginaAssinatura() {
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
   // e a cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
-  const pixConfigurado = PLANO.pixChave.trim().length > 0;
+  const pixConfigurado = PIX_CHAVE.trim().length > 0;
 
-  const copiaECola = pixConfigurado
-    ? pixCopiaECola({
-        chave: PLANO.pixChave,
-        nome: PLANO.pixNome,
-        valorCentavos: PLANO.valorCentavos,
-        identificador: "AGENDA",
-      })
-    : "";
+  const vantagens: Record<string, string[]> = {
+    mensal: [],
+    anual: [
+      `${MESES_DE_BRINDE} meses de brinde`,
+      `Economia de ${emReais(ECONOMIA_ANUAL_CENTAVOS)} no ano`,
+      "Preço travado por 12 meses, mesmo se a mensalidade subir",
+      "Um Pix só no ano inteiro, sem lembrar todo mês",
+    ],
+  };
 
-  const qrCode = pixConfigurado
-    ? await QRCode.toString(copiaECola, {
-        type: "svg",
-        margin: 1,
-        color: { dark: "#2f2722", light: "#ffffff" },
-      })
-    : "";
+  const opcoes: OpcaoDePlano[] = pixConfigurado
+    ? await Promise.all(
+        Object.values(PLANOS).map(async (plano) => {
+          const copiaECola = pixCopiaECola({
+            chave: PIX_CHAVE,
+            nome: PIX_NOME,
+            valorCentavos: plano.valorCentavos,
+            identificador: plano.codigo === "anual" ? "AGENDAANUAL" : "AGENDA",
+          });
+
+          return {
+            codigo: plano.codigo,
+            nome: plano.nome,
+            periodo: plano.periodo,
+            valor: emReais(plano.valorCentavos),
+            dias: plano.dias,
+            vantagens: vantagens[plano.codigo] ?? [],
+            copiaECola,
+            qrCode: await QRCode.toString(copiaECola, {
+              type: "svg",
+              margin: 1,
+              color: { dark: "#2f2722", light: "#ffffff" },
+            }),
+          };
+        }),
+      )
+    : [];
 
   return (
     <div className="space-y-8">
       <section>
         <h1 className="font-display text-3xl font-semibold text-carvao">Sua assinatura</h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
-          {PLANO.nome} por {emReais(PLANO.valorCentavos)} ao mês, pago por Pix. Sem
-          fidelidade, sem multa e sem surpresa na fatura.
+          {emReais(PLANOS.mensal.valorCentavos)} ao mês, ou{" "}
+          {emReais(PLANOS.anual.valorCentavos)} no ano com {MESES_DE_BRINDE} meses de brinde.
+          Pago por Pix, sem fidelidade e sem multa.
         </p>
       </section>
 
@@ -92,12 +120,16 @@ export default async function PaginaAssinatura() {
 
           <dl className="mt-6 space-y-3 text-sm">
             <div className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3">
-              <dt className="text-carvao-suave">Plano</dt>
-              <dd className="font-semibold text-carvao">{PLANO.nome}</dd>
+              <dt className="text-carvao-suave">Mensal</dt>
+              <dd className="font-semibold text-carvao">
+                {emReais(PLANOS.mensal.valorCentavos)}
+              </dd>
             </div>
             <div className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3">
-              <dt className="text-carvao-suave">Valor por mês</dt>
-              <dd className="font-semibold text-carvao">{emReais(PLANO.valorCentavos)}</dd>
+              <dt className="text-carvao-suave">Anual</dt>
+              <dd className="font-semibold text-carvao">
+                {emReais(PLANOS.anual.valorCentavos)}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-carvao-suave">
@@ -127,27 +159,8 @@ export default async function PaginaAssinatura() {
           </p>
 
           {pixConfigurado ? (
-            <div className="mt-5 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
-              <div
-                className="mx-auto w-40 rounded-2xl border border-areia-escura bg-white p-3 [&>svg]:h-full [&>svg]:w-full"
-                dangerouslySetInnerHTML={{ __html: qrCode }}
-              />
-
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-areia-escura bg-creme px-4 py-3">
-                  <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
-                    Pix Copia e Cola
-                  </p>
-                  <p className="mt-2 font-mono text-xs leading-relaxed break-all text-carvao-suave select-all">
-                    {copiaECola}
-                  </p>
-                  <p className="mt-2 text-xs text-carvao-suave">
-                    Em nome de {PLANO.pixNome || "—"} · {emReais(PLANO.valorCentavos)}
-                  </p>
-                </div>
-
-                <BotaoCopiar texto={copiaECola} rotulo="Copiar código Pix" />
-              </div>
+            <div className="mt-5">
+              <PagamentoPix opcoes={opcoes} pixNome={PIX_NOME} jaAvisou={jaAvisou} />
             </div>
           ) : (
             <p className="mt-5 rounded-2xl border border-areia-escura bg-creme px-4 py-3 text-sm text-carvao-suave">
@@ -156,10 +169,6 @@ export default async function PaginaAssinatura() {
               variáveis de ambiente do site.
             </p>
           )}
-
-          <div className="mt-6 border-t border-areia-escura/60 pt-5">
-            <FormularioAvisoDePagamento jaAvisou={jaAvisou} />
-          </div>
         </div>
       </section>
 

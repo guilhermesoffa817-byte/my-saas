@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Marca } from "@/componentes/marca";
-import { BotaoCopiar } from "@/componentes/botoes";
-import { PLANO, DIAS_DE_TESTE } from "@/lib/assinatura";
+import {
+  PLANOS,
+  DIAS_DE_TESTE,
+  MESES_DE_BRINDE,
+  ECONOMIA_ANUAL_CENTAVOS,
+} from "@/lib/assinatura";
 import { BotaoTema } from "@/componentes/tema";
 import { emReais } from "@/lib/formato";
 import { usuarioAtual } from "@/lib/sessao";
@@ -44,7 +48,7 @@ const passos = [
   {
     numero: "3",
     titulo: "Assine quando gostar",
-    texto: `Um Pix de ${emReais(PLANO.valorCentavos)} por mês e pronto. Sem fidelidade, sem letra miúda.`,
+    texto: `Um Pix de ${emReais(PLANOS.mensal.valorCentavos)} por mês, ou ${emReais(PLANOS.anual.valorCentavos)} no ano. Sem fidelidade, sem letra miúda.`,
   },
 ];
 
@@ -56,7 +60,7 @@ const perguntas = [
   },
   {
     pergunta: "Como funciona o pagamento?",
-    resposta: `Você faz um Pix de ${emReais(PLANO.valorCentavos)} para a chave que fica no seu painel, avisa a gente com um clique e liberamos mais 30 dias assim que conferirmos.`,
+    resposta: `No painel você escolhe mensal ou anual, faz o Pix pelo QR Code que aparece lá e avisa com um clique. Assim que conferirmos, seu acesso é liberado.`,
   },
   {
     pergunta: "Funciona no celular?",
@@ -205,13 +209,21 @@ export default async function PaginaInicial() {
                 Um plano só, sem pegadinha
               </span>
               <h2 className="mt-4 font-display text-3xl font-semibold text-carvao md:text-4xl">
-                {PLANO.nome}
+                Plano Estúdio
               </h2>
               <p className="mt-3 flex items-end gap-2">
                 <span className="font-display text-5xl font-semibold text-terracota">
-                  {emReais(PLANO.valorCentavos)}
+                  {emReais(PLANOS.mensal.valorCentavos)}
                 </span>
                 <span className="pb-2 text-carvao-suave">por mês</span>
+              </p>
+              <p className="mt-2 text-sm text-carvao-suave">
+                Ou{" "}
+                <strong className="text-carvao">
+                  {emReais(PLANOS.anual.valorCentavos)} no ano
+                </strong>{" "}
+                — {MESES_DE_BRINDE} meses de brinde, {emReais(ECONOMIA_ANUAL_CENTAVOS)} de
+                economia.
               </p>
               <ul className="mt-6 space-y-2.5 text-carvao-suave">
                 {[
@@ -237,26 +249,35 @@ export default async function PaginaInicial() {
                 O pagamento é por Pix
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-carvao-suave">
-                Todo mês você faz um Pix de{" "}
-                <strong className="text-carvao">{emReais(PLANO.valorCentavos)}</strong> para a
-                chave abaixo e avisa com um clique no painel. Simples assim.
+                No painel você escolhe mensal ou anual e o QR Code aparece com o valor
+                certo. Faz o Pix, avisa com um clique e pronto.
               </p>
 
               <div className="mt-5 rounded-2xl border border-areia-escura bg-superficie p-5">
                 <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
-                  Chave Pix (telefone)
+                  Vantagens do anual
                 </p>
-                <p className="mt-2 font-display text-2xl font-semibold tracking-wide text-carvao select-all">
-                  {PLANO.pixChave}
-                </p>
-                <div className="mt-4">
-                  <BotaoCopiar texto={PLANO.pixChave} rotulo="Copiar a chave Pix" />
-                </div>
+                <ul className="mt-3 space-y-2 text-sm text-carvao-suave">
+                  {[
+                    `${MESES_DE_BRINDE} meses de brinde`,
+                    `${emReais(ECONOMIA_ANUAL_CENTAVOS)} de economia no ano`,
+                    "Preço travado por 12 meses",
+                    "Um Pix só no ano inteiro",
+                  ].map((item) => (
+                    <li key={item} className="flex gap-2.5">
+                      <span
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota"
+                        aria-hidden
+                      />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
 
               <p className="mt-5 text-sm leading-relaxed text-carvao-suave">
-                Assim que a gente confirmar o seu Pix, seu acesso é renovado por mais 30 dias.
-                Se der qualquer problema, a gente resolve junto com você.
+                Assim que a gente confirmar o seu Pix, seu acesso é renovado. Se der
+                qualquer problema, a gente resolve junto com você.
               </p>
             </div>
           </div>

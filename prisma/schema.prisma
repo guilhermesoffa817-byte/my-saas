@@ -40,7 +40,8 @@ model Assinatura {
 model Pagamento {
   id            String    @id @default(cuid())
   usuarioId     String
-  valorCentavos Int       @default(26000)
+  valorCentavos Int       @default(16900)
+  plano         String    @default("mensal")
   competencia   String
   status        String    @default("aguardando")
   observacao    String?

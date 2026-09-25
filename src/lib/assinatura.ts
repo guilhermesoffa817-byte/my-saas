@@ -3,11 +3,55 @@ import { somarDias } from "@/lib/formato";
 export const DIAS_DE_TESTE = 3;
 export const DIAS_POR_CICLO = 30;
 
+export const PIX_CHAVE = process.env.PIX_CHAVE ?? "";
+export const PIX_NOME = process.env.PIX_NOME ?? "";
+
+const MENSAL_CENTAVOS = Number(process.env.ASSINATURA_VALOR_CENTAVOS ?? 16900);
+/** Anual sai por dez mensalidades: dois meses de brinde para quem paga adiantado. */
+const ANUAL_CENTAVOS = Number(process.env.ASSINATURA_ANUAL_CENTAVOS ?? MENSAL_CENTAVOS * 10);
+
+export type CodigoPlano = "mensal" | "anual";
+
+export type Plano = {
+  codigo: CodigoPlano;
+  nome: string;
+  periodo: string;
+  valorCentavos: number;
+  dias: number;
+};
+
+export const PLANOS: Record<CodigoPlano, Plano> = {
+  mensal: {
+    codigo: "mensal",
+    nome: "Mensal",
+    periodo: "por mês",
+    valorCentavos: MENSAL_CENTAVOS,
+    dias: DIAS_POR_CICLO,
+  },
+  anual: {
+    codigo: "anual",
+    nome: "Anual",
+    periodo: "por ano",
+    valorCentavos: ANUAL_CENTAVOS,
+    dias: 365,
+  },
+};
+
+/** Quanto o anual economiza em relação a doze mensalidades. */
+export const ECONOMIA_ANUAL_CENTAVOS = MENSAL_CENTAVOS * 12 - ANUAL_CENTAVOS;
+export const MESES_DE_BRINDE = Math.round(ECONOMIA_ANUAL_CENTAVOS / MENSAL_CENTAVOS);
+
+/** Traduz o que veio do formulário ou do banco; o que não reconhecer vira mensal. */
+export function planoPorCodigo(valor: unknown): Plano {
+  return valor === "anual" ? PLANOS.anual : PLANOS.mensal;
+}
+
+/** Mantido para as telas que só falam do mensal. */
 export const PLANO = {
   nome: "Plano Estúdio",
-  valorCentavos: Number(process.env.ASSINATURA_VALOR_CENTAVOS ?? 26000),
-  pixChave: process.env.PIX_CHAVE ?? "",
-  pixNome: process.env.PIX_NOME ?? "",
+  valorCentavos: MENSAL_CENTAVOS,
+  pixChave: PIX_CHAVE,
+  pixNome: PIX_NOME,
 };
 
 export type StatusAssinatura = "teste" | "aguardando" | "ativa" | "expirada";
@@ -89,11 +133,15 @@ function montarRecado(
   return "Sua assinatura venceu. Faça o Pix para voltar a usar o painel quando quiser.";
 }
 
-/** Nova validade ao confirmar um pagamento: soma 30 dias sem perder os dias que sobraram. */
-export function novaValidade(validaAte: Date | null, agora = new Date()) {
+/** Nova validade ao confirmar um pagamento: soma os dias do plano sem perder o que sobrou. */
+export function novaValidade(
+  validaAte: Date | null,
+  agora = new Date(),
+  dias = DIAS_POR_CICLO,
+) {
   const base =
     validaAte && validaAte.getTime() > agora.getTime() ? validaAte : agora;
-  return somarDias(base, DIAS_POR_CICLO);
+  return somarDias(base, dias);
 }
 
 /**

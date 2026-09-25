@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirUsuario } from "@/lib/guardas";
-import { PLANO } from "@/lib/assinatura";
+import { planoPorCodigo } from "@/lib/assinatura";
 import { competenciaAtual } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -13,6 +13,7 @@ export async function avisarPagamento(
   dados: FormData,
 ): Promise<Resposta> {
   const usuario = await exigirUsuario();
+  const plano = planoPorCodigo(dados.get("plano"));
 
   const observacao = (() => {
     const valor = dados.get("observacao");
@@ -33,7 +34,8 @@ export async function avisarPagamento(
   await prisma.pagamento.create({
     data: {
       usuarioId: usuario.id,
-      valorCentavos: PLANO.valorCentavos,
+      valorCentavos: plano.valorCentavos,
+      plano: plano.codigo,
       competencia: competenciaAtual(),
       observacao,
     },
@@ -45,6 +47,6 @@ export async function avisarPagamento(
 
   return {
     recado:
-      "Obrigado por avisar! Vamos conferir o Pix e liberar mais 30 dias para você. Se demorar, é só chamar a gente.",
+      `Obrigado por avisar! Vamos conferir o Pix e liberar mais ${plano.dias} dias para você. Se demorar, é só chamar a gente.`,
   };
 }

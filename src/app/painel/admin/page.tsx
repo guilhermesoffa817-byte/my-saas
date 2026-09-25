@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
 import { Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
-import { avaliarAssinatura, DIAS_DE_TESTE, PLANO } from "@/lib/assinatura";
+import { avaliarAssinatura, DIAS_DE_TESTE, PLANOS, planoPorCodigo } from "@/lib/assinatura";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -55,7 +55,7 @@ export default async function PaginaAdmin() {
           Pagamentos e assinantes
         </h1>
         <p className="mt-2 text-carvao-suave">
-          Confira os Pix recebidos na chave {PLANO.pixChave} e libere o acesso de quem já
+          Confira os Pix recebidos na sua chave e libere o acesso de quem já
           pagou.
         </p>
       </section>
@@ -66,7 +66,7 @@ export default async function PaginaAdmin() {
           { rotulo: "Assinaturas em dia", valor: String(receitaAtiva) },
           {
             rotulo: "Receita recorrente",
-            valor: emReais(receitaAtiva * PLANO.valorCentavos),
+            valor: emReais(receitaAtiva * PLANOS.mensal.valorCentavos),
           },
         ].map((item) => (
           <div key={item.rotulo} className="cartao py-5">
@@ -109,6 +109,8 @@ export default async function PaginaAdmin() {
                   </p>
                   <p className="mt-2 text-sm text-carvao">
                     {emReais(pagamento.valorCentavos)} ·{" "}
+                    <strong>{planoPorCodigo(pagamento.plano).nome}</strong> (
+                    {planoPorCodigo(pagamento.plano).dias} dias) ·{" "}
                     {competenciaPorExtenso(pagamento.competencia)} · avisado em{" "}
                     {dataEHora(pagamento.criadoEm)}
                   </p>
@@ -215,7 +217,7 @@ export default async function PaginaAdmin() {
                   {competenciaPorExtenso(pagamento.competencia)}
                 </span>
                 <span className="text-carvao-suave">
-                  {emReais(pagamento.valorCentavos)}
+                  {emReais(pagamento.valorCentavos)} · {planoPorCodigo(pagamento.plano).nome}
                   {pagamento.respondidoEm
                     ? ` · confirmado em ${dataCurta(pagamento.respondidoEm)}`
                     : ""}
