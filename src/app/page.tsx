@@ -98,7 +98,7 @@ export default function PaginaInicial() {
           <div className="grid items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
             <div>
               <span className="etiqueta border border-areia-escura bg-areia/60 text-carvao-suave">
-                Feito para estúdios de estética
+                Feita para organizar negócios
               </span>
               <h1 className="mt-5 font-display text-4xl leading-[1.1] font-semibold text-carvao md:text-6xl">
                 Cuide das suas clientes.
