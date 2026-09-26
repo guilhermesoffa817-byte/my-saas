@@ -4,7 +4,11 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { usuarioAtual, type UsuarioLogado } from "@/lib/sessao";
-import { avaliarAssinatura, type SituacaoAssinatura } from "@/lib/assinatura";
+import {
+  avaliarAssinatura,
+  temFinanceiro,
+  type SituacaoAssinatura,
+} from "@/lib/assinatura";
 
 /** Também guardado durante a montagem: contorno e página perguntam o mesmo. */
 const pixAvisado = cache(async (usuarioId: string) =>
@@ -37,7 +41,7 @@ export async function situacaoDoUsuario(
     ...situacao,
     status: "aguardando",
     recado:
-      "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir — costuma ser rapidinho.",
+      "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir — costuma ser rápido.",
   };
 }
 
@@ -55,4 +59,14 @@ export async function exigirAdmin(): Promise<UsuarioLogado> {
   const usuario = await exigirUsuario();
   if (usuario.papel !== "admin") redirect("/painel");
   return usuario;
+}
+
+/** Porta da aba Finanças: só entra quem está com um plano VIP em dia. */
+export async function exigirFinanceiro(): Promise<{
+  usuario: UsuarioLogado;
+  situacao: SituacaoAssinatura;
+}> {
+  const { usuario, situacao } = await exigirAcesso();
+  if (!temFinanceiro(usuario.assinatura)) redirect("/painel/assinatura?vip=1");
+  return { usuario, situacao };
 }

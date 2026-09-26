@@ -1,7 +1,7 @@
 # Agenda Online — sistema para estúdios de estética
 
 Um SaaS simples e acolhedor para quem cuida de pessoas: agenda, ficha das clientes,
-serviços, faturamento do mês e assinatura de **R$ 169,00 ao mês** ou **R$ 1.690,00 ao ano** paga por **Pix**.
+serviços, faturamento do mês e assinatura a partir de **R$ 169,00 ao mês**, paga por **Pix**, com um plano **VIP** de R$ 329,00 que abre o controle financeiro.
 
 ## O que já está pronto
 
@@ -11,6 +11,8 @@ serviços, faturamento do mês e assinatura de **R$ 169,00 ao mês** ou **R$ 1.6
 - **Clientes**: contato, aniversário e observações (alergias, preferências...).
 - **Serviços**: preço e duração, que já aparecem prontos na hora de agendar.
 - **Painel** com atendimentos do dia, concluídos no mês e faturamento calculado sozinho.
+- **Finanças (plano VIP)**: entradas, despesas, imposto estimado e um gráfico dos dias
+  da semana que mais rendem.
 - **Assinatura por Pix**: QR Code, chave para copiar, aviso de pagamento com um clique
   e histórico dos meses.
 - **Área de administração** para conferir os Pix recebidos, liberar mais 30 dias de
@@ -36,6 +38,8 @@ serviços, faturamento do mês e assinatura de **R$ 169,00 ao mês** ou **R$ 1.6
    | `PIX_NOME`                  | o nome que aparece no seu Pix                   |
    | `ASSINATURA_VALOR_CENTAVOS` | `16900` (R$ 169,00 ao mês)                      |
    | `ASSINATURA_ANUAL_CENTAVOS` | `169000` (R$ 1.690,00 ao ano)                   |
+   | `ASSINATURA_VIP_CENTAVOS`   | `32900` (R$ 329,00 ao mês)                      |
+   | `ASSINATURA_VIP_ANUAL_CENTAVOS` | `329000` (R$ 3.290,00 ao ano)               |
 
 5. Clique em **Deploy**. O próprio build cria as tabelas do banco.
 6. Em **Settings → Domains**, troque o endereço para o nome que quiser —

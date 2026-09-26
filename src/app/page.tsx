@@ -5,6 +5,7 @@ import {
   DIAS_DE_TESTE,
   MESES_DE_BRINDE,
   ECONOMIA_ANUAL_CENTAVOS,
+  ECONOMIA_VIP_ANUAL_CENTAVOS,
 } from "@/lib/assinatura";
 import { BotaoTema } from "@/componentes/tema";
 import { emReais } from "@/lib/formato";
@@ -13,22 +14,22 @@ const recursos = [
   {
     titulo: "Agenda que cabe na sua rotina",
     texto:
-      "Marque um horário em segundos, veja o dia inteiro numa olhada e saiba quem já confirmou.",
+      "Marque um horário em segundos, veja a semana inteira de uma olhada e acompanhe quem já confirmou.",
   },
   {
     titulo: "A ficha de cada cliente",
     texto:
-      "Telefone, aniversário, alergias, o que ela gostou da última vez. Tudo guardado com carinho.",
+      "Telefone, CPF, endereço, aniversário, alergias e preferências. Tudo guardado com cuidado, num lugar só.",
   },
   {
     titulo: "Seus serviços e preços",
     texto:
-      "Cadastre limpeza de pele, design, massagem... com preço e duração. Na hora de agendar já vem tudo pronto.",
+      "Cadastre limpeza de pele, design de sobrancelha ou massagem com preço e duração. Na hora de agendar, já vem tudo preenchido.",
   },
   {
-    titulo: "Quanto entrou no mês",
+    titulo: "Suas contas em ordem",
     texto:
-      "O painel soma os atendimentos concluídos e mostra o faturamento sem você abrir planilha nenhuma.",
+      "O painel soma os atendimentos concluídos e mostra o faturamento do mês. No plano VIP, você acompanha também as despesas e o imposto estimado.",
   },
 ];
 
@@ -41,12 +42,13 @@ const passos = [
   {
     numero: "2",
     titulo: "Traga seu estúdio",
-    texto: "Cadastre seus serviços e suas clientes. Se precisar de ajuda, é só chamar a gente.",
+    texto:
+      "Cadastre seus serviços e suas clientes. Se precisar de ajuda em qualquer etapa, é só nos chamar.",
   },
   {
     numero: "3",
-    titulo: "Assine quando gostar",
-    texto: `Um Pix de ${emReais(PLANOS.mensal.valorCentavos)} por mês, ou ${emReais(PLANOS.anual.valorCentavos)} no ano. Sem fidelidade, sem letra miúda.`,
+    titulo: "Assine quando fizer sentido",
+    texto: `A partir de ${emReais(PLANOS.mensal.valorCentavos)} por mês, pagos por Pix. Sem fidelidade e sem letra miúda.`,
   },
 ];
 
@@ -54,7 +56,7 @@ const perguntas = [
   {
     pergunta: "Preciso assinar contrato ou ficar preso por algum tempo?",
     resposta:
-      "Não. A assinatura é mês a mês. Se um mês você não puder pagar, é só não fazer o Pix — seus dados continuam guardadinhos esperando você voltar.",
+      "Não. A assinatura é mês a mês e você cancela quando quiser. Se em algum mês não puder pagar, basta não fazer o Pix: seus dados continuam guardados, esperando a sua volta.",
   },
   {
     pergunta: "Como funciona o pagamento?",
@@ -63,12 +65,12 @@ const perguntas = [
   {
     pergunta: "Funciona no celular?",
     resposta:
-      "Funciona sim. O sistema abre no navegador do celular, do tablet ou do computador — o que estiver mais perto de você na hora do atendimento.",
+      "Funciona, sim. O sistema abre no navegador do celular, do tablet ou do computador — o que estiver mais perto de você na hora do atendimento.",
   },
   {
     pergunta: "E se eu tiver dúvida no meio do caminho?",
     resposta:
-      "A gente responde de verdade. Nada de robô com resposta pronta: você fala com uma pessoa, do jeito que deveria ser.",
+      "Você fala com uma pessoa de verdade, não com um robô de respostas prontas. Estamos aqui para ajudar em qualquer etapa.",
   },
 ];
 
@@ -104,9 +106,9 @@ export default function PaginaInicial() {
                 <span className="text-terracota">A papelada fica com a gente.</span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-carvao-suave">
-                Agenda, ficha das clientes, serviços e faturamento num lugar só — simples
-                do jeito que o seu dia já é corrido. Nada de planilha perdida nem caderninho
-                que some bem na hora.
+                Agenda, ficha das clientes, serviços e faturamento reunidos num lugar só.
+                Simples como o seu dia exige, completo como o seu trabalho merece — sem
+                planilha perdida nem caderno que some bem na hora.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link href="/criar-conta" className="botao px-8 py-3.5 text-base">
@@ -117,7 +119,7 @@ export default function PaginaInicial() {
                 </Link>
               </div>
               <p className="mt-4 text-sm text-carvao-suave">
-                Sem cartão de crédito para começar. Prometido.
+                Não pedimos cartão de crédito para começar.
               </p>
             </div>
 
@@ -198,83 +200,137 @@ export default function PaginaInicial() {
         </section>
 
         <section id="plano" className="mx-auto max-w-6xl scroll-mt-8 px-5 py-16">
-          <div className="grid gap-8 rounded-xl2 border border-areia-escura/70 bg-superficie p-8 shadow-[0_20px_60px_-40px_rgba(14,31,23,0.55)] md:grid-cols-2 md:p-12">
-            <div>
-              <span className="etiqueta border border-areia-escura bg-areia/60 text-carvao-suave">
-                Um plano só, sem pegadinha
-              </span>
-              <h2 className="mt-4 font-display text-3xl font-semibold text-carvao md:text-4xl">
-                Plano Estúdio
-              </h2>
-              <p className="mt-3 flex items-end gap-2">
-                <span className="font-display text-5xl font-semibold text-terracota">
-                  {emReais(PLANOS.mensal.valorCentavos)}
-                </span>
-                <span className="pb-2 text-carvao-suave">por mês</span>
-              </p>
-              <p className="mt-2 text-sm text-carvao-suave">
-                Ou{" "}
-                <strong className="text-carvao">
-                  {emReais(PLANOS.anual.valorCentavos)} no ano
-                </strong>{" "}
-                — {MESES_DE_BRINDE} meses de brinde, {emReais(ECONOMIA_ANUAL_CENTAVOS)} de
-                economia.
-              </p>
-              <ul className="mt-6 space-y-2.5 text-carvao-suave">
-                {[
+          <div className="max-w-2xl">
+            <span className="etiqueta border border-areia-escura bg-areia/60 text-carvao-suave">
+              Dois planos, sem letra miúda
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-semibold text-carvao md:text-4xl">
+              Escolha o que combina com o seu momento
+            </h2>
+            <p className="mt-3 leading-relaxed text-carvao-suave">
+              Comece pelo Essencial para organizar a agenda. Quando quiser enxergar o
+              dinheiro com a mesma clareza, o VIP abre a parte financeira. Você troca de
+              plano quando quiser, sem multa.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            {[
+              {
+                etiqueta: "Para começar com o pé direito",
+                nome: "Essencial",
+                mensal: PLANOS.mensal.valorCentavos,
+                anual: PLANOS.anual.valorCentavos,
+                economia: ECONOMIA_ANUAL_CENTAVOS,
+                destaque: false,
+                recursos: [
                   "Agenda completa, quantos atendimentos você quiser",
                   "Clientes e serviços sem limite",
+                  "Ficha com CPF, endereço e observações",
                   "Faturamento do mês calculado sozinho",
-                  "Suporte com gente de verdade",
-                  `${DIAS_DE_TESTE} dias para testar antes de pagar`,
-                ].map((item) => (
-                  <li key={item} className="flex gap-2.5">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota" aria-hidden />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/criar-conta" className="botao mt-8 px-8 py-3.5 text-base">
-                Criar minha conta
-              </Link>
-            </div>
+                  "Atendimento com gente de verdade",
+                ],
+              },
+              {
+                etiqueta: "Para quem quer enxergar o lucro",
+                nome: "VIP",
+                mensal: PLANOS.vip_mensal.valorCentavos,
+                anual: PLANOS.vip_anual.valorCentavos,
+                economia: ECONOMIA_VIP_ANUAL_CENTAVOS,
+                destaque: true,
+                recursos: [
+                  "Tudo o que o Essencial oferece",
+                  "Controle financeiro: o que entrou e o que saiu",
+                  "Imposto estimado calculado todo mês",
+                  "Gráfico dos dias da semana que mais rendem",
+                  "Resumo pronto para conversar com a contadora",
+                ],
+              },
+            ].map((plano) => (
+              <div
+                key={plano.nome}
+                className={`animar-entrada rounded-xl2 border p-8 md:p-10 ${
+                  plano.destaque
+                    ? "border-terracota bg-superficie shadow-[0_24px_70px_-44px_rgba(14,31,23,0.65)] ring-1 ring-terracota/25"
+                    : "border-areia-escura/70 bg-superficie"
+                }`}
+              >
+                <span
+                  className={`etiqueta ${
+                    plano.destaque
+                      ? "bg-terracota text-acento-texto"
+                      : "border border-areia-escura bg-areia/60 text-carvao-suave"
+                  }`}
+                >
+                  {plano.etiqueta}
+                </span>
 
-            <div className="rounded-xl2 bg-creme p-7">
-              <h3 className="font-display text-xl font-semibold text-carvao">
-                O pagamento é por Pix
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-carvao-suave">
-                No painel você escolhe mensal ou anual e o QR Code aparece com o valor
-                certo. Faz o Pix, avisa com um clique e pronto.
-              </p>
+                <h3 className="mt-4 font-display text-2xl font-semibold text-carvao">
+                  {plano.nome}
+                </h3>
 
-              <div className="mt-5 rounded-2xl border border-areia-escura bg-superficie p-5">
-                <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
-                  Vantagens do anual
+                <p className="mt-3 flex items-end gap-2">
+                  <span className="font-display text-5xl font-semibold text-terracota tabular-nums">
+                    {emReais(plano.mensal)}
+                  </span>
+                  <span className="pb-2 text-carvao-suave">por mês</span>
                 </p>
-                <ul className="mt-3 space-y-2 text-sm text-carvao-suave">
-                  {[
-                    `${MESES_DE_BRINDE} meses de brinde`,
-                    `${emReais(ECONOMIA_ANUAL_CENTAVOS)} de economia no ano`,
-                    "Preço travado por 12 meses",
-                    "Um Pix só no ano inteiro",
-                  ].map((item) => (
+
+                <p className="mt-2 text-sm text-carvao-suave">
+                  Ou <strong className="text-carvao">{emReais(plano.anual)} no ano</strong> —{" "}
+                  {MESES_DE_BRINDE} meses de brinde, {emReais(plano.economia)} de economia.
+                </p>
+
+                <ul className="mt-6 space-y-2.5 text-carvao-suave">
+                  {plano.recursos.map((item) => (
                     <li key={item} className="flex gap-2.5">
                       <span
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota"
+                        className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota"
                         aria-hidden
                       />
                       {item}
                     </li>
                   ))}
                 </ul>
-              </div>
 
-              <p className="mt-5 text-sm leading-relaxed text-carvao-suave">
-                Assim que a gente confirmar o seu Pix, seu acesso é renovado. Se der
-                qualquer problema, a gente resolve junto com você.
+                <Link
+                  href="/criar-conta"
+                  className={`mt-8 px-8 py-3.5 text-base ${plano.destaque ? "botao" : "botao-suave"}`}
+                >
+                  Começar com o {plano.nome}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-6 rounded-xl2 border border-areia-escura/70 bg-creme p-8 md:grid-cols-2 md:p-10">
+            <div>
+              <h3 className="font-display text-xl font-semibold text-carvao">
+                O pagamento é por Pix
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-carvao-suave">
+                No painel você escolhe o plano e o QR Code aparece com o valor correto.
+                Faz o Pix, avisa com um clique e pronto. São {DIAS_DE_TESTE} dias de
+                teste antes de qualquer cobrança, e não pedimos cartão para começar.
               </p>
             </div>
+
+            <ul className="space-y-2.5 text-sm text-carvao-suave">
+              {[
+                "Sem fidelidade: cancele quando quiser",
+                "Sem multa e sem taxa de adesão",
+                "Troque de plano a qualquer momento",
+                "Seus dados continuam guardados se você pausar",
+              ].map((item) => (
+                <li key={item} className="flex gap-2.5">
+                  <span
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota"
+                    aria-hidden
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
 
@@ -308,8 +364,8 @@ export default function PaginaInicial() {
               Seu estúdio organizado ainda hoje
             </h2>
             <p className="mx-auto mt-4 max-w-xl leading-relaxed text-inverso-texto/75">
-              Crie a conta, teste {DIAS_DE_TESTE} dias e veja se a sua rotina fica mais leve.
-              Se não ficar, é só não assinar — sem ressentimento.
+              Crie sua conta, use por {DIAS_DE_TESTE} dias e veja se a sua rotina fica mais
+              leve. Se não ficar, basta não assinar — sem compromisso nenhum.
             </p>
             <Link
               href="/criar-conta"

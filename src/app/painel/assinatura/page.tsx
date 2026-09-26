@@ -8,6 +8,7 @@ import {
   PIX_NOME,
   PLANOS,
   ECONOMIA_ANUAL_CENTAVOS,
+  ECONOMIA_VIP_ANUAL_CENTAVOS,
   pixCopiaECola,
 } from "@/lib/assinatura";
 import {
@@ -34,7 +35,12 @@ const rotuloPagamento = {
   recusado: "Não localizado",
 } as const;
 
-export default async function PaginaAssinatura() {
+export default async function PaginaAssinatura({
+  searchParams,
+}: {
+  searchParams: Promise<{ vip?: string }>;
+}) {
+  const { vip } = await searchParams;
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
 
@@ -56,7 +62,19 @@ export default async function PaginaAssinatura() {
       `${MESES_DE_BRINDE} meses de brinde`,
       `Economia de ${emReais(ECONOMIA_ANUAL_CENTAVOS)} no ano`,
       "Preço travado por 12 meses, mesmo se a mensalidade subir",
-      "Um Pix só no ano inteiro, sem lembrar todo mês",
+      "Um Pix só no ano inteiro, sem precisar lembrar todo mês",
+    ],
+    vip_mensal: [
+      "Aba Finanças liberada",
+      "Controle de entradas, despesas e imposto estimado",
+      "Gráfico dos seus dias mais fortes",
+      "Tudo do plano Essencial",
+    ],
+    vip_anual: [
+      `${MESES_DE_BRINDE} meses de brinde`,
+      `Economia de ${emReais(ECONOMIA_VIP_ANUAL_CENTAVOS)} no ano`,
+      "Aba Finanças liberada",
+      "Preço travado por 12 meses",
     ],
   };
 
@@ -86,12 +104,23 @@ export default async function PaginaAssinatura() {
 
   return (
     <div className="space-y-8">
+      {vip ? (
+        <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
+          <p className="font-semibold text-carvao">A aba Finanças faz parte do plano VIP</p>
+          <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
+            Com ela você acompanha o que entra, o que sai, o imposto estimado e descobre
+            quais dias da semana rendem mais. Para liberar, escolha um dos planos VIP
+            abaixo.
+          </p>
+        </div>
+      ) : null}
+
       <section>
         <h1 className="font-display text-3xl font-semibold text-carvao">Sua assinatura</h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
-          {emReais(PLANOS.mensal.valorCentavos)} ao mês, ou{" "}
-          {emReais(PLANOS.anual.valorCentavos)} no ano com {MESES_DE_BRINDE} meses de brinde.
-          Pago por Pix, sem fidelidade e sem multa.
+          A partir de {emReais(PLANOS.mensal.valorCentavos)} ao mês. O plano VIP acrescenta
+          a aba Finanças, e os planos anuais dão {MESES_DE_BRINDE} meses de brinde. Pagamento
+          por Pix, sem fidelidade e sem multa.
         </p>
       </section>
 
@@ -115,18 +144,17 @@ export default async function PaginaAssinatura() {
           <p className="mt-4 leading-relaxed text-carvao-suave">{situacao.recado}</p>
 
           <dl className="mt-6 space-y-3 text-sm">
-            <div className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3">
-              <dt className="text-carvao-suave">Mensal</dt>
-              <dd className="font-semibold text-carvao">
-                {emReais(PLANOS.mensal.valorCentavos)}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3">
-              <dt className="text-carvao-suave">Anual</dt>
-              <dd className="font-semibold text-carvao">
-                {emReais(PLANOS.anual.valorCentavos)}
-              </dd>
-            </div>
+            {Object.values(PLANOS).map((plano) => (
+              <div
+                key={plano.codigo}
+                className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3"
+              >
+                <dt className="text-carvao-suave">{plano.nome}</dt>
+                <dd className="font-semibold tabular-nums text-carvao">
+                  {emReais(plano.valorCentavos)}
+                </dd>
+              </div>
+            ))}
             <div className="flex justify-between gap-4">
               <dt className="text-carvao-suave">
                 {situacao.liberada ? "Vale até" : "Venceu em"}

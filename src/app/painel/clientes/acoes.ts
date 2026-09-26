@@ -21,7 +21,7 @@ function validar(dados: FormData) {
   const nascimento = texto(dados, "nascimento");
   const observacoes = texto(dados, "observacoes");
 
-  if (nome.length < 2) return { erro: "Escreva o nome da cliente, por favor." } as const;
+  if (nome.length < 2) return { erro: "Por favor, escreva o nome da cliente." } as const;
   if (telefone.replace(/\D/g, "").length < 10) {
     return { erro: "O telefone precisa ter DDD e número, como (66) 99251-3501." } as const;
   }
@@ -34,7 +34,7 @@ function validar(dados: FormData) {
 
   const dataNascimento = nascimento ? deDataLocal(nascimento) : null;
   if (nascimento && !dataNascimento) {
-    return { erro: "Não consegui entender a data de nascimento." } as const;
+    return { erro: "Não consegui entender a data de nascimento. Pode conferir?" } as const;
   }
 
   return {
@@ -65,7 +65,7 @@ export async function salvarCliente(_anterior: Resposta, dados: FormData): Promi
 
     await prisma.cliente.update({ where: { id }, data: conferido.valores });
     revalidatePath("/painel/clientes");
-    return { recado: `Prontinho, os dados de ${conferido.valores.nome} foram atualizados.` };
+    return { recado: `Pronto! Os dados de ${conferido.valores.nome} foram atualizados.` };
   }
 
   await prisma.cliente.create({

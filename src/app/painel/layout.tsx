@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Marca } from "@/componentes/marca";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
+import { temFinanceiro } from "@/lib/assinatura";
 import { primeiroNome } from "@/lib/formato";
 import { sair } from "@/app/acoes/autenticacao";
 import { Navegacao } from "./navegacao";
@@ -32,7 +33,10 @@ export default async function LayoutPainel({
           </div>
         </div>
         <div className="mx-auto max-w-6xl px-5 pb-3">
-          <Navegacao admin={usuario.papel === "admin"} />
+          <Navegacao
+            admin={usuario.papel === "admin"}
+            financeiro={temFinanceiro(usuario.assinatura)}
+          />
         </div>
       </header>
 
@@ -60,7 +64,7 @@ export default async function LayoutPainel({
 
       <footer className="mx-auto max-w-6xl px-5 pb-10 text-sm text-carvao-suave">
         <p>
-          {usuario.nomeNegocio} — qualquer dúvida, a gente está aqui para ajudar.
+          {usuario.nomeNegocio} — qualquer dúvida, estamos aqui para ajudar.
         </p>
       </footer>
     </div>

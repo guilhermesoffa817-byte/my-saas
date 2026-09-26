@@ -8,12 +8,18 @@ const itens = [
   { href: "/painel/agenda", rotulo: "Agenda" },
   { href: "/painel/clientes", rotulo: "Clientes" },
   { href: "/painel/servicos", rotulo: "Serviços" },
-  { href: "/painel/assinatura", rotulo: "Assinatura" },
 ];
 
-export function Navegacao({ admin }: { admin: boolean }) {
+const assinatura = { href: "/painel/assinatura", rotulo: "Assinatura" };
+
+export function Navegacao({ admin, financeiro }: { admin: boolean; financeiro: boolean }) {
   const caminho = usePathname();
-  const lista = admin ? [...itens, { href: "/painel/admin", rotulo: "Pagamentos" }] : itens;
+  const lista = [
+    ...itens,
+    ...(financeiro ? [{ href: "/painel/financas", rotulo: "Finanças" }] : []),
+    assinatura,
+    ...(admin ? [{ href: "/painel/admin", rotulo: "Pagamentos" }] : []),
+  ];
 
   return (
     <nav className="flex gap-1.5 overflow-x-auto pb-1">

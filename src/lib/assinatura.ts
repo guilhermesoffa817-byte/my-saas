@@ -9,33 +9,65 @@ export const PIX_NOME = process.env.PIX_NOME ?? "";
 const MENSAL_CENTAVOS = Number(process.env.ASSINATURA_VALOR_CENTAVOS ?? 16900);
 /** Anual sai por dez mensalidades: dois meses de brinde para quem paga adiantado. */
 const ANUAL_CENTAVOS = Number(process.env.ASSINATURA_ANUAL_CENTAVOS ?? MENSAL_CENTAVOS * 10);
+const VIP_MENSAL_CENTAVOS = Number(process.env.ASSINATURA_VIP_CENTAVOS ?? 32900);
+const VIP_ANUAL_CENTAVOS = Number(
+  process.env.ASSINATURA_VIP_ANUAL_CENTAVOS ?? VIP_MENSAL_CENTAVOS * 10,
+);
 
-export type CodigoPlano = "mensal" | "anual";
+export type CodigoPlano = "mensal" | "anual" | "vip_mensal" | "vip_anual";
 
 export type Plano = {
   codigo: CodigoPlano;
   nome: string;
+  familia: "essencial" | "vip";
   periodo: string;
   valorCentavos: number;
   dias: number;
+  /** Só os planos VIP abrem a aba Finanças. */
+  financeiro: boolean;
 };
 
 export const PLANOS: Record<CodigoPlano, Plano> = {
   mensal: {
     codigo: "mensal",
-    nome: "Mensal",
+    nome: "Essencial mensal",
+    familia: "essencial",
     periodo: "por mês",
     valorCentavos: MENSAL_CENTAVOS,
     dias: DIAS_POR_CICLO,
+    financeiro: false,
   },
   anual: {
     codigo: "anual",
-    nome: "Anual",
+    nome: "Essencial anual",
+    familia: "essencial",
     periodo: "por ano",
     valorCentavos: ANUAL_CENTAVOS,
     dias: 365,
+    financeiro: false,
+  },
+  vip_mensal: {
+    codigo: "vip_mensal",
+    nome: "VIP mensal",
+    familia: "vip",
+    periodo: "por mês",
+    valorCentavos: VIP_MENSAL_CENTAVOS,
+    dias: DIAS_POR_CICLO,
+    financeiro: true,
+  },
+  vip_anual: {
+    codigo: "vip_anual",
+    nome: "VIP anual",
+    familia: "vip",
+    periodo: "por ano",
+    valorCentavos: VIP_ANUAL_CENTAVOS,
+    dias: 365,
+    financeiro: true,
   },
 };
+
+/** Quanto o VIP anual economiza em relação a doze mensalidades VIP. */
+export const ECONOMIA_VIP_ANUAL_CENTAVOS = VIP_MENSAL_CENTAVOS * 12 - VIP_ANUAL_CENTAVOS;
 
 /** Quanto o anual economiza em relação a doze mensalidades. */
 export const ECONOMIA_ANUAL_CENTAVOS = MENSAL_CENTAVOS * 12 - ANUAL_CENTAVOS;
@@ -43,7 +75,21 @@ export const MESES_DE_BRINDE = Math.round(ECONOMIA_ANUAL_CENTAVOS / MENSAL_CENTA
 
 /** Traduz o que veio do formulário ou do banco; o que não reconhecer vira mensal. */
 export function planoPorCodigo(valor: unknown): Plano {
-  return valor === "anual" ? PLANOS.anual : PLANOS.mensal;
+  if (typeof valor === "string" && valor in PLANOS) {
+    return PLANOS[valor as CodigoPlano];
+  }
+  return PLANOS.mensal;
+}
+
+/** A aba Finanças só abre para quem está com um plano VIP em dia. */
+export function temFinanceiro(
+  assinatura: { status: string; plano: string; validaAte: Date } | null | undefined,
+  agora = new Date(),
+) {
+  if (!assinatura) return false;
+  if (assinatura.validaAte.getTime() <= agora.getTime()) return false;
+  if (assinatura.status !== "ativa") return false;
+  return planoPorCodigo(assinatura.plano).financeiro;
 }
 
 /** Mantido para as telas que só falam do mensal. */
@@ -116,21 +162,21 @@ function montarRecado(
 ) {
   if (status === "teste" && dentroDoPrazo) {
     return diasRestantes === 1
-      ? "Seu período de teste termina amanhã. Que tal já garantir o próximo mês?"
-      : `Você está no período de teste: faltam ${diasRestantes} dias para ele acabar.`;
+      ? "Seu período de teste termina amanhã. Que tal garantir o próximo mês agora?"
+      : `Você está no período de teste: faltam ${diasRestantes} dias para ele terminar.`;
   }
 
   if (status === "ativa" && dentroDoPrazo) {
     return diasRestantes <= 5
       ? `Sua assinatura está em dia e renova em ${diasRestantes} ${diasRestantes === 1 ? "dia" : "dias"}.`
-      : "Sua assinatura está em dia. Obrigado por confiar na gente!";
+      : "Sua assinatura está em dia. Obrigado pela confiança!";
   }
 
   if (status === "aguardando") {
-    return "Recebemos o aviso do seu Pix. Estamos conferindo e já liberamos tudo, viu?";
+    return "Recebemos o aviso do seu Pix. Estamos conferindo e liberamos o acesso em seguida.";
   }
 
-  return "Sua assinatura venceu. Faça o Pix para voltar a usar o painel quando quiser.";
+  return "Sua assinatura venceu. Faça o Pix quando puder para voltar a usar o painel.";
 }
 
 /** Nova validade ao confirmar um pagamento: soma os dias do plano sem perder o que sobrou. */

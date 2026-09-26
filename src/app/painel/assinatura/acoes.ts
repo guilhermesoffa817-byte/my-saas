@@ -27,7 +27,7 @@ export async function avisarPagamento(
   if (jaAvisado) {
     return {
       recado:
-        "Seu aviso já está com a gente e estamos conferindo. Pode deixar que assim que cair, liberamos tudo.",
+        "Seu aviso já está conosco e estamos conferindo. Assim que o pagamento cair, liberamos o acesso.",
     };
   }
 
@@ -47,6 +47,6 @@ export async function avisarPagamento(
 
   return {
     recado:
-      `Obrigado por avisar! Vamos conferir o Pix e liberar mais ${plano.dias} dias para você. Se demorar, é só chamar a gente.`,
+      `Obrigado por avisar! Vamos conferir o Pix e liberar mais ${plano.dias} dias para você. Se demorar, é só nos chamar.`,
   };
 }

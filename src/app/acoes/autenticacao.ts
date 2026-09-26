@@ -33,10 +33,10 @@ export async function criarConta(
   const senha = texto(dados, "senha");
 
   if (!nome || !nomeNegocio || !email || !telefone || !documento || !senha) {
-    return { erro: "Faltou preencher algum campo. Dá uma conferida, por favor?" };
+    return { erro: "Ainda falta preencher algum campo. Pode conferir, por favor?" };
   }
   if (!EMAIL_VALIDO.test(email)) {
-    return { erro: "Esse e-mail parece incompleto. Pode escrever de novo?" };
+    return { erro: "Esse e-mail parece incompleto. Pode escrevê-lo novamente?" };
   }
   if (apenasDigitos(telefone).length < 10) {
     return { erro: "O WhatsApp precisa ter DDD e número, como (66) 99251-3501." };
@@ -53,7 +53,7 @@ export async function criarConta(
   const jaExiste = await prisma.usuario.findUnique({ where: { email } });
   if (jaExiste) {
     return {
-      erro: "Já existe uma conta com esse e-mail. Que tal entrar por aqui?",
+      erro: "Já existe uma conta com esse e-mail. Que tal entrar em vez de criar outra?",
     };
   }
 

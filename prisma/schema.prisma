@@ -18,6 +18,8 @@ model Usuario {
   telefone    String?
   /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
   documento   String?
+  /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
+  impostoPercentual Int @default(6)
   cep         String?
   endereco    String?
   papel       String   @default("dona")
@@ -28,12 +30,15 @@ model Usuario {
   servicos     Servico[]
   agendamentos Agendamento[]
   pagamentos   Pagamento[]
+  lancamentos  Lancamento[]
 }
 
 model Assinatura {
   id          String   @id @default(cuid())
   usuarioId   String   @unique
   status      String   @default("teste")
+  /// Qual plano está valendo: define se a aba Finanças aparece.
+  plano       String   @default("mensal")
   validaAte   DateTime
   criadoEm    DateTime @default(now())
   atualizadoEm DateTime @updatedAt
@@ -108,4 +113,20 @@ model Agendamento {
 
   @@index([usuarioId, inicio])
   @@index([clienteId])
+}
+
+/// Dinheiro que entrou ou saiu fora dos atendimentos: aluguel, material, um extra.
+model Lancamento {
+  id            String   @id @default(cuid())
+  usuarioId     String
+  tipo          String
+  descricao     String
+  categoria     String?
+  valorCentavos Int
+  data          DateTime
+  criadoEm      DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, data])
 }

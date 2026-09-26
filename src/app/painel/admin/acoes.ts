@@ -40,9 +40,11 @@ export async function confirmarPagamento(dados: FormData) {
       create: {
         usuarioId: pagamento.usuarioId,
         status: "ativa",
+        plano: plano.codigo,
         validaAte,
       },
-      update: { status: "ativa", validaAte },
+      // O plano vigente passa a ser o último pago: é ele que libera a aba Finanças.
+      update: { status: "ativa", plano: plano.codigo, validaAte },
     }),
   ]);
 
