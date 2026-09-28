@@ -20,6 +20,10 @@ model Usuario {
   documento   String?
   /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
   impostoPercentual Int @default(6)
+  /// Código do link de indicação desta pessoa. Só quem indica tem um.
+  codigoIndicacao String? @unique
+  /// Código de quem trouxe esta conta, guardado no momento do cadastro.
+  indicadoPor     String?
   cep         String?
   endereco    String?
   papel       String   @default("dona")
@@ -31,6 +35,8 @@ model Usuario {
   agendamentos Agendamento[]
   pagamentos   Pagamento[]
   lancamentos  Lancamento[]
+
+  @@index([indicadoPor])
 }
 
 model Assinatura {

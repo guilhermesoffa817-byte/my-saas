@@ -8,9 +8,16 @@ import { FormularioCriarConta } from "./formulario";
 
 export const metadata = { title: "Criar conta — Agenda Online" };
 
-export default async function PaginaCriarConta() {
+export default async function PaginaCriarConta({
+  searchParams,
+}: {
+  searchParams: Promise<{ ind?: string }>;
+}) {
   const usuario = await usuarioAtual();
   if (usuario) redirect("/painel");
+
+  // Código de quem indicou, que veio no endereço do link.
+  const { ind } = await searchParams;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -29,7 +36,7 @@ export default async function PaginaCriarConta() {
           </p>
 
           <div className="cartao mt-7">
-            <FormularioCriarConta />
+            <FormularioCriarConta indicadoPor={ind ?? null} />
           </div>
 
           <p className="mt-6 text-center text-sm text-carvao-suave">

@@ -31,6 +31,7 @@ export async function criarConta(
   const cep = texto(dados, "cep");
   const endereco = texto(dados, "endereco");
   const senha = texto(dados, "senha");
+  const indicadoPor = texto(dados, "indicadoPor").toLowerCase().slice(0, 40);
 
   if (!nome || !nomeNegocio || !email || !telefone || !documento || !senha) {
     return { erro: "Ainda falta preencher algum campo. Pode conferir, por favor?" };
@@ -60,6 +61,15 @@ export async function criarConta(
   // A primeira conta criada é a da administração, que confere os Pix recebidos.
   const primeiraConta = (await prisma.usuario.count()) === 0;
 
+  // Só guarda a indicação se o código existir de verdade, para o painel não
+  // mostrar parceiro que nunca existiu.
+  const quemIndicou = indicadoPor
+    ? await prisma.usuario.findUnique({
+        where: { codigoIndicacao: indicadoPor },
+        select: { codigoIndicacao: true },
+      })
+    : null;
+
   const usuario = await prisma.usuario.create({
     data: {
       nome,
@@ -69,6 +79,7 @@ export async function criarConta(
       documento: apenasDigitos(documento),
       cep: cep ? apenasDigitos(cep) : null,
       endereco: endereco || null,
+      indicadoPor: quemIndicou?.codigoIndicacao ?? null,
       papel: primeiraConta ? "admin" : "dona",
       senhaHash: await bcrypt.hash(senha, 10),
       assinatura: {

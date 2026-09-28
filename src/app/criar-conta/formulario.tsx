@@ -5,11 +5,15 @@ import { criarConta } from "@/app/acoes/autenticacao";
 import { BotaoEnviar } from "@/componentes/botoes";
 import { Aviso } from "@/componentes/avisos";
 
-export function FormularioCriarConta() {
+export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | null }) {
   const [estado, acao] = useActionState(criarConta, null);
 
   return (
     <form action={acao} className="space-y-4">
+      {indicadoPor ? (
+        <input type="hidden" name="indicadoPor" value={indicadoPor} />
+      ) : null}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="rotulo" htmlFor="nome">

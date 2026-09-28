@@ -11,6 +11,7 @@ import {
   telefoneBonito,
 } from "@/lib/formato";
 import { confirmarPagamento, darCortesia, recusarPagamento } from "./acoes";
+import { Indicacoes, type Parceiro } from "./indicacoes";
 
 export const metadata = { title: "Pagamentos — Agenda Online" };
 export const dynamic = "force-dynamic";
@@ -48,6 +49,49 @@ export default async function PaginaAdmin() {
     (assinante) => avaliarAssinatura(assinante.assinatura).status === "ativa",
   ).length;
 
+  // Parceiros são as contas que têm um código de indicação criado.
+  const comCodigo = await prisma.usuario.findMany({
+    where: { codigoIndicacao: { not: null } },
+    select: { nome: true, codigoIndicacao: true },
+    orderBy: { nome: "asc" },
+  });
+
+  const indicadas = await prisma.usuario.findMany({
+    where: { indicadoPor: { not: null } },
+    select: {
+      nome: true,
+      nomeNegocio: true,
+      criadoEm: true,
+      indicadoPor: true,
+      assinatura: true,
+      pagamentos: {
+        where: { status: "confirmado" },
+        select: { valorCentavos: true },
+      },
+    },
+    orderBy: { criadoEm: "desc" },
+  });
+
+  const parceiros: Parceiro[] = comCodigo.map((parceiro) => ({
+    nome: parceiro.nome,
+    codigo: parceiro.codigoIndicacao as string,
+    contas: indicadas
+      .filter((conta) => conta.indicadoPor === parceiro.codigoIndicacao)
+      .map((conta) => ({
+        nome: conta.nome,
+        nomeNegocio: conta.nomeNegocio,
+        criadoEm: conta.criadoEm,
+        situacao: avaliarAssinatura(conta.assinatura).status,
+        totalPagoCentavos: conta.pagamentos.reduce(
+          (soma, pagamento) => soma + pagamento.valorCentavos,
+          0,
+        ),
+      })),
+  }));
+
+  const enderecoBase = process.env.ENDERECO_DO_SITE ?? "https://agendaonlinecontabilidade.netlify.app";
+  const percentualComissao = Number(process.env.COMISSAO_PERCENTUAL ?? 25);
+
   return (
     <div className="space-y-8">
       <section>
@@ -79,6 +123,12 @@ export default async function PaginaAdmin() {
           </div>
         ))}
       </section>
+
+      <Indicacoes
+        parceiros={parceiros}
+        enderecoBase={enderecoBase}
+        percentual={percentualComissao}
+      />
 
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-carvao">
