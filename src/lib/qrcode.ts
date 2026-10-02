@@ -15,7 +15,7 @@ export async function qrCodeSvg(conteudo: string) {
   const svg = await QRCode.toString(conteudo, {
     type: "svg",
     margin: 1,
-    color: { dark: "#2f2722", light: "#ffffff" },
+    color: { dark: "#0b1220", light: "#ffffff" },
   });
 
   desenhados.set(conteudo, svg);

@@ -13,7 +13,7 @@ import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
 import { excluirLancamento } from "./acoes";
 
-export const metadata = { title: "Finanças — Agenda Online" };
+export const metadata = { title: "Finanças · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 const NOMES_DOS_DIAS = [
@@ -189,7 +189,7 @@ export default async function PaginaFinancas() {
           Registrar um lançamento
         </h2>
         <p className="mt-1 text-sm text-carvao-suave">
-          Aluguel, material, um produto vendido — tudo o que não passa pela agenda.
+          Aluguel, material, um produto vendido. Tudo o que não passa pela agenda.
         </p>
         <div className="mt-5">
           <FormularioLancamento hoje={paraDataLocal(agora)} />

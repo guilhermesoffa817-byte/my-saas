@@ -19,7 +19,7 @@ import {
 } from "@/lib/formato";
 import { PagamentoPix, type OpcaoDePlano } from "./escolha";
 
-export const metadata = { title: "Assinatura — Agenda Online" };
+export const metadata = { title: "Assinatura · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 const rotuloStatus = {
@@ -53,7 +53,7 @@ export default async function PaginaAssinatura({
   const jaAvisou = pagamentos.some((pagamento) => pagamento.status === "aguardando");
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
-  // e a cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
+  // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
   const pixConfigurado = PIX_CHAVE.trim().length > 0;
 
   const vantagens: Record<string, string[]> = {
@@ -220,7 +220,7 @@ export default async function PaginaAssinatura({
                   </p>
                   <p className="text-xs text-carvao-suave">
                     Avisado em {dataEHora(pagamento.criadoEm)}
-                    {pagamento.observacao ? ` — "${pagamento.observacao}"` : ""}
+                    {pagamento.observacao ? ` · "${pagamento.observacao}"` : ""}
                   </p>
                 </div>
                 <Etiqueta

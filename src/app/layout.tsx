@@ -17,9 +17,9 @@ const texto = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Agenda Online — o sistema do seu estúdio de estética",
+  title: "Agenda Online · a agenda do seu estúdio",
   description:
-    "Agenda, ficha das clientes, serviços e faturamento num lugar só. Feito para quem cuida de pessoas e não quer perder tempo com papelada.",
+    "Agenda, ficha de clientes, serviços e faturamento num lugar só. Para qualquer estúdio que marca hora e não quer perder tempo com papelada.",
 };
 
 export default function RootLayout({

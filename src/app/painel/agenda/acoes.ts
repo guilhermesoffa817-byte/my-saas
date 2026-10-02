@@ -29,7 +29,7 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
   const inicio = deHorarioLocal(texto(dados, "inicio"));
   const observacoes = texto(dados, "observacoes");
 
-  if (!clienteId) return { erro: "Escolha a cliente que vai ser atendida." };
+  if (!clienteId) return { erro: "Escolha o cliente que vai ser atendido." };
   if (!servicoId) return { erro: "Escolha o serviço desse atendimento." };
   if (!inicio) return { erro: "Escolha o dia e a hora do atendimento." };
 
@@ -38,7 +38,7 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
     prisma.servico.findFirst({ where: { id: servicoId, usuarioId: usuario.id } }),
   ]);
 
-  if (!cliente) return { erro: "Não encontramos essa cliente na sua lista." };
+  if (!cliente) return { erro: "Não encontramos esse cliente na sua lista." };
   if (!servico) return { erro: "Não encontramos esse serviço na sua lista." };
 
   const conflito = await horarioOcupado({

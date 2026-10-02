@@ -13,7 +13,7 @@ import {
 import { confirmarPagamento, darCortesia, recusarPagamento } from "./acoes";
 import { Indicacoes, type Parceiro } from "./indicacoes";
 
-export const metadata = { title: "Pagamentos — Agenda Online" };
+export const metadata = { title: "Pagamentos · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 const rotuloStatus = {

@@ -121,14 +121,14 @@ export function FormularioCliente({
             name="endereco"
             defaultValue={cliente?.endereco ?? ""}
             className="campo"
-            placeholder="Rua das Flores, 120 — Centro"
+            placeholder="Rua das Flores, 120, Centro"
           />
         </div>
       </div>
 
       <div>
         <label className="rotulo" htmlFor={`observacoes-${cliente?.id ?? "nova"}`}>
-          Observações <span className="font-normal">(alergias, preferências, o que ela gosta)</span>
+          Observações <span className="font-normal">(alergias, preferências, o que o cliente gosta)</span>
         </label>
         <textarea
           id={`observacoes-${cliente?.id ?? "nova"}`}

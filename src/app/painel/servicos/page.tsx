@@ -6,7 +6,7 @@ import { emReais } from "@/lib/formato";
 import { FormularioServico } from "./formulario";
 import { alternarServico, removerServico } from "./acoes";
 
-export const metadata = { title: "Serviços — Agenda Online" };
+export const metadata = { title: "Serviços · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaServicos() {
@@ -45,7 +45,7 @@ export default async function PaginaServicos() {
         {servicos.length === 0 ? (
           <Vazio
             titulo="Nenhum serviço cadastrado ainda"
-            texto="Comece pelos seus carros-chefe: limpeza de pele, design de sobrancelha, massagem..."
+            texto="Comece pelos seus carros-chefe, aqueles que a maioria dos clientes pede."
           />
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">

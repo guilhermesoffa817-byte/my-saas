@@ -6,7 +6,7 @@ import { cpfBonito, dataCurta, paraDataLocal, telefoneBonito } from "@/lib/forma
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
 
-export const metadata = { title: "Clientes — Agenda Online" };
+export const metadata = { title: "Clientes · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaClientes({
@@ -39,7 +39,7 @@ export default async function PaginaClientes({
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-display text-3xl font-semibold text-carvao">Suas clientes</h1>
+        <h1 className="font-display text-3xl font-semibold text-carvao">Seus clientes</h1>
         <p className="mt-2 text-carvao-suave">
           A ficha de cada uma fica guardada aqui: contato, aniversário e aquelas
           observações que fazem toda a diferença no atendimento.
@@ -47,7 +47,7 @@ export default async function PaginaClientes({
       </section>
 
       <section className="cartao">
-        <h2 className="font-display text-xl font-semibold text-carvao">Nova cliente</h2>
+        <h2 className="font-display text-xl font-semibold text-carvao">Novo cliente</h2>
         <p className="mt-1 mb-5 text-sm text-carvao-suave">
           Só o nome e o WhatsApp já bastam para começar.
         </p>
@@ -83,7 +83,7 @@ export default async function PaginaClientes({
             texto={
               termo
                 ? "Tente procurar por outra parte do nome ou pelo telefone."
-                : "Cadastre a primeira cliente no formulário acima — leva menos de um minuto."
+                : "Cadastre o primeiro cliente no formulário acima. Leva menos de um minuto."
             }
           />
         ) : (
@@ -161,7 +161,7 @@ export default async function PaginaClientes({
                   <form action={excluirCliente}>
                     <input type="hidden" name="id" value={cliente.id} />
                     <BotaoConfirmar
-                      pergunta={`Apagar ${cliente.nome} e todos os agendamentos dela? Isso não tem volta.`}
+                      pergunta={`Apagar ${cliente.nome} e todos os agendamentos desse cliente? Isso não tem volta.`}
                       className="text-rose-700 hover:border-rose-300 hover:text-rose-700"
                     >
                       Apagar

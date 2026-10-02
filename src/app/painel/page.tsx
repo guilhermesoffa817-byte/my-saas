@@ -16,7 +16,7 @@ import {
   telefoneBonito,
 } from "@/lib/formato";
 
-export const metadata = { title: "Painel — Agenda Online" };
+export const metadata = { title: "Painel · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 function saudacao(data: Date) {
@@ -89,7 +89,7 @@ export default async function PaginaPainel() {
         </h1>
         <p className="mt-2 text-carvao-suave">
           {hojeLista.length === 0
-            ? "Hoje a agenda está livre. Um bom dia para respirar ou chamar aquela cliente que sumiu."
+            ? "Hoje a agenda está livre. Um bom dia para respirar ou chamar aquele cliente que sumiu."
             : hojeLista.length === 1
               ? "Você tem um atendimento hoje. Vai ser tranquilo."
               : `Você tem ${hojeLista.length} atendimentos hoje. Vamos com calma, um de cada vez.`}
@@ -174,7 +174,7 @@ export default async function PaginaPainel() {
               Marcar um horário
             </Link>
             <Link href="/painel/clientes" className="botao-suave w-full">
-              Cadastrar uma cliente
+              Cadastrar um cliente
             </Link>
           </div>
         </div>

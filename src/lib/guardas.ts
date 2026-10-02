@@ -41,7 +41,7 @@ export async function situacaoDoUsuario(
     ...situacao,
     status: "aguardando",
     recado:
-      "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir — costuma ser rápido.",
+      "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir. Costuma ser rápido.",
   };
 }
 

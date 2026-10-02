@@ -79,7 +79,7 @@ export function PagamentoPix({
               {escolhida.copiaECola}
             </p>
             <p className="mt-2 text-xs text-carvao-suave">
-              Em nome de {pixNome || "—"} · {escolhida.valor} · acesso por {escolhida.dias} dias
+              Em nome de {pixNome || "a confirmar"} · {escolhida.valor} · acesso por {escolhida.dias} dias
             </p>
           </div>
 

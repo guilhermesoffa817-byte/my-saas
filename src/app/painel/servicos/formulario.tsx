@@ -39,7 +39,7 @@ export function FormularioServico({ servico }: { servico?: ServicoDoFormulario }
             required
             defaultValue={servico?.nome}
             className="campo"
-            placeholder="Limpeza de pele profunda"
+            placeholder="Atendimento completo"
           />
         </div>
 

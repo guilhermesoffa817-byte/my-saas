@@ -33,7 +33,7 @@ export function FormularioAgendamento({
           </label>
           <select id="clienteId" name="clienteId" required className="campo" defaultValue="">
             <option value="" disabled>
-              Escolha quem será atendida
+              Escolha quem será atendido
             </option>
             {clientes.map((cliente) => (
               <option key={cliente.id} value={cliente.id}>
@@ -53,7 +53,7 @@ export function FormularioAgendamento({
             </option>
             {servicos.map((servico) => (
               <option key={servico.id} value={servico.id}>
-                {servico.nome} — {servico.preco} ({servico.duracaoMin} min)
+                {servico.nome} · {servico.preco} ({servico.duracaoMin} min)
               </option>
             ))}
           </select>

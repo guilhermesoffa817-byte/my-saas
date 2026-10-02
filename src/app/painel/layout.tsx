@@ -64,7 +64,7 @@ export default async function LayoutPainel({
 
       <footer className="mx-auto max-w-6xl px-5 pb-10 text-sm text-carvao-suave">
         <p>
-          {usuario.nomeNegocio} — qualquer dúvida, estamos aqui para ajudar.
+          {usuario.nomeNegocio} · qualquer dúvida, estamos aqui para ajudar.
         </p>
       </footer>
     </div>

@@ -3,22 +3,22 @@
 /*
   Os nomes das cores continuam os mesmos de antes (terracota, creme, areia...)
   para que nenhuma tela precise ser reescrita. O que mudou foram os valores:
-  agora a paleta é verde, e cada cor tem uma versão clara e uma escura.
+  agora a paleta é azul sobre branco no claro e sobre preto no escuro.
 */
 @theme {
-  --color-creme: #f5f8f5;
+  --color-creme: #f6f8fb;
   --color-superficie: #ffffff;
-  --color-areia: #e7f0e9;
-  --color-areia-escura: #cfe0d4;
-  --color-terracota: #15795a;
-  --color-terracota-escura: #0f5c45;
+  --color-areia: #eaf0f8;
+  --color-areia-escura: #d4dfee;
+  --color-terracota: #1d4ed8;
+  --color-terracota-escura: #1e3fa8;
   --color-acento-texto: #ffffff;
-  --color-rose: #dceee3;
-  --color-oliva: #3c7d62;
-  --color-carvao: #0e1f17;
-  --color-carvao-suave: #576c61;
-  --color-inverso: #0e1f17;
-  --color-inverso-texto: #f2f7f3;
+  --color-rose: #dce8fd;
+  --color-oliva: #0369a1;
+  --color-carvao: #0b1220;
+  --color-carvao-suave: #4b5873;
+  --color-inverso: #0b1220;
+  --color-inverso-texto: #f3f6fc;
 
   --font-display: var(--fonte-display), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--fonte-texto), ui-sans-serif, system-ui, sans-serif;
@@ -34,38 +34,38 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="claro"]) {
     color-scheme: dark;
-    --color-creme: #0a120e;
-    --color-superficie: #111c17;
-    --color-areia: #18271f;
-    --color-areia-escura: #274034;
-    --color-terracota: #3acb92;
-    --color-terracota-escura: #2fb47f;
-    --color-acento-texto: #05130d;
-    --color-rose: #162e23;
-    --color-oliva: #6bd3a6;
-    --color-carvao: #e7f1ea;
-    --color-carvao-suave: #94ac9e;
-    --color-inverso: #16281f;
-    --color-inverso-texto: #eaf3ed;
+    --color-creme: #070a12;
+    --color-superficie: #0f141f;
+    --color-areia: #161d2b;
+    --color-areia-escura: #28324a;
+    --color-terracota: #60a5fa;
+    --color-terracota-escura: #3b82f6;
+    --color-acento-texto: #05080f;
+    --color-rose: #152238;
+    --color-oliva: #38bdf8;
+    --color-carvao: #eef2f9;
+    --color-carvao-suave: #9aa8c0;
+    --color-inverso: #121a2a;
+    --color-inverso-texto: #edf2fa;
   }
 }
 
 /* E vale também quando o visitante escolhe escuro no botão, mesmo de dia. */
 :root[data-tema="escuro"] {
   color-scheme: dark;
-  --color-creme: #0a120e;
-  --color-superficie: #111c17;
-  --color-areia: #18271f;
-  --color-areia-escura: #274034;
-  --color-terracota: #3acb92;
-  --color-terracota-escura: #2fb47f;
-  --color-acento-texto: #05130d;
-  --color-rose: #162e23;
-  --color-oliva: #6bd3a6;
-  --color-carvao: #e7f1ea;
-  --color-carvao-suave: #94ac9e;
-  --color-inverso: #16281f;
-  --color-inverso-texto: #eaf3ed;
+  --color-creme: #070a12;
+  --color-superficie: #0f141f;
+  --color-areia: #161d2b;
+  --color-areia-escura: #28324a;
+  --color-terracota: #60a5fa;
+  --color-terracota-escura: #3b82f6;
+  --color-acento-texto: #05080f;
+  --color-rose: #152238;
+  --color-oliva: #38bdf8;
+  --color-carvao: #eef2f9;
+  --color-carvao-suave: #9aa8c0;
+  --color-inverso: #121a2a;
+  --color-inverso-texto: #edf2fa;
 }
 
 body {
@@ -101,7 +101,7 @@ body {
 
   .cartao {
     @apply rounded-2xl border border-areia-escura/70 bg-superficie p-6
-      shadow-[0_10px_40px_-28px_rgba(14,31,23,0.5)];
+      shadow-[0_10px_40px_-28px_rgba(11,18,32,0.5)];
   }
 
   .etiqueta {

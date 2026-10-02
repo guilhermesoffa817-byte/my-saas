@@ -38,7 +38,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             name="nomeNegocio"
             required
             className="campo"
-            placeholder="Estúdio Bela Pele"
+            placeholder="Estúdio Bela Vista"
             autoComplete="organization"
           />
         </div>
@@ -112,7 +112,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             id="endereco"
             name="endereco"
             className="campo"
-            placeholder="Rua das Flores, 120 — Centro, Cuiabá/MT"
+            placeholder="Rua das Flores, 120, Centro, Cuiabá/MT"
             autoComplete="street-address"
           />
         </div>
@@ -144,7 +144,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
 
       <p className="text-center text-xs leading-relaxed text-carvao-suave">
         O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Seus dados
-        ficam só com a gente. Ao criar a conta você começa no período de teste — o pagamento
+        ficam só com a gente. Ao criar a conta você começa no período de teste. O pagamento
         só é pedido quando ele terminar, e nunca sem avisar.
       </p>
     </form>

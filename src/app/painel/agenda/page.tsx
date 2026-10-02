@@ -19,7 +19,7 @@ import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
 
-export const metadata = { title: "Agenda — Agenda Online" };
+export const metadata = { title: "Agenda · Agenda Online" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAgenda({
@@ -95,7 +95,7 @@ export default async function PaginaAgenda({
         <h1 className="font-display text-3xl font-semibold text-carvao">Sua agenda</h1>
         <p className="mt-2 text-carvao-suave">
           Escolha o dia, marque os horários e vá marcando como concluído conforme
-          as clientes forem saindo.
+          os clientes forem saindo.
         </p>
       </section>
 
@@ -119,7 +119,7 @@ export default async function PaginaAgenda({
           <div className="mt-4 space-y-3">
             <Aviso tom="atencao">
               Antes de marcar o primeiro horário, precisamos de{" "}
-              {clientes.length === 0 ? "pelo menos uma cliente" : null}
+              {clientes.length === 0 ? "pelo menos um cliente" : null}
               {clientes.length === 0 && servicos.length === 0 ? " e " : null}
               {servicos.length === 0 ? "pelo menos um serviço ativo" : null} no cadastro.
             </Aviso>
