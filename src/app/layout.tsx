@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
   title: {
     default: TITULO_PADRAO,
-    // As outras páginas viram "Agenda · Cuidi" e por aí vai.
+    // As outras páginas viram "Agenda · Agenda Online" e por aí vai.
     template: `%s · ${NOME_DO_PRODUTO}`,
   },
   description: DESCRICAO_CURTA,
