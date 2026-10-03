@@ -138,7 +138,7 @@ export default function PaginaInicial() {
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-terracota text-xs font-bold text-acento-texto">
                   2
                 </span>
-                Com o Agendi
+                Com o {NOME_DO_PRODUTO}
               </p>
               <CenaDepois />
               <p className="mt-3 text-sm leading-relaxed text-carvao-suave">

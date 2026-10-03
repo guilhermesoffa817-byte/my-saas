@@ -7,6 +7,7 @@ import {
   ENDERECO_DO_SITE,
   NOME_DO_PRODUTO,
   PALAVRAS_CHAVE,
+  TITULO_PADRAO,
 } from "@/lib/site";
 
 const display = Plus_Jakarta_Sans({
@@ -27,9 +28,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(ENDERECO_DO_SITE),
 
   title: {
-    default: "Agendi · sistema de agendamento para estúdios",
-    // As outras páginas viram "Agenda · Agendi" e por aí vai.
-    template: "%s · Agendi",
+    default: TITULO_PADRAO,
+    // As outras páginas viram "Agenda · Cuidi" e por aí vai.
+    template: `%s · ${NOME_DO_PRODUTO}`,
   },
   description: DESCRICAO_CURTA,
   keywords: PALAVRAS_CHAVE,
@@ -50,20 +51,20 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: ENDERECO_DO_SITE,
     siteName: NOME_DO_PRODUTO,
-    title: "Agendi · sistema de agendamento para estúdios",
+    title: TITULO_PADRAO,
     description: DESCRICAO_CURTA,
     images: [
       {
         url: "/capa.png",
         width: 1200,
         height: 630,
-        alt: "Agendi: a semana organizada e o faturamento do mês somado.",
+        alt: `${NOME_DO_PRODUTO}: a semana organizada e o faturamento do mês somado.`,
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agendi · sistema de agendamento para estúdios",
+    title: TITULO_PADRAO,
     description: DESCRICAO_CURTA,
     images: ["/capa.png"],
   },

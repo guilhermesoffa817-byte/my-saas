@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NOME_DO_PRODUTO } from "@/lib/site";
 
 export function Marca({ href = "/", claro = false }: { href?: string; claro?: boolean }) {
   return (
@@ -18,7 +19,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
           claro ? "text-inverso-texto" : "text-carvao"
         }`}
       >
-        Agendi
+        {NOME_DO_PRODUTO}
       </span>
     </Link>
   );
