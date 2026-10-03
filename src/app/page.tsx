@@ -10,6 +10,12 @@ import {
   ECONOMIA_VIP_ANUAL_CENTAVOS,
 } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
+import {
+  DESCRICAO_CURTA,
+  ENDERECO_DO_SITE,
+  NOME_DO_PRODUTO,
+  SEGMENTOS,
+} from "@/lib/site";
 
 const problemas = [
   {
@@ -26,9 +32,43 @@ const problemas = [
   },
 ];
 
+/**
+ * Os dados estruturados que o Google lê para entender que isto é um programa
+ * por assinatura, de que ramo e por quanto. É o que permite o resultado da
+ * busca aparecer com o preço em vez de só o endereço. Os valores saem dos
+ * planos de verdade, para nunca desencontrarem do que a página mostra.
+ */
+const dadosParaOGoogle = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: NOME_DO_PRODUTO,
+  applicationCategory: "BusinessApplication",
+  applicationSubCategory: "Sistema de agendamento",
+  operatingSystem: "Web",
+  url: ENDERECO_DO_SITE,
+  description: DESCRICAO_CURTA,
+  inLanguage: "pt-BR",
+  audience: {
+    "@type": "BusinessAudience",
+    audienceType: SEGMENTOS.join(", "),
+  },
+  offers: [PLANOS.mensal, PLANOS.vip_mensal].map((plano) => ({
+    "@type": "Offer",
+    name: plano.nome,
+    price: (plano.valorCentavos / 100).toFixed(2),
+    priceCurrency: "BRL",
+    availability: "https://schema.org/InStock",
+    url: `${ENDERECO_DO_SITE}/criar-conta`,
+  })),
+};
+
 export default function PaginaInicial() {
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosParaOGoogle) }}
+      />
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <Marca />
         <nav className="flex items-center gap-2 sm:gap-3">
@@ -107,7 +147,12 @@ export default function PaginaInicial() {
         </section>
 
         <section className="border-y border-areia-escura/60 bg-superficie/70">
-          <div className="mx-auto grid max-w-6xl gap-6 px-5 py-14 md:grid-cols-3">
+          <div className="mx-auto max-w-6xl px-5 pt-14">
+            <h2 className="font-display text-2xl font-semibold text-carvao">
+              O que o sistema de agendamento resolve
+            </h2>
+          </div>
+          <div className="mx-auto grid max-w-6xl gap-6 px-5 pt-8 pb-10 md:grid-cols-3">
             {problemas.map((item, posicao) => (
               <div
                 key={item.dor}
@@ -120,6 +165,12 @@ export default function PaginaInicial() {
                 <p className="mt-1.5 leading-relaxed text-carvao-suave">{item.solucao}</p>
               </div>
             ))}
+          </div>
+          <div className="mx-auto max-w-6xl px-5 pb-14">
+            <p className="text-sm leading-relaxed text-carvao-suave">
+              Serve para estúdio de {SEGMENTOS.join(", ")} e qualquer outro
+              negócio que marque hora com cliente.
+            </p>
           </div>
         </section>
 
