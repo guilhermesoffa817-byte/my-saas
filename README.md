@@ -1,4 +1,4 @@
-# Agenda Online — sua agenda online que cuida do seu dia e do seu dinheiro
+# Bossa — sua agenda online que cuida do seu dia e do seu dinheiro
 
 Um SaaS simples e acolhedor para quem cuida de pessoas: agenda, ficha das clientes,
 serviços, faturamento do mês e assinatura a partir de **R$ 169,00 ao mês**, paga por **Pix**, com um plano **VIP** de R$ 329,00 que abre o controle financeiro.

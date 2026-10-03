@@ -11,7 +11,7 @@ export const ENDERECO_DO_SITE = (
   process.env.ENDERECO_DO_SITE ?? "https://agendaonlinecontabilidade.netlify.app"
 ).replace(/\/+$/, "");
 
-export const NOME_DO_PRODUTO = "Agenda Online";
+export const NOME_DO_PRODUTO = "Bossa";
 
 /** O que vai depois do nome no título da aba e no resultado da busca. */
 export const TITULO_PADRAO = `${NOME_DO_PRODUTO} · sistema de agendamento para estúdios`;
@@ -60,4 +60,4 @@ export const PALAVRAS_CHAVE = [
 ];
 
 export const DESCRICAO_CURTA =
-  "A agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";
+  "Bossa é a agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";
