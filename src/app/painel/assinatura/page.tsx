@@ -19,7 +19,7 @@ import {
 } from "@/lib/formato";
 import { PagamentoPix, type OpcaoDePlano } from "./escolha";
 
-export const metadata = { title: "Assinatura · Agenda Online" };
+export const metadata = { title: "Assinatura" };
 export const dynamic = "force-dynamic";
 
 const rotuloStatus = {

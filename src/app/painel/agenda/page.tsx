@@ -19,7 +19,7 @@ import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
 
-export const metadata = { title: "Agenda · Agenda Online" };
+export const metadata = { title: "Agenda" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAgenda({

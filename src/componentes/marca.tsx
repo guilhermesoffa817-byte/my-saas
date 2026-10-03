@@ -18,7 +18,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
           claro ? "text-inverso-texto" : "text-carvao"
         }`}
       >
-        Agenda Online
+        Agendi
       </span>
     </Link>
   );

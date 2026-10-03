@@ -11,7 +11,11 @@ export const ENDERECO_DO_SITE = (
   process.env.ENDERECO_DO_SITE ?? "https://agendaonlinecontabilidade.netlify.app"
 ).replace(/\/+$/, "");
 
-export const NOME_DO_PRODUTO = "Agenda Online";
+export const NOME_DO_PRODUTO = "Agendi";
+
+/** A frase que acompanha o nome em todo lugar. */
+export const FRASE_DA_MARCA =
+  "sua agenda online que cuida do seu dia e do seu dinheiro";
 
 /**
  * Os ramos que o sistema atende. Aparecem escritos na página, porque é assim
@@ -53,4 +57,4 @@ export const PALAVRAS_CHAVE = [
 ];
 
 export const DESCRICAO_CURTA =
-  "Sistema de agendamento online para estúdios: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";
+  "Agendi é a agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";

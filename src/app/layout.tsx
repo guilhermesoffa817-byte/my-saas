@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(ENDERECO_DO_SITE),
 
   title: {
-    default: "Agenda Online · sistema de agendamento para estúdios",
-    // As outras páginas viram "Agenda · Agenda Online" e por aí vai.
-    template: "%s · Agenda Online",
+    default: "Agendi · sistema de agendamento para estúdios",
+    // As outras páginas viram "Agenda · Agendi" e por aí vai.
+    template: "%s · Agendi",
   },
   description: DESCRICAO_CURTA,
   keywords: PALAVRAS_CHAVE,
@@ -50,20 +50,20 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: ENDERECO_DO_SITE,
     siteName: NOME_DO_PRODUTO,
-    title: "Agenda Online · sistema de agendamento para estúdios",
+    title: "Agendi · sistema de agendamento para estúdios",
     description: DESCRICAO_CURTA,
     images: [
       {
         url: "/capa.png",
         width: 1200,
         height: 630,
-        alt: "Agenda Online: a semana organizada e o faturamento do mês somado.",
+        alt: "Agendi: a semana organizada e o faturamento do mês somado.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agenda Online · sistema de agendamento para estúdios",
+    title: "Agendi · sistema de agendamento para estúdios",
     description: DESCRICAO_CURTA,
     images: ["/capa.png"],
   },

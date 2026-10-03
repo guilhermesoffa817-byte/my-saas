@@ -13,7 +13,7 @@ import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
 import { excluirLancamento } from "./acoes";
 
-export const metadata = { title: "Finanças · Agenda Online" };
+export const metadata = { title: "Finanças" };
 export const dynamic = "force-dynamic";
 
 const NOMES_DOS_DIAS = [

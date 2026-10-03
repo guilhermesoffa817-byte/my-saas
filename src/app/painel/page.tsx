@@ -16,7 +16,7 @@ import {
   telefoneBonito,
 } from "@/lib/formato";
 
-export const metadata = { title: "Painel · Agenda Online" };
+export const metadata = { title: "Painel" };
 export const dynamic = "force-dynamic";
 
 function saudacao(data: Date) {

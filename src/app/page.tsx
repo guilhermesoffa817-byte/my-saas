@@ -13,6 +13,7 @@ import { emReais } from "@/lib/formato";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
+  FRASE_DA_MARCA,
   NOME_DO_PRODUTO,
   SEGMENTOS,
 } from "@/lib/site";
@@ -47,6 +48,7 @@ const dadosParaOGoogle = {
   operatingSystem: "Web",
   url: ENDERECO_DO_SITE,
   description: DESCRICAO_CURTA,
+  slogan: FRASE_DA_MARCA,
   inLanguage: "pt-BR",
   audience: {
     "@type": "BusinessAudience",
@@ -136,7 +138,7 @@ export default function PaginaInicial() {
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-terracota text-xs font-bold text-acento-texto">
                   2
                 </span>
-                Com o Agenda Online
+                Com o Agendi
               </p>
               <CenaDepois />
               <p className="mt-3 text-sm leading-relaxed text-carvao-suave">
@@ -284,7 +286,7 @@ export default function PaginaInicial() {
       <footer className="border-t border-areia-escura/60">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-carvao-suave">
           <Marca />
-          <p>Feita para organizar negócios.</p>
+          <p>{FRASE_DA_MARCA.charAt(0).toUpperCase() + FRASE_DA_MARCA.slice(1)}.</p>
         </div>
       </footer>
     </div>

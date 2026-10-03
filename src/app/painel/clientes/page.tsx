@@ -6,7 +6,7 @@ import { cpfBonito, dataCurta, paraDataLocal, telefoneBonito } from "@/lib/forma
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
 
-export const metadata = { title: "Clientes · Agenda Online" };
+export const metadata = { title: "Clientes" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaClientes({
