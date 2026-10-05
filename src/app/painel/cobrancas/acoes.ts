@@ -283,15 +283,28 @@ export async function salvarAjustesDeCobranca(
     return { erro: "O código Pix também precisa da cidade de quem recebe." };
   }
 
+  /*
+    Caixa de seleção desabilitada não é enviada pelo navegador, e ausência aqui
+    significaria "desmarcada". Quem está num plano sem lembretes vê as caixas
+    travadas; se as preferências fossem gravadas mesmo assim, salvar a chave Pix
+    apagaria em silêncio a configuração de lembrete de quem um dia assinou o VIP.
+    Por isso as preferências só são tocadas por quem pode mexer nelas.
+  */
+  const preferencias = podeUsar(usuario, "lembretes")
+    ? {
+        lembreteAntes: dados.get("lembreteAntes") === "on",
+        lembreteNoDia: dados.get("lembreteNoDia") === "on",
+        lembreteTresDias: dados.get("lembreteTresDias") === "on",
+        lembreteSeteDias: dados.get("lembreteSeteDias") === "on",
+      }
+    : {};
+
   await prisma.usuario.update({
     where: { id: usuario.id },
     data: {
       pixChave: pixChave || null,
       pixCidade: pixCidade || null,
-      lembreteAntes: dados.get("lembreteAntes") === "on",
-      lembreteNoDia: dados.get("lembreteNoDia") === "on",
-      lembreteTresDias: dados.get("lembreteTresDias") === "on",
-      lembreteSeteDias: dados.get("lembreteSeteDias") === "on",
+      ...preferencias,
     },
   });
 

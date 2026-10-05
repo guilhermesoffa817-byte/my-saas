@@ -114,3 +114,44 @@ describe.skipIf(!TEM_BANCO)("nada em dobro", () => {
     expect(lida.vencimento.toISOString().slice(0, 10)).toBe("2026-11-01");
   });
 });
+
+/**
+ * O defeito que apareceu quando a tela foi aberta num plano sem lembretes:
+ * caixa de seleção desabilitada não é enviada pelo navegador, e a ação lia a
+ * ausência como "desmarcada". Resultado: salvar a chave Pix apagava em silêncio
+ * a preferência de lembrete de quem um dia assinou o VIP.
+ */
+describe.skipIf(!TEM_BANCO)("ajustes de cobrança", () => {
+  afterAll(async () => {
+    await limpar();
+    await (await banco()).$disconnect();
+  });
+
+  it("salvar a chave Pix não pode apagar as preferências de lembrete", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("ajustes");
+
+    // Alguém que já configurou os lembretes do jeito que quer.
+    await db.usuario.update({
+      where: { id: estudio.usuario.id },
+      data: { lembreteAntes: true, lembreteNoDia: true, lembreteTresDias: false, lembreteSeteDias: true },
+    });
+
+    // Um formulário sem nenhuma caixa enviada, que é o que o navegador manda
+    // quando elas estão desabilitadas.
+    const semLembretes = {};
+
+    await db.usuario.update({
+      where: { id: estudio.usuario.id },
+      data: { pixChave: "+5566992513501", pixCidade: "Cuiabá", ...semLembretes },
+    });
+
+    const depois = await db.usuario.findUniqueOrThrow({ where: { id: estudio.usuario.id } });
+    expect(depois.pixChave).toBe("+5566992513501");
+    expect(depois.lembreteAntes).toBe(true);
+    expect(depois.lembreteNoDia).toBe(true);
+    expect(depois.lembreteTresDias).toBe(false);
+    expect(depois.lembreteSeteDias).toBe(true);
+  });
+});
