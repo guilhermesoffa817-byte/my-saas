@@ -9,6 +9,12 @@ type Comuns = {
   rotulo: string;
   dica?: string;
   obrigatorio?: boolean;
+  /**
+   * Quando o mesmo campo aparece várias vezes na página, numa lista, o nome
+   * precisa continuar igual para o formulário, mas o id tem de ser único para
+   * o rótulo apontar para o campo certo.
+   */
+  idDoCampo?: string;
 };
 
 function Envolver({
@@ -16,17 +22,19 @@ function Envolver({
   rotulo,
   dica,
   obrigatorio,
+  idDoCampo,
   children,
 }: Comuns & { children: React.ReactNode }) {
+  const id = idDoCampo ?? nome;
   return (
     <div>
-      <label className="rotulo" htmlFor={nome}>
+      <label className="rotulo" htmlFor={id}>
         {rotulo}
         {obrigatorio ? null : <span className="font-normal"> (opcional)</span>}
       </label>
       {children}
       {dica ? (
-        <p id={`${nome}-dica`} className="mt-1.5 text-xs leading-relaxed text-carvao-suave">
+        <p id={`${id}-dica`} className="mt-1.5 text-xs leading-relaxed text-carvao-suave">
           {dica}
         </p>
       ) : null}
@@ -40,19 +48,21 @@ export function Campo({
   dica,
   obrigatorio = true,
   tipo = "text",
+  idDoCampo,
   ...resto
 }: Comuns &
   Omit<React.InputHTMLAttributes<HTMLInputElement>, "name" | "id" | "type"> & {
     tipo?: string;
   }) {
+  const id = idDoCampo ?? nome;
   return (
-    <Envolver nome={nome} rotulo={rotulo} dica={dica} obrigatorio={obrigatorio}>
+    <Envolver nome={nome} rotulo={rotulo} dica={dica} obrigatorio={obrigatorio} idDoCampo={id}>
       <input
-        id={nome}
+        id={id}
         name={nome}
         type={tipo}
         required={obrigatorio}
-        aria-describedby={dica ? `${nome}-dica` : undefined}
+        aria-describedby={dica ? `${id}-dica` : undefined}
         className="campo"
         {...resto}
       />

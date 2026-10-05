@@ -55,6 +55,13 @@ export const SECUNDARIOS: Destino[] = [
     icone: "etiqueta",
   },
   {
+    href: "/painel/vencimentos",
+    rotulo: "Vencimentos",
+    explicacao: "Contas a pagar e prazos de contrato.",
+    icone: "sino",
+    vip: true,
+  },
+  {
     href: "/painel/financas",
     rotulo: "Finanças",
     explicacao: "O que entra, o que sai e o imposto estimado.",

@@ -101,7 +101,11 @@ export default async function PaginaCobrancas({
           <Indicador
             rotulo="Atrasado"
             valor={emReais(atrasado)}
-            detalhe={`${comSituacao.filter((c) => c.naTela === "atrasada").length} passaram da data`}
+            detalhe={
+              comSituacao.filter((c) => c.naTela === "atrasada").length === 1
+                ? "1 passou da data"
+                : `${comSituacao.filter((c) => c.naTela === "atrasada").length} passaram da data`
+            }
             tom={atrasado > 0 ? "atencao" : "neutro"}
             atraso={80}
           />

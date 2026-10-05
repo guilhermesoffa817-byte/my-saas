@@ -45,6 +45,8 @@ model Usuario {
   pagamentos   Pagamento[]
   lancamentos  Lancamento[]
   cobrancas    Cobranca[]
+  vencimentos  Vencimento[]
+  repeticoes   RepeticaoDeVencimento[]
 
   @@index([indicadoPor])
 }
@@ -193,4 +195,59 @@ model LembreteDeCobranca {
   cobranca Cobranca @relation(fields: [cobrancaId], references: [id], onDelete: Cascade)
 
   @@unique([cobrancaId, momento])
+}
+
+/// Tudo o que tem data e cobra uma atitude: a conta de luz, o aluguel, o fim de
+/// um contrato, o dia do reajuste.
+///
+/// Fica em tabela própria, e não em Lancamento, porque conta com data futura
+/// não é dinheiro que já saiu. Misturar as duas coisas mudaria o sentido dos
+/// números que o estúdio já conhece. Só vira saída quando alguém marcar o pago.
+model Vencimento {
+  id            String    @id @default(cuid())
+  usuarioId     String
+  /// "conta" para o que se paga, "prazo" para data de contrato.
+  tipo          String    @default("conta")
+  descricao     String
+  categoria     String?
+  /// Prazo de contrato nem sempre tem valor; conta sempre tem.
+  valorCentavos Int?
+  /// Dia de calendário, sem hora. "Atrasado" se calcula a partir daqui.
+  data          DateTime  @db.Date
+  pago          Boolean   @default(false)
+  pagoEm        DateTime? @db.Date
+  /// A saída criada ao pagar. Guardada para que pagar duas vezes não lance duas.
+  lancamentoId  String?
+  /// A repetição que gerou esta ocorrência, quando vier de uma.
+  repeticaoId   String?
+  criadoEm      DateTime  @default(now())
+  atualizadoEm  DateTime  @updatedAt
+
+  usuario   Usuario                @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  repeticao RepeticaoDeVencimento? @relation(fields: [repeticaoId], references: [id], onDelete: Cascade)
+
+  @@unique([repeticaoId, data])
+  @@index([usuarioId, pago, data])
+}
+
+/// O combinado que se repete todo mês. As ocorrências saem daqui, completadas
+/// quando a tela abre, sem tarefa agendada.
+model RepeticaoDeVencimento {
+  id            String    @id @default(cuid())
+  usuarioId     String
+  tipo          String    @default("conta")
+  descricao     String
+  categoria     String?
+  valorCentavos Int?
+  /// A primeira data do combinado. O dia dela é a referência todo mês.
+  primeira      DateTime  @db.Date
+  /// Até quando vale. Sem data final, o Bossa mantém os próximos doze meses.
+  ate           DateTime? @db.Date
+  ativa         Boolean   @default(true)
+  criadoEm      DateTime  @default(now())
+
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  vencimentos Vencimento[]
+
+  @@index([usuarioId, ativa])
 }
