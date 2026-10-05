@@ -62,6 +62,13 @@ export const SECUNDARIOS: Destino[] = [
     vip: true,
   },
   {
+    href: "/painel/documentos",
+    rotulo: "Documentos",
+    explicacao: "Envie um contrato ou uma conta e o Bossa lê para você.",
+    icone: "papel",
+    vip: true,
+  },
+  {
     href: "/painel/financas",
     rotulo: "Finanças",
     explicacao: "O que entra, o que sai e o imposto estimado.",

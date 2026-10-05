@@ -47,6 +47,7 @@ model Usuario {
   cobrancas    Cobranca[]
   vencimentos  Vencimento[]
   repeticoes   RepeticaoDeVencimento[]
+  documentos   Documento[]
 
   @@index([indicadoPor])
 }
@@ -250,4 +251,74 @@ model RepeticaoDeVencimento {
   vencimentos Vencimento[]
 
   @@index([usuarioId, ativa])
+}
+
+/// Um contrato, um boleto ou uma conta que a pessoa enviou para o Bossa ler.
+///
+/// O arquivo em si não fica aqui: fica num espaço privado do Supabase, e esta
+/// tabela guarda só o caminho até ele. O conteúdo lido vira itens, que só viram
+/// vencimento depois que alguém conferir.
+model Documento {
+  id               String    @id @default(cuid())
+  usuarioId        String
+  nome             String
+  /// Caminho dentro do espaço privado de arquivos.
+  caminho          String
+  tipoDoArquivo    String
+  tamanhoBytes     Int
+  paginas          Int?
+  /// lendo, pronto, conferido ou falhou.
+  situacao         String    @default("lendo")
+  /// Por que não deu para ler, quando não deu. Nunca guarda trecho do documento.
+  motivoDaFalha    String?
+  /// O que o documento é, em uma linha, segundo a leitura.
+  tipoDeDocumento  String?
+  partes           String?
+  resumo           String?
+  fimDoContrato    DateTime? @db.Date
+  reajusteEm       DateTime? @db.Date
+  indiceDeReajuste String?
+  multa            String?
+  avisoPrevio      String?
+  /// Quando a leitura começou, para a tela saber se travou no meio.
+  leituraEm        DateTime?
+  criadoEm         DateTime  @default(now())
+  atualizadoEm     DateTime  @updatedAt
+
+  usuario Usuario           @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  itens   ItemDoDocumento[]
+
+  @@index([usuarioId, situacao, criadoEm])
+}
+
+/// Cada coisa que a leitura encontrou no documento, ainda não lançada.
+///
+/// Guarda o trecho de origem e a página para que a pessoa confira o que o Bossa
+/// leu contra o que está escrito, sem abrir o arquivo.
+model ItemDoDocumento {
+  id            String    @id @default(cuid())
+  documentoId   String
+  descricao     String
+  /// entrada ou saida.
+  tipo          String    @default("saida")
+  valorCentavos Int?
+  data          DateTime? @db.Date
+  /// "mensal" quando se repete; vazio quando é uma vez só.
+  repeticao     String?
+  /// Até quando a repetição vale.
+  repeteAte     DateTime? @db.Date
+  /// O pedaço do documento de onde isto saiu, e em que página.
+  trecho        String?
+  pagina        Int?
+  /// A leitura marcou como duvidoso: a pessoa precisa olhar com atenção.
+  duvidoso      Boolean   @default(false)
+  /// aceito, descartado ou nada ainda.
+  decisao       String?
+  /// O vencimento criado quando o item foi aceito.
+  vencimentoId  String?
+  criadoEm      DateTime  @default(now())
+
+  documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
+
+  @@index([documentoId])
 }
