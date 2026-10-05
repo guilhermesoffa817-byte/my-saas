@@ -98,7 +98,7 @@ export default async function PaginaFinancas() {
   return (
     <div className="space-y-8">
       <section className="animar-entrada">
-        <h1 className="font-display text-3xl font-semibold text-carvao">
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">
           Suas finanças
         </h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
@@ -107,7 +107,7 @@ export default async function PaginaFinancas() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Indicador titulo="Entrou" valor={emReais(entradas)} tom="boa" atraso={0}>
           {emReais(atendimentosCentavos)} de atendimentos
         </Indicador>

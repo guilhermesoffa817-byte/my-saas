@@ -75,7 +75,7 @@ export default async function PaginaPainel() {
     { rotulo: "Atendimentos hoje", valor: String(hojeLista.length) },
     { rotulo: "Concluídos no mês", valor: String(concluidosNoMes.length) },
     { rotulo: "Faturamento do mês", valor: emReais(faturamento) },
-    { rotulo: "Clientes cadastradas", valor: String(totalClientes) },
+    { rotulo: "Clientes cadastrados", valor: String(totalClientes) },
   ];
 
   return (
@@ -84,7 +84,7 @@ export default async function PaginaPainel() {
         <p className="text-sm text-carvao-suave">
           {diaDaSemana(agora).replace(/^./, (l) => l.toUpperCase())}, {dataPorExtenso(agora)}
         </p>
-        <h1 className="mt-1 font-display text-3xl font-semibold text-carvao md:text-4xl">
+        <h1 className="mt-1 font-display text-2xl font-semibold text-carvao sm:text-3xl md:text-4xl">
           {saudacao(agora)}, {primeiroNome(usuario.nome)}
         </h1>
         <p className="mt-2 text-carvao-suave">
@@ -96,7 +96,7 @@ export default async function PaginaPainel() {
         </p>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {resumo.map((item) => (
           <div key={item.rotulo} className="cartao py-5">
             <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">

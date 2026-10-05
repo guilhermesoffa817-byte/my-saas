@@ -92,7 +92,7 @@ export default async function PaginaAgenda({
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-display text-3xl font-semibold text-carvao">Sua agenda</h1>
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">Sua agenda</h1>
         <p className="mt-2 text-carvao-suave">
           Escolha o dia, marque os horários e vá marcando como concluído conforme
           os clientes forem saindo.

@@ -10,7 +10,10 @@
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "teste": "vitest run",
+    "teste:olho": "vitest",
+    "tipos": "tsc --noEmit"
   },
   "dependencies": {
     "@prisma/client": "^6.16.1",
@@ -34,6 +37,7 @@
     "prisma": "^6.16.1",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

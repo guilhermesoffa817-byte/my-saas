@@ -116,7 +116,7 @@ export default async function PaginaAssinatura({
       ) : null}
 
       <section>
-        <h1 className="font-display text-3xl font-semibold text-carvao">Sua assinatura</h1>
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">Sua assinatura</h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
           A partir de {emReais(PLANOS.mensal.valorCentavos)} ao mês. O plano VIP acrescenta
           a aba Finanças, e os planos anuais dão {MESES_DE_BRINDE} meses de brinde. Pagamento
