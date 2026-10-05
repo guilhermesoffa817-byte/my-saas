@@ -9,6 +9,7 @@ import {
   temFinanceiro,
   type SituacaoAssinatura,
 } from "@/lib/assinatura";
+import { podeUsar, type Recurso } from "@/lib/recursos";
 
 /** Também guardado durante a montagem: contorno e página perguntam o mesmo. */
 const pixAvisado = cache(async (usuarioId: string) =>
@@ -68,5 +69,18 @@ export async function exigirFinanceiro(): Promise<{
 }> {
   const { usuario, situacao } = await exigirAcesso();
   if (!temFinanceiro(usuario.assinatura)) redirect("/painel/assinatura?vip=1");
+  return { usuario, situacao };
+}
+
+/**
+ * Porta das telas que dependem de plano. A regra de quem pode o quê está em
+ * lib/recursos.ts; aqui só se aplica o resultado dela. Quem não tem o plano vai
+ * para a tela de assinatura, igual a aba Finanças já fazia.
+ */
+export async function exigirRecurso(
+  recurso: Recurso,
+): Promise<{ usuario: UsuarioLogado; situacao: SituacaoAssinatura }> {
+  const { usuario, situacao } = await exigirAcesso();
+  if (!podeUsar(usuario, recurso)) redirect("/painel/assinatura?vip=1");
   return { usuario, situacao };
 }

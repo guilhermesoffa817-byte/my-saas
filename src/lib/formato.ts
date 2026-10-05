@@ -152,6 +152,57 @@ export function inicioDoProximoMes(data: Date) {
   return deHorarioLocal(`${ano}-${String(mes).padStart(2, "0")}-01T00:00`)!;
 }
 
+/**
+ * Datas puras: vencimento, data de pagamento, data de um documento.
+ *
+ * São dia de calendário, sem hora. No banco ficam em colunas `date`, que o
+ * Prisma entrega como meia-noite em UTC. Se essa data passar por `paraDataLocal`,
+ * que converte para São Paulo, meia-noite em UTC vira 21h do dia anterior e o
+ * vencimento do dia 10 aparece como dia 9. É o erro de um dia clássico, e é por
+ * isso que data pura tem par próprio de ida e volta, sempre em UTC.
+ */
+export function paraDataPura(data: Date) {
+  return data.toISOString().slice(0, 10);
+}
+
+export function deDataPura(texto: string): Date | null {
+  const limpo = texto.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(limpo)) return null;
+  const data = new Date(`${limpo}T00:00:00.000Z`);
+  if (Number.isNaN(data.getTime())) return null;
+  // Rejeita 31 de fevereiro e companhia, que o Date aceitaria rolando o mês.
+  return paraDataPura(data) === limpo ? data : null;
+}
+
+/** O dia de hoje no fuso do estúdio, como data pura. */
+export function hojeNoEstudio(agora = new Date()) {
+  return deDataPura(paraDataLocal(agora))!;
+}
+
+/** Soma dias a uma data pura sem sair do dia de calendário. */
+export function somarDiasPuros(data: Date, dias: number) {
+  return new Date(data.getTime() + dias * 24 * 60 * 60 * 1000);
+}
+
+/** Quantos dias separam duas datas puras. Positivo quando a segunda é depois. */
+export function diferencaEmDias(de: Date, ate: Date) {
+  return Math.round((ate.getTime() - de.getTime()) / (24 * 60 * 60 * 1000));
+}
+
+/** Formata uma data pura para a tela, sem passar por fuso nenhum. */
+export function dataPuraCurta(data: Date) {
+  const [ano, mes, dia] = paraDataPura(data).split("-");
+  return `${dia}/${mes}/${ano}`;
+}
+
+/**
+ * O último dia do mês que contém a data. Serve para a repetição mensal:
+ * quem vence dia 31 vence dia 28 em fevereiro, não dia 3 de março.
+ */
+export function ultimoDiaDoMes(ano: number, mes: number) {
+  return new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+}
+
 export function somarDias(data: Date, dias: number) {
   return new Date(data.getTime() + dias * 24 * 60 * 60 * 1000);
 }

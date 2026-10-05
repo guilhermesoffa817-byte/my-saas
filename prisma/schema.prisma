@@ -10,24 +10,33 @@ datasource db {
 }
 
 model Usuario {
-  id          String   @id @default(cuid())
-  nome        String
-  email       String   @unique
-  senhaHash   String
-  nomeNegocio String
-  telefone    String?
+  id                String   @id @default(cuid())
+  nome              String
+  email             String   @unique
+  senhaHash         String
+  nomeNegocio       String
+  telefone          String?
   /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
-  documento   String?
+  documento         String?
   /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
-  impostoPercentual Int @default(6)
+  impostoPercentual Int      @default(6)
   /// Código do link de indicação desta pessoa. Só quem indica tem um.
-  codigoIndicacao String? @unique
+  codigoIndicacao   String?  @unique
   /// Código de quem trouxe esta conta, guardado no momento do cadastro.
-  indicadoPor     String?
-  cep         String?
-  endereco    String?
-  papel       String   @default("dona")
-  criadoEm    DateTime @default(now())
+  indicadoPor       String?
+  cep               String?
+  endereco          String?
+  /// Chave Pix do estúdio, usada para cobrar os clientes dele.
+  pixChave          String?
+  /// Cidade de quem recebe. O código Pix exige, junto com o nome.
+  pixCidade         String?
+  /// Quando lembrar: véspera, no dia, três dias depois, sete dias depois.
+  lembreteAntes     Boolean  @default(true)
+  lembreteNoDia     Boolean  @default(true)
+  lembreteTresDias  Boolean  @default(true)
+  lembreteSeteDias  Boolean  @default(true)
+  papel             String   @default("dona")
+  criadoEm          DateTime @default(now())
 
   assinatura   Assinatura?
   clientes     Cliente[]
@@ -35,18 +44,19 @@ model Usuario {
   agendamentos Agendamento[]
   pagamentos   Pagamento[]
   lancamentos  Lancamento[]
+  cobrancas    Cobranca[]
 
   @@index([indicadoPor])
 }
 
 model Assinatura {
-  id          String   @id @default(cuid())
-  usuarioId   String   @unique
-  status      String   @default("teste")
+  id           String   @id @default(cuid())
+  usuarioId    String   @unique
+  status       String   @default("teste")
   /// Qual plano está valendo: define se a aba Finanças aparece.
-  plano       String   @default("mensal")
-  validaAte   DateTime
-  criadoEm    DateTime @default(now())
+  plano        String   @default("mensal")
+  validaAte    DateTime
+  criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -70,19 +80,22 @@ model Pagamento {
 }
 
 model Cliente {
-  id          String   @id @default(cuid())
-  usuarioId   String
-  nome        String
-  telefone    String
-  email       String?
-  cpf         String?
-  endereco    String?
-  nascimento  DateTime?
-  observacoes String?
-  criadoEm    DateTime @default(now())
+  id           String    @id @default(cuid())
+  usuarioId    String
+  nome         String
+  telefone     String
+  email        String?
+  cpf          String?
+  endereco     String?
+  nascimento   DateTime?
+  observacoes  String?
+  /// Quem pediu para não receber lembrete de cobrança.
+  semLembretes Boolean   @default(false)
+  criadoEm     DateTime  @default(now())
 
   usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   agendamentos Agendamento[]
+  cobrancas    Cobranca[]
 
   @@index([usuarioId])
 }
@@ -113,9 +126,10 @@ model Agendamento {
   observacoes String?
   criadoEm    DateTime @default(now())
 
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  cliente Cliente @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  servico Servico @relation(fields: [servicoId], references: [id], onDelete: Restrict)
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cliente   Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  servico   Servico    @relation(fields: [servicoId], references: [id], onDelete: Restrict)
+  cobrancas Cobranca[]
 
   @@index([usuarioId, inicio])
   @@index([clienteId])
@@ -135,4 +149,48 @@ model Lancamento {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, data])
+}
+
+/// Dinheiro a receber de um cliente do estúdio. Nasce de um horário da agenda
+/// ou solto, pela ficha do cliente.
+model Cobranca {
+  id               String    @id @default(cuid())
+  usuarioId        String
+  clienteId        String
+  /// O horário que originou a cobrança, quando houver.
+  agendamentoId    String?
+  valorCentavos    Int
+  /// Dia de calendário, sem hora. "Atrasada" se calcula a partir daqui.
+  vencimento       DateTime  @db.Date
+  /// aberta, paga ou cancelada. Atrasada não se grava: é conta de data.
+  situacao         String    @default("aberta")
+  formaDePagamento String?
+  pagaEm           DateTime? @db.Date
+  /// O lançamento criado ao receber, nas cobranças que não vêm da agenda.
+  /// Guardado para que marcar como paga duas vezes não lance duas vezes.
+  lancamentoId     String?
+  criadoEm         DateTime  @default(now())
+  atualizadoEm     DateTime  @updatedAt
+
+  usuario     Usuario              @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cliente     Cliente              @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  agendamento Agendamento?         @relation(fields: [agendamentoId], references: [id], onDelete: SetNull)
+  lembretes   LembreteDeCobranca[]
+
+  @@index([usuarioId, situacao, vencimento])
+  @@index([clienteId])
+  @@index([agendamentoId])
+}
+
+/// Cada mensagem de lembrete que a pessoa confirmou ter enviado.
+/// O par cobrança e momento é único: o mesmo aviso não se registra duas vezes.
+model LembreteDeCobranca {
+  id         String   @id @default(cuid())
+  cobrancaId String
+  momento    String
+  enviadoEm  DateTime @default(now())
+
+  cobranca Cobranca @relation(fields: [cobrancaId], references: [id], onDelete: Cascade)
+
+  @@unique([cobrancaId, momento])
 }

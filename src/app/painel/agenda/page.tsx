@@ -60,6 +60,8 @@ export default async function PaginaAgenda({
         observacoes: true,
         cliente: { select: { nome: true, telefone: true } },
         servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
+        /* Para saber se o horário já foi cobrado e se a cobrança está de pé. */
+        cobrancas: { select: { id: true, situacao: true } },
       },
       orderBy: { inicio: "asc" },
     }),
@@ -184,6 +186,8 @@ export default async function PaginaAgenda({
               const fim = new Date(
                 item.inicio.getTime() + item.servico.duracaoMin * 60 * 1000,
               );
+              const cobrancaAberta = item.cobrancas.find((c) => c.situacao === "aberta");
+              const cobrancaPaga = item.cobrancas.find((c) => c.situacao === "paga");
 
               return (
                 <li
@@ -241,12 +245,74 @@ export default async function PaginaAgenda({
                         </form>
                       ) : null}
 
-                      {item.status === "agendado" ? (
+                      {/*
+                        "Cobrar" fica enquanto não houver cobrança paga para o
+                        horário. Com uma cobrança em aberto, o botão leva até
+                        ela em vez de criar outra.
+                      */}
+                      {item.status !== "cancelado" && !cobrancaPaga ? (
+                        <Link
+                          href={
+                            cobrancaAberta
+                              ? `/painel/cobrancas/${cobrancaAberta.id}`
+                              : `/painel/cobrancas/nova?agendamento=${item.id}`
+                          }
+                          className="botao-suave"
+                        >
+                          {cobrancaAberta ? "Ver cobrança" : "Cobrar"}
+                        </Link>
+                      ) : null}
+
+                      {cobrancaPaga ? (
+                        <Link
+                          href={`/painel/cobrancas/${cobrancaPaga.id}`}
+                          className="botao-texto"
+                        >
+                          Cobrança paga
+                        </Link>
+                      ) : null}
+
+                      {item.status === "agendado" && !cobrancaAberta ? (
                         <form action={mudarStatus}>
                           <input type="hidden" name="id" value={item.id} />
                           <input type="hidden" name="status" value="cancelado" />
                           <BotaoEnviar variante="suave">Cancelar</BotaoEnviar>
                         </form>
+                      ) : null}
+
+                      {/*
+                        Cancelar um horário que tem cobrança em aberto é uma
+                        decisão de dinheiro, não só de agenda. Em vez de
+                        escolher por quem usa, o Bossa pergunta.
+                      */}
+                      {item.status === "agendado" && cobrancaAberta ? (
+                        <details className="w-full">
+                          <summary className="botao-suave w-full cursor-pointer list-none">
+                            Cancelar
+                          </summary>
+                          <div className="mt-2 space-y-2 rounded-xl border border-areia-escura bg-areia/40 p-3">
+                            <p className="text-xs leading-relaxed text-carvao-suave">
+                              Esse horário tem uma cobrança em aberto de{" "}
+                              {emReais(item.servico.precoCentavos)}. O que fazer com ela?
+                            </p>
+                            <form action={mudarStatus}>
+                              <input type="hidden" name="id" value={item.id} />
+                              <input type="hidden" name="status" value="cancelado" />
+                              <input type="hidden" name="cobranca" value="cancelar" />
+                              <BotaoEnviar variante="suave" className="w-full">
+                                Cancelar o horário e a cobrança
+                              </BotaoEnviar>
+                            </form>
+                            <form action={mudarStatus}>
+                              <input type="hidden" name="id" value={item.id} />
+                              <input type="hidden" name="status" value="cancelado" />
+                              <input type="hidden" name="cobranca" value="manter" />
+                              <BotaoEnviar variante="suave" className="w-full">
+                                Cancelar só o horário, continuo cobrando
+                              </BotaoEnviar>
+                            </form>
+                          </div>
+                        </details>
                       ) : null}
 
                       {item.status !== "agendado" ? (

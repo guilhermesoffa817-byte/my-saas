@@ -33,21 +33,27 @@ export const PRINCIPAIS: Destino[] = [
     icone: "calendario",
   },
   {
+    href: "/painel/cobrancas",
+    rotulo: "Cobranças",
+    explicacao: "O que você tem a receber dos seus clientes.",
+    icone: "dinheiro",
+  },
+  {
     href: "/painel/clientes",
     rotulo: "Clientes",
     explicacao: "A ficha de cada pessoa que você atende.",
     icone: "pessoas",
   },
+];
+
+/** O resto, que vive na tela "Mais". */
+export const SECUNDARIOS: Destino[] = [
   {
     href: "/painel/servicos",
     rotulo: "Serviços",
     explicacao: "O que você oferece, com preço e duração.",
     icone: "etiqueta",
   },
-];
-
-/** O resto, que vive na tela "Mais". */
-export const SECUNDARIOS: Destino[] = [
   {
     href: "/painel/financas",
     rotulo: "Finanças",
