@@ -47,3 +47,5 @@ next-env.d.ts
 
 # permitir o exemplo de variáveis de ambiente
 !.env.example
+.env
+.env.teste

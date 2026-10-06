@@ -28,6 +28,10 @@ const problemas = [
     solucao: "Cada cliente tem ficha com alergia, preferência e aniversário.",
   },
   {
+    dor: "Tem gente devendo e você não lembra quem",
+    solucao: "O Bossa mostra quem cobrar hoje e abre o WhatsApp com a mensagem pronta.",
+  },
+  {
     dor: "Não sabe quanto ganhou no mês",
     solucao: "O faturamento aparece somado, sem planilha nenhuma.",
   },
@@ -154,7 +158,7 @@ export default function PaginaInicial() {
               O que o sistema de agendamento resolve
             </h2>
           </div>
-          <div className="mx-auto grid max-w-6xl gap-6 px-5 pt-8 pb-10 md:grid-cols-3">
+          <div className="mx-auto grid max-w-6xl gap-6 px-5 pt-8 pb-10 sm:grid-cols-2 lg:grid-cols-4">
             {problemas.map((item, posicao) => (
               <div
                 key={item.dor}
@@ -192,6 +196,7 @@ export default function PaginaInicial() {
                 itens: [
                   "Agenda e clientes sem limite",
                   "Ficha com CPF, endereço e observações",
+                  "Cobrança pelo WhatsApp, com código Pix pronto",
                   "Faturamento do mês somado sozinho",
                 ],
               },
@@ -203,7 +208,9 @@ export default function PaginaInicial() {
                 destaque: true,
                 itens: [
                   "Tudo do Essencial",
-                  "Controle do que entra e do que sai",
+                  "Lembretes de quem cobrar, pelas datas",
+                  "Contas a pagar e prazos de contrato, com repetição mensal",
+                  "Contrato e conta lidos para você conferir",
                   "Imposto estimado e gráfico dos dias que mais rendem",
                 ],
               },

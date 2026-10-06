@@ -1,4 +1,5 @@
 import { somarDias } from "@/lib/formato";
+import { montarPix } from "@/lib/pix";
 
 export const DIAS_DE_TESTE = 3;
 export const DIAS_POR_CICLO = 30;
@@ -191,7 +192,11 @@ export function novaValidade(
 }
 
 /**
- * Monta o payload "copia e cola" do Pix (BR Code estático, padrão do Banco Central).
+ * O "copia e cola" da mensalidade do Bossa.
+ *
+ * A montagem em si mora em lib/pix.ts, que é a mesma usada pelas cobranças que
+ * cada estúdio manda para os clientes dele. Uma implementação só, um conjunto
+ * de testes só: se o código Pix quebrar, quebra num lugar e o teste pega.
  */
 export function pixCopiaECola({
   chave,
@@ -206,45 +211,9 @@ export function pixCopiaECola({
   valorCentavos: number;
   identificador?: string;
 }) {
-  const campo = (id: string, valor: string) =>
-    `${id}${String(valor.length).padStart(2, "0")}${valor}`;
-
-  const semAcento = (texto: string) =>
-    texto
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^A-Za-z0-9 ]/g, "")
-      .toUpperCase()
-      .trim();
-
-  const merchant =
-    campo("00", "br.gov.bcb.pix") + campo("01", chave);
-
-  const payload =
-    campo("00", "01") +
-    campo("26", merchant) +
-    campo("52", "0000") +
-    campo("53", "986") +
-    campo("54", (valorCentavos / 100).toFixed(2)) +
-    campo("58", "BR") +
-    campo("59", semAcento(nome).slice(0, 25) || "ESTUDIO") +
-    campo("60", semAcento(cidade).slice(0, 15) || "SAO PAULO") +
-    campo("62", campo("05", semAcento(identificador).slice(0, 25) || "***")) +
-    "6304";
-
-  return payload + crc16(payload);
-}
-
-function crc16(texto: string) {
-  let resultado = 0xffff;
-  for (let i = 0; i < texto.length; i++) {
-    resultado ^= texto.charCodeAt(i) << 8;
-    for (let bit = 0; bit < 8; bit++) {
-      resultado =
-        (resultado & 0x8000) !== 0
-          ? ((resultado << 1) ^ 0x1021) & 0xffff
-          : (resultado << 1) & 0xffff;
-    }
-  }
-  return resultado.toString(16).toUpperCase().padStart(4, "0");
+  const resultado = montarPix({ chave, nome, cidade, valorCentavos, identificador });
+  // A tela só chama isto depois de conferir que a chave existe; se ainda assim
+  // vier errada, devolver texto vazio é melhor do que um código que o banco
+  // aceita abrir e recusa pagar.
+  return resultado.certo ? resultado.codigo : "";
 }

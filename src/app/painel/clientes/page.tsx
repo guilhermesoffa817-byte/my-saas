@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { exigirAcesso } from "@/lib/guardas";
 import { Vazio } from "@/componentes/avisos";
-import { BotaoConfirmar } from "@/componentes/botoes";
+import Link from "next/link";
+import { BotaoConfirmar, BotaoEnviar } from "@/componentes/ui/botao";
+import { mudarLembretesDoCliente } from "../cobrancas/acoes";
 import { cpfBonito, dataCurta, paraDataLocal, telefoneBonito } from "@/lib/formato";
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
@@ -39,7 +41,7 @@ export default async function PaginaClientes({
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-display text-3xl font-semibold text-carvao">Seus clientes</h1>
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">Seus clientes</h1>
         <p className="mt-2 text-carvao-suave">
           A ficha de cada uma fica guardada aqui: contato, aniversário e aquelas
           observações que fazem toda a diferença no atendimento.
@@ -136,6 +138,32 @@ export default async function PaginaClientes({
                 ) : null}
 
                 <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/painel/cobrancas/nova?cliente=${cliente.id}`}
+                    className="botao-suave"
+                  >
+                    Cobrar
+                  </Link>
+
+                  {/*
+                    Quem pede para não receber aviso sai da lista "Para lembrar
+                    hoje". Continua sendo possível cobrar: o que muda é o Bossa
+                    parar de sugerir.
+                  */}
+                  <form action={mudarLembretesDoCliente}>
+                    <input type="hidden" name="id" value={cliente.id} />
+                    <input
+                      type="hidden"
+                      name="semLembretes"
+                      value={cliente.semLembretes ? "0" : "1"}
+                    />
+                    <BotaoEnviar variante="texto">
+                      {cliente.semLembretes
+                        ? "Voltar a enviar lembretes"
+                        : "Não enviar lembretes"}
+                    </BotaoEnviar>
+                  </form>
+
                   <details className="w-full">
                     <summary className="botao-suave cursor-pointer list-none">
                       Editar ficha

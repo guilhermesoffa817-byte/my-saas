@@ -10,10 +10,15 @@
     "postinstall": "prisma generate",
     "seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "vercel-build": "prisma generate && prisma migrate deploy && next build",
+    "teste": "vitest run",
+    "teste:olho": "vitest",
+    "tipos": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@prisma/client": "^6.16.1",
+    "@supabase/supabase-js": "^2.117.2",
     "bcryptjs": "^3.0.2",
     "jose": "^6.1.0",
     "next": "16.3.5",
@@ -34,6 +39,7 @@
     "prisma": "^6.16.1",
     "tailwindcss": "^4",
     "tsx": "^4.20.5",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

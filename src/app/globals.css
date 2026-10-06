@@ -76,9 +76,13 @@ body {
 }
 
 @layer components {
+  /*
+    `text-base` não é enfeite: abaixo de 16px o Safari do iPhone dá zoom sozinho
+    ao tocar no campo, e a tela fica torta no meio do preenchimento.
+  */
   .campo {
-    @apply w-full rounded-xl border border-areia-escura bg-superficie px-4 py-3 text-carvao
-      placeholder:text-carvao-suave/60 outline-none transition
+    @apply w-full rounded-xl border border-areia-escura bg-superficie px-4 py-3 text-base
+      text-carvao placeholder:text-carvao-suave/60 outline-none transition
       focus:border-terracota focus:ring-2 focus:ring-terracota/25;
   }
 
@@ -87,14 +91,14 @@ body {
   }
 
   .botao {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-terracota px-6 py-3
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-terracota px-6 py-3
       text-sm font-semibold text-acento-texto shadow-sm transition
       hover:bg-terracota-escura focus-visible:outline-2 focus-visible:outline-offset-2
       focus-visible:outline-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .botao-suave {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-areia-escura
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-areia-escura
       bg-superficie px-5 py-2.5 text-sm font-semibold text-carvao transition
       hover:border-terracota hover:text-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
@@ -102,6 +106,21 @@ body {
   .cartao {
     @apply rounded-2xl border border-areia-escura/70 bg-superficie p-6
       shadow-[0_10px_40px_-28px_rgba(11,18,32,0.5)];
+  }
+
+  /* Ação sem volta: apagar, cancelar. Vermelha para parar o polegar antes do toque. */
+  .botao-perigo {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3
+      text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700
+      focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* Ação secundária, sem caixa, para não competir com a ação principal da tela. */
+  .botao-texto {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5
+      text-sm font-semibold text-terracota transition hover:bg-areia/70
+      disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .etiqueta {

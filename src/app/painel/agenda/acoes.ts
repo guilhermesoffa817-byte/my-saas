@@ -19,6 +19,7 @@ function atualizarTelas() {
   revalidatePath("/painel");
   revalidatePath("/painel/agenda");
   revalidatePath("/painel/clientes");
+  revalidatePath("/painel/cobrancas");
 }
 
 export async function marcarHorario(_anterior: Resposta, dados: FormData): Promise<Resposta> {
@@ -111,6 +112,19 @@ export async function mudarStatus(dados: FormData) {
   if (!agendamento) return;
 
   await prisma.agendamento.update({ where: { id }, data: { status } });
+
+  /*
+    Cancelar o horário não cancela a cobrança por conta própria: o atendimento
+    pode ter sido desmarcado e o valor seguir devido. A tela pergunta, e a
+    resposta chega aqui. Sem resposta, a cobrança fica como está.
+  */
+  if (status === "cancelado" && texto(dados, "cobranca") === "cancelar") {
+    await prisma.cobranca.updateMany({
+      where: { agendamentoId: id, usuarioId: usuario.id, situacao: "aberta" },
+      data: { situacao: "cancelada" },
+    });
+  }
+
   atualizarTelas();
 }
 

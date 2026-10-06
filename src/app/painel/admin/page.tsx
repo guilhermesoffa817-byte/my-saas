@@ -95,7 +95,7 @@ export default async function PaginaAdmin() {
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-display text-3xl font-semibold text-carvao">
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">
           Pagamentos e assinantes
         </h1>
         <p className="mt-2 text-carvao-suave">
