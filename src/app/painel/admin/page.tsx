@@ -12,6 +12,7 @@ import {
 } from "@/lib/formato";
 import { confirmarPagamento, darCortesia, recusarPagamento } from "./acoes";
 import { Indicacoes, type Parceiro } from "./indicacoes";
+import { Senhas, type ContaParaSenha } from "./senhas";
 
 export const metadata = { title: "Pagamentos" };
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ const rotuloStatus = {
 export default async function PaginaAdmin() {
   await exigirAdmin();
 
-  const [aguardando, assinantes, confirmados] = await Promise.all([
+  const [aguardando, assinantes, confirmados, pedidosDeSenha] = await Promise.all([
     prisma.pagamento.findMany({
       where: { status: "aguardando" },
       include: { usuario: true },
@@ -43,7 +44,29 @@ export default async function PaginaAdmin() {
       orderBy: { respondidoEm: "desc" },
       take: 10,
     }),
+    /* Quem pediu senha nova e ainda não recebeu link. */
+    prisma.pedidoDeSenha.findMany({
+      where: { usadoEm: null, entregueEm: null, expiraEm: { gt: new Date() } },
+      orderBy: { criadoEm: "asc" },
+      select: { usuarioId: true, criadoEm: true },
+    }),
   ]);
+
+  const pediuSenhaEm = new Map(
+    pedidosDeSenha.map((pedido) => [pedido.usuarioId, dataEHora(pedido.criadoEm)]),
+  );
+
+  const contasParaSenha: ContaParaSenha[] = assinantes.map((conta) => ({
+    id: conta.id,
+    nome: conta.nome,
+    email: conta.email,
+    telefone: conta.telefone,
+    nomeNegocio: conta.nomeNegocio,
+    pediuEm: pediuSenhaEm.get(conta.id) ?? null,
+  }));
+
+  // Quem está esperando vem primeiro.
+  contasParaSenha.sort((a, b) => Number(Boolean(b.pediuEm)) - Number(Boolean(a.pediuEm)));
 
   const receitaAtiva = assinantes.filter(
     (assinante) => avaliarAssinatura(assinante.assinatura).status === "ativa",
@@ -129,6 +152,8 @@ export default async function PaginaAdmin() {
         enderecoBase={enderecoBase}
         percentual={percentualComissao}
       />
+
+      <Senhas contas={contasParaSenha} enderecoDoSite={enderecoBase} />
 
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-carvao">

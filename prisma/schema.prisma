@@ -36,18 +36,22 @@ model Usuario {
   lembreteTresDias  Boolean  @default(true)
   lembreteSeteDias  Boolean  @default(true)
   papel             String   @default("dona")
+  /// Sobe a cada troca de senha. A sessão carrega esse número, então quem
+  /// entrou com a senha antiga perde o acesso quando a senha muda.
+  sessaoVersao      Int      @default(0)
   criadoEm          DateTime @default(now())
 
-  assinatura   Assinatura?
-  clientes     Cliente[]
-  servicos     Servico[]
-  agendamentos Agendamento[]
-  pagamentos   Pagamento[]
-  lancamentos  Lancamento[]
-  cobrancas    Cobranca[]
-  vencimentos  Vencimento[]
-  repeticoes   RepeticaoDeVencimento[]
-  documentos   Documento[]
+  assinatura     Assinatura?
+  clientes       Cliente[]
+  servicos       Servico[]
+  agendamentos   Agendamento[]
+  pagamentos     Pagamento[]
+  lancamentos    Lancamento[]
+  cobrancas      Cobranca[]
+  vencimentos    Vencimento[]
+  repeticoes     RepeticaoDeVencimento[]
+  documentos     Documento[]
+  pedidosDeSenha PedidoDeSenha[]
 
   @@index([indicadoPor])
 }
@@ -321,4 +325,24 @@ model ItemDoDocumento {
   documento Documento @relation(fields: [documentoId], references: [id], onDelete: Cascade)
 
   @@index([documentoId])
+}
+
+/// Um pedido de nova senha, esperando virar link.
+///
+/// O código em si não fica aqui: só o resumo dele. Quem abrir o banco não
+/// consegue entrar em conta nenhuma. Vale meia hora e uma vez só.
+model PedidoDeSenha {
+  id         String    @id @default(cuid())
+  usuarioId  String
+  /// SHA-256 do código. O código só existe no link, uma vez.
+  codigoHash String?   @unique
+  /// Quem ainda não recebeu link aparece na administração como pedido aberto.
+  entregueEm DateTime?
+  expiraEm   DateTime
+  usadoEm    DateTime?
+  criadoEm   DateTime  @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, usadoEm])
 }

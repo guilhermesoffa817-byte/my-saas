@@ -91,7 +91,7 @@ export async function criarConta(
     },
   });
 
-  await criarSessao(usuario.id);
+  await criarSessao(usuario.id, usuario.sessaoVersao);
   redirect("/painel");
 }
 
@@ -115,7 +115,7 @@ export async function entrar(
     return { erro: "E-mail ou senha não batem. Tenta de novo com calma?" };
   }
 
-  await criarSessao(usuario.id);
+  await criarSessao(usuario.id, usuario.sessaoVersao);
   redirect("/painel");
 }
 

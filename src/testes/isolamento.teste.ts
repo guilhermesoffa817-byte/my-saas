@@ -85,3 +85,146 @@ describe.skipIf(!TEM_BANCO)("um estúdio não enxerga o outro", () => {
     expect(lista[0].id).toBe(um.cobranca.id);
   });
 });
+
+/**
+ * Recuperação de senha.
+ *
+ * O que não pode acontecer aqui é grave: um código que serve duas vezes, ou um
+ * código que continua valendo depois de outro ter sido usado, abre a conta de
+ * um cliente para quem não devia.
+ */
+describe.skipIf(!TEM_BANCO)("recuperação de senha", () => {
+  afterAll(async () => {
+    await limpar();
+    await (await banco()).$disconnect();
+  });
+
+  it("o código não fica guardado em texto, só o resumo", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("senha1");
+
+    const { gerarCodigo, resumoDoCodigo, validadeAPartirDe } = await import("@/lib/senha");
+    const codigo = gerarCodigo();
+
+    await db.pedidoDeSenha.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        codigoHash: resumoDoCodigo(codigo),
+        expiraEm: validadeAPartirDe(),
+      },
+    });
+
+    const guardado = await db.pedidoDeSenha.findFirstOrThrow({
+      where: { usuarioId: estudio.usuario.id },
+    });
+    expect(guardado.codigoHash).not.toBe(codigo);
+    expect(guardado.codigoHash).toHaveLength(64);
+
+    // E o resumo encontra o pedido pelo índice, que é como a conferência faz.
+    const achado = await db.pedidoDeSenha.findUnique({
+      where: { codigoHash: resumoDoCodigo(codigo) },
+    });
+    expect(achado?.id).toBe(guardado.id);
+  });
+
+  it("o mesmo código não troca a senha duas vezes", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("senha2");
+
+    const { gerarCodigo, resumoDoCodigo, validadeAPartirDe } = await import("@/lib/senha");
+    const pedido = await db.pedidoDeSenha.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        codigoHash: resumoDoCodigo(gerarCodigo()),
+        expiraEm: validadeAPartirDe(),
+      },
+    });
+
+    // É a mesma condição da ação de verdade.
+    const primeira = await db.pedidoDeSenha.updateMany({
+      where: { id: pedido.id, usadoEm: null },
+      data: { usadoEm: new Date() },
+    });
+    const segunda = await db.pedidoDeSenha.updateMany({
+      where: { id: pedido.id, usadoEm: null },
+      data: { usadoEm: new Date() },
+    });
+
+    expect(primeira.count).toBe(1);
+    expect(segunda.count).toBe(0);
+  });
+
+  it("trocar a senha sobe a versão da sessão, que derruba quem estava dentro", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("senha3");
+
+    expect(estudio.usuario.sessaoVersao).toBe(0);
+
+    const depois = await db.usuario.update({
+      where: { id: estudio.usuario.id },
+      data: { senhaHash: "novo", sessaoVersao: { increment: 1 } },
+      select: { sessaoVersao: true },
+    });
+
+    // O cookie antigo carrega a versão 0 e passa a discordar do banco.
+    expect(depois.sessaoVersao).toBe(1);
+    expect(depois.sessaoVersao).not.toBe(estudio.usuario.sessaoVersao);
+  });
+
+  it("gerar um link novo derruba os pendentes da mesma conta", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("senha4");
+
+    const { gerarCodigo, resumoDoCodigo, validadeAPartirDe } = await import("@/lib/senha");
+
+    const antigo = await db.pedidoDeSenha.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        codigoHash: resumoDoCodigo(gerarCodigo()),
+        expiraEm: validadeAPartirDe(),
+      },
+    });
+
+    await db.pedidoDeSenha.updateMany({
+      where: { usuarioId: estudio.usuario.id, usadoEm: null },
+      data: { usadoEm: new Date() },
+    });
+    await db.pedidoDeSenha.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        codigoHash: resumoDoCodigo(gerarCodigo()),
+        expiraEm: validadeAPartirDe(),
+      },
+    });
+
+    const velho = await db.pedidoDeSenha.findUniqueOrThrow({ where: { id: antigo.id } });
+    expect(velho.usadoEm).not.toBeNull();
+
+    const vivos = await db.pedidoDeSenha.count({
+      where: { usuarioId: estudio.usuario.id, usadoEm: null },
+    });
+    expect(vivos).toBe(1);
+  });
+
+  it("apagar a conta leva os pedidos de senha junto", async () => {
+    await limpar();
+    const db = await banco();
+    const estudio = await montarEstudio("senha5");
+
+    const { gerarCodigo, resumoDoCodigo, validadeAPartirDe } = await import("@/lib/senha");
+    await db.pedidoDeSenha.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        codigoHash: resumoDoCodigo(gerarCodigo()),
+        expiraEm: validadeAPartirDe(),
+      },
+    });
+
+    await db.usuario.delete({ where: { id: estudio.usuario.id } });
+    expect(await db.pedidoDeSenha.count({ where: { usuarioId: estudio.usuario.id } })).toBe(0);
+  });
+});
