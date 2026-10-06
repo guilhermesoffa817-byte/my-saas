@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useActionState } from "react";
 import { entrar } from "@/app/acoes/autenticacao";
 import { BotaoEnviar } from "@/componentes/botoes";
@@ -45,6 +47,15 @@ export function FormularioEntrar() {
       <BotaoEnviar className="w-full" enviando="Entrando...">
         Entrar no meu painel
       </BotaoEnviar>
+
+      <p className="text-center text-sm">
+        <Link
+          href="/esqueci-senha"
+          className="font-semibold text-carvao-suave hover:text-terracota hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
+      </p>
     </form>
   );
 }

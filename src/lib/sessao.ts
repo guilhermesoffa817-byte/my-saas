@@ -19,8 +19,13 @@ function segredo() {
   return new TextEncoder().encode(valor);
 }
 
-export async function criarSessao(usuarioId: string) {
-  const token = await new SignJWT({ sub: usuarioId })
+export async function criarSessao(usuarioId: string, versao = 0) {
+  /*
+    A versão viaja dentro do cookie. Quando a senha muda, o número no banco sobe
+    e todo cookie antigo passa a discordar, então quem tinha entrado com a senha
+    velha é posto para fora. Sem isso, trocar a senha não expulsaria ninguém.
+  */
+  const token = await new SignJWT({ sub: usuarioId, v: versao })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${DURACAO_DIAS}d`)
@@ -48,7 +53,11 @@ async function idDaSessao() {
 
   try {
     const { payload } = await jwtVerify(token, segredo());
-    return typeof payload.sub === "string" ? payload.sub : null;
+    if (typeof payload.sub !== "string") return null;
+    // Cookie emitido antes desta mudança não traz versão: vale como zero, que
+    // é o padrão de quem nunca trocou a senha. Ninguém é desconectado à toa.
+    const versao = typeof payload.v === "number" ? payload.v : 0;
+    return { id: payload.sub, versao };
   } catch {
     return null;
   }
@@ -67,9 +76,16 @@ const buscarUsuario = cache(async (id: string) =>
 );
 
 export async function usuarioAtual() {
-  const id = await idDaSessao();
-  if (!id) return null;
-  return buscarUsuario(id);
+  const sessao = await idDaSessao();
+  if (!sessao) return null;
+
+  const usuario = await buscarUsuario(sessao.id);
+  if (!usuario) return null;
+
+  // Senha trocada depois deste cookie: a sessão não vale mais.
+  if (usuario.sessaoVersao !== sessao.versao) return null;
+
+  return usuario;
 }
 
 export type UsuarioLogado = NonNullable<Awaited<ReturnType<typeof usuarioAtual>>>;
