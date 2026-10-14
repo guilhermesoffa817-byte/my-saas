@@ -1,11 +1,7 @@
 import { emReais } from "@/lib/formato";
+import { DIAS_DO_GRAFICO, type porDiaDaSemana } from "@/lib/financas";
 
-export type DiaDoGrafico = {
-  rotulo: string;
-  nomeCompleto: string;
-  atendimentos: number;
-  centavos: number;
-};
+export type DiaDoGrafico = ReturnType<typeof porDiaDaSemana>[number];
 
 /**
  * Faturamento por dia da semana. Uma medida só, um eixo só — a quantidade de
@@ -23,7 +19,7 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
         <h2 className="font-display text-xl font-semibold text-carvao">
           Seus dias mais fortes
         </h2>
-        <p className="text-sm text-carvao-suave">Últimos 90 dias</p>
+        <p className="text-sm text-carvao-suave">Últimos {DIAS_DO_GRAFICO} dias</p>
       </div>
 
       {temMovimento ? (
@@ -37,21 +33,35 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
         </p>
       )}
 
+      {/*
+        As colunas têm `min-w-0`: sem ele, o valor escondido em cima de cada
+        barra ("R$ 480,00", que não quebra) dava a largura mínima da coluna, e
+        no celular as sete colunas passavam da tela e saíam do alinhamento com
+        as siglas de baixo. O valor em destaque transborda centrado sobre a
+        barra, sem empurrar nada.
+      */}
       <div className="mt-6 flex h-52 items-end justify-between gap-2 sm:gap-3">
         {dias.map((dia, posicao) => {
           const altura = temMovimento ? Math.max((dia.centavos / maior) * 100, 2) : 2;
-          const destaque = temMovimento && dia.centavos === maior;
+          // Só um dia leva o valor em cima: o mesmo que a frase acima nomeia.
+          // Dois dias empatados lado a lado teriam os valores sobrepostos.
+          const destaque = temMovimento && dia.rotulo === melhor.rotulo;
 
           return (
-            <div key={dia.rotulo} className="flex h-full flex-1 flex-col justify-end gap-2">
-              <p
-                className={`text-center text-[11px] leading-tight font-semibold tabular-nums ${
-                  destaque ? "text-carvao" : "text-transparent"
-                }`}
-                aria-hidden={!destaque}
-              >
-                {emReais(dia.centavos)}
-              </p>
+            <div
+              key={dia.rotulo}
+              className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"
+            >
+              <div className="flex justify-center">
+                <p
+                  className={`text-[11px] leading-tight font-semibold whitespace-nowrap tabular-nums ${
+                    destaque ? "text-carvao" : "invisible"
+                  }`}
+                  aria-hidden={!destaque}
+                >
+                  {emReais(dia.centavos)}
+                </p>
+              </div>
 
               <div
                 title={`${dia.nomeCompleto}: ${emReais(dia.centavos)} em ${dia.atendimentos} ${
@@ -74,7 +84,7 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
         {dias.map((dia) => (
           <p
             key={dia.rotulo}
-            className="flex-1 text-center text-[11px] font-semibold tracking-wide text-carvao-suave uppercase"
+            className="min-w-0 flex-1 text-center text-[11px] font-semibold tracking-wide text-carvao-suave uppercase"
           >
             {dia.rotulo}
           </p>
