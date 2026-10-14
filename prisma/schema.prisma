@@ -98,6 +98,9 @@ model Cliente {
   observacoes  String?
   /// Quem pediu para não receber lembrete de cobrança.
   semLembretes Boolean   @default(false)
+  /// Cliente com histórico não é apagada: sai das listas, mas os atendimentos e
+  /// as cobranças pagas continuam contando no faturamento dos meses passados.
+  arquivadoEm  DateTime?
   criadoEm     DateTime  @default(now())
 
   usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -124,14 +127,21 @@ model Servico {
 }
 
 model Agendamento {
-  id          String   @id @default(cuid())
-  usuarioId   String
-  clienteId   String
-  servicoId   String
-  inicio      DateTime
-  status      String   @default("agendado")
-  observacoes String?
-  criadoEm    DateTime @default(now())
+  id                   String    @id @default(cuid())
+  usuarioId            String
+  clienteId            String
+  servicoId            String
+  inicio               DateTime
+  /// agendado, concluido, faltou ou cancelado.
+  status               String    @default("agendado")
+  /// O preço combinado na hora de marcar. Guardado aqui para que mudar o preço
+  /// do serviço depois não reescreva o faturamento dos meses que já passaram.
+  /// Vazio só nos horários marcados antes deste campo existir.
+  valorCentavos        Int?
+  /// Quando a mensagem de confirmação foi enviada pelo WhatsApp.
+  confirmacaoEnviadaEm DateTime?
+  observacoes          String?
+  criadoEm             DateTime  @default(now())
 
   usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   cliente   Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -345,4 +355,18 @@ model PedidoDeSenha {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, usadoEm])
+}
+
+/// Cada senha errada na tela de entrada.
+///
+/// Serve para frear quem tenta adivinhar senha: depois de algumas tentativas
+/// erradas no mesmo e-mail, a entrada espera alguns minutos. Guarda só o resumo
+/// do e-mail, nunca a senha digitada.
+model TentativaDeEntrada {
+  id       String   @id @default(cuid())
+  /// SHA-256 do e-mail digitado, em minúsculas.
+  chave    String
+  criadoEm DateTime @default(now())
+
+  @@index([chave, criadoEm])
 }
