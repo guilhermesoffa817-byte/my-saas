@@ -73,8 +73,8 @@ export function Indicacoes({
           return (
             <div key={parceiro.codigo} className="cartao space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="font-display text-lg font-semibold text-carvao">
+                <div className="min-w-0">
+                  <p className="font-display text-lg font-semibold break-words text-carvao">
                     {parceiro.nome}
                   </p>
                   <p className="text-sm text-carvao-suave">
@@ -84,15 +84,20 @@ export function Indicacoes({
                   </p>
                 </div>
 
-                <div className="text-right">
+                {/*
+                  `ml-auto` mantém o bloco encostado à direita mesmo quando ele
+                  desce para a linha de baixo no celular. Sem isso ele caía à
+                  esquerda com o texto alinhado à direita, torto.
+                */}
+                <div className="ml-auto text-right">
                   <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
                     Comissão a pagar
                   </p>
-                  <p className="font-display text-xl font-semibold tabular-nums text-terracota">
+                  <p className="font-display text-xl font-semibold whitespace-nowrap tabular-nums text-terracota">
                     {emReais(comissao)}
                   </p>
                   <p className="text-xs text-carvao-suave">
-                    de {emReais(totalPago)} recebidos
+                    de <span className="whitespace-nowrap">{emReais(totalPago)}</span> recebidos
                   </p>
                 </div>
               </div>
@@ -121,7 +126,7 @@ export function Indicacoes({
                       className="flex flex-wrap items-center justify-between gap-3 border-t border-areia-escura/60 pt-2 first:border-0 first:pt-0"
                     >
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-carvao">
+                        <p className="text-sm font-semibold break-words text-carvao">
                           {conta.nomeNegocio}
                         </p>
                         <p className="text-xs text-carvao-suave">
@@ -129,8 +134,8 @@ export function Indicacoes({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm tabular-nums text-carvao-suave">
+                      <div className="ml-auto flex shrink-0 items-center gap-3">
+                        <span className="text-sm whitespace-nowrap tabular-nums text-carvao-suave">
                           {emReais(conta.totalPagoCentavos)}
                         </span>
                         <Etiqueta tom={TOM_POR_SITUACAO[conta.situacao]}>
