@@ -9,7 +9,11 @@ import {
   PLANOS,
   ECONOMIA_ANUAL_CENTAVOS,
   ECONOMIA_VIP_ANUAL_CENTAVOS,
+  codigoDoPlano,
   pixCopiaECola,
+  planoParaRenovar,
+  planoPorCodigo,
+  valorMensalEquivalente,
 } from "@/lib/assinatura";
 import {
   competenciaPorExtenso,
@@ -41,6 +45,8 @@ export default async function PaginaAssinatura({
   searchParams: Promise<{ vip?: string }>;
 }) {
   const { vip } = await searchParams;
+  // A porta da aba Finanças manda para cá com ?vip=1.
+  const querVip = vip === "1";
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
 
@@ -50,7 +56,19 @@ export default async function PaginaAssinatura({
     take: 12,
   });
 
-  const jaAvisou = pagamentos.some((pagamento) => pagamento.status === "aguardando");
+  const avisado = pagamentos.find((pagamento) => pagamento.status === "aguardando");
+  const jaAvisou = Boolean(avisado);
+
+  /*
+    O plano que está valendo, para a tela dizer qual é e para a escolha do Pix
+    começar nele. Teste grátis ainda não é plano: quem está nele começa pelo
+    mensal. Quem venceu continua com o último plano pago, que é o que renova.
+  */
+  const assinatura = usuario.assinatura;
+  const planoAtual =
+    assinatura && assinatura.status !== "teste" ? codigoDoPlano(assinatura.plano) : null;
+  const planoInicial = planoParaRenovar(assinatura, querVip);
+  const proximo = PLANOS[planoParaRenovar(assinatura)];
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
@@ -85,13 +103,15 @@ export default async function PaginaAssinatura({
             chave: PIX_CHAVE,
             nome: PIX_NOME,
             valorCentavos: plano.valorCentavos,
-            identificador: plano.codigo === "anual" ? "AGENDAANUAL" : "AGENDA",
+            identificador: plano.identificadorPix,
           });
 
           return {
             codigo: plano.codigo,
             nome: plano.nome,
             periodo: plano.periodo,
+            porMes: plano.meses > 1 ? emReais(valorMensalEquivalente(plano)) : null,
+            financeiro: plano.financeiro,
             valor: emReais(plano.valorCentavos),
             dias: plano.dias,
             vantagens: vantagens[plano.codigo] ?? [],
@@ -104,7 +124,7 @@ export default async function PaginaAssinatura({
 
   return (
     <div className="space-y-8">
-      {vip ? (
+      {querVip ? (
         <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
           <p className="font-semibold text-carvao">A aba Finanças faz parte do plano VIP</p>
           <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
@@ -126,7 +146,7 @@ export default async function PaginaAssinatura({
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
         <div className="cartao">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-xl font-semibold text-carvao">Como está hoje</h2>
             <Etiqueta
               tom={
@@ -144,22 +164,42 @@ export default async function PaginaAssinatura({
           <p className="mt-4 leading-relaxed text-carvao-suave">{situacao.recado}</p>
 
           <dl className="mt-6 space-y-3 text-sm">
-            {Object.values(PLANOS).map((plano) => (
-              <div
-                key={plano.codigo}
-                className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3"
-              >
-                <dt className="text-carvao-suave">{plano.nome}</dt>
-                <dd className="font-semibold tabular-nums text-carvao">
-                  {emReais(plano.valorCentavos)}
+            <div className="flex items-baseline justify-between gap-4 border-b border-areia-escura/60 pb-3">
+              <dt className="shrink-0 text-carvao-suave">Seu plano</dt>
+              <dd className="min-w-0 text-right font-semibold text-carvao">
+                {planoAtual ? PLANOS[planoAtual].nome : "Teste grátis"}
+              </dd>
+            </div>
+            {avisado ? (
+              <div className="flex items-baseline justify-between gap-4 border-b border-areia-escura/60 pb-3">
+                <dt className="shrink-0 text-carvao-suave">Pix em conferência</dt>
+                <dd className="min-w-0 text-right">
+                  <span className="block font-semibold text-carvao">
+                    {planoPorCodigo(avisado.plano).nome}
+                  </span>
+                  <span className="whitespace-nowrap text-carvao-suave tabular-nums">
+                    {emReais(avisado.valorCentavos)}
+                  </span>
                 </dd>
               </div>
-            ))}
-            <div className="flex justify-between gap-4">
-              <dt className="text-carvao-suave">
+            ) : (
+              <div className="flex items-baseline justify-between gap-4 border-b border-areia-escura/60 pb-3">
+                <dt className="shrink-0 text-carvao-suave">Próximo pagamento</dt>
+                <dd className="min-w-0 text-right">
+                  <span className="block font-semibold text-carvao">{proximo.nome}</span>
+                  <span className="whitespace-nowrap text-carvao-suave tabular-nums">
+                    {emReais(proximo.valorCentavos)} {proximo.periodo}
+                  </span>
+                </dd>
+              </div>
+            )}
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="shrink-0 text-carvao-suave">
                 {situacao.liberada ? "Vale até" : "Venceu em"}
               </dt>
-              <dd className="font-semibold text-carvao">{dataCurta(situacao.validaAte)}</dd>
+              <dd className="font-semibold text-carvao tabular-nums">
+                {dataCurta(situacao.validaAte)}
+              </dd>
             </div>
           </dl>
 
@@ -184,7 +224,13 @@ export default async function PaginaAssinatura({
 
           {pixConfigurado ? (
             <div className="mt-5">
-              <PagamentoPix opcoes={opcoes} pixNome={PIX_NOME} jaAvisou={jaAvisou} />
+              <PagamentoPix
+                opcoes={opcoes}
+                inicial={planoInicial}
+                atual={planoAtual}
+                pixNome={PIX_NOME}
+                jaAvisou={jaAvisou}
+              />
             </div>
           ) : (
             <p className="mt-5 rounded-2xl border border-areia-escura bg-creme px-4 py-3 text-sm text-carvao-suave">
@@ -211,30 +257,33 @@ export default async function PaginaAssinatura({
             {pagamentos.map((pagamento) => (
               <li
                 key={pagamento.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-areia-escura/70 bg-creme px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-areia-escura/70 bg-creme px-4 py-3"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-carvao">
                     {competenciaPorExtenso(pagamento.competencia)} ·{" "}
-                    {emReais(pagamento.valorCentavos)}
+                    <span className="whitespace-nowrap">{emReais(pagamento.valorCentavos)}</span>
                   </p>
-                  <p className="text-xs text-carvao-suave">
-                    Avisado em {dataEHora(pagamento.criadoEm)}
+                  <p className="text-xs break-words text-carvao-suave">
+                    {planoPorCodigo(pagamento.plano).nome} · avisado em{" "}
+                    {dataEHora(pagamento.criadoEm)}
                     {pagamento.observacao ? ` · "${pagamento.observacao}"` : ""}
                   </p>
                 </div>
-                <Etiqueta
-                  tom={
-                    pagamento.status === "confirmado"
-                      ? "boa"
-                      : pagamento.status === "recusado"
-                        ? "erro"
-                        : "atencao"
-                  }
-                >
-                  {rotuloPagamento[pagamento.status as keyof typeof rotuloPagamento] ??
-                    pagamento.status}
-                </Etiqueta>
+                <span className="shrink-0">
+                  <Etiqueta
+                    tom={
+                      pagamento.status === "confirmado"
+                        ? "boa"
+                        : pagamento.status === "recusado"
+                          ? "erro"
+                          : "atencao"
+                    }
+                  >
+                    {rotuloPagamento[pagamento.status as keyof typeof rotuloPagamento] ??
+                      pagamento.status}
+                  </Etiqueta>
+                </span>
               </li>
             ))}
           </ul>

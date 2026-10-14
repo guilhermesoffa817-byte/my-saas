@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BotaoCopiar } from "@/componentes/botoes";
+import { Aviso } from "@/componentes/avisos";
 import { FormularioAvisoDePagamento } from "./formulario";
 import type { CodigoPlano } from "@/lib/assinatura";
 
@@ -9,6 +10,10 @@ export type OpcaoDePlano = {
   codigo: CodigoPlano;
   nome: string;
   periodo: string;
+  /** Quanto o plano anual sai por mês, para comparar com o mensal. */
+  porMes: string | null;
+  /** Planos que abrem a aba Finanças. */
+  financeiro: boolean;
   valor: string;
   dias: number;
   vantagens: string[];
@@ -19,15 +24,23 @@ export type OpcaoDePlano = {
 
 export function PagamentoPix({
   opcoes,
+  inicial,
+  atual,
   pixNome,
   jaAvisou,
 }: {
   opcoes: OpcaoDePlano[];
+  /** Onde a escolha começa: o plano de hoje, para quem renova sem mexer em nada. */
+  inicial: CodigoPlano;
+  /** O plano pago que está valendo. Vazio no teste grátis. */
+  atual: CodigoPlano | null;
   pixNome: string;
   jaAvisou: boolean;
 }) {
-  const [codigo, definirCodigo] = useState<CodigoPlano>(opcoes[0].codigo);
+  const [codigo, definirCodigo] = useState<CodigoPlano>(inicial);
   const escolhida = opcoes.find((opcao) => opcao.codigo === codigo) ?? opcoes[0];
+  const deHoje = opcoes.find((opcao) => opcao.codigo === atual);
+  const trocando = deHoje && deHoje.codigo !== escolhida.codigo;
 
   return (
     <div className="space-y-5">
@@ -58,11 +71,30 @@ export function PagamentoPix({
               <span className="mt-2 block font-display text-2xl font-semibold text-carvao">
                 {opcao.valor}
               </span>
-              <span className="block text-xs text-carvao-suave">{opcao.periodo}</span>
+              <span className="block text-xs text-carvao-suave">
+                {opcao.periodo}
+                {opcao.porMes ? ` · sai a ${opcao.porMes} por mês` : ""}
+                {opcao.codigo === atual ? " · seu plano hoje" : ""}
+              </span>
             </button>
           );
         })}
       </div>
+
+      {/* Trocar de plano é escolha, nunca descuido: a tela diz o que muda. */}
+      {trocando ? (
+        deHoje.financeiro && !escolhida.financeiro ? (
+          <Aviso tom="atencao">
+            Hoje você está no {deHoje.nome}. Com o {escolhida.nome}, a aba Finanças
+            fecha quando o Pix for confirmado.
+          </Aviso>
+        ) : (
+          <Aviso>
+            Hoje você está no {deHoje.nome}. Com este Pix, você passa para o{" "}
+            {escolhida.nome}.
+          </Aviso>
+        )
+      ) : null}
 
       <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
         <div
