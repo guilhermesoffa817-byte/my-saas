@@ -26,11 +26,13 @@ export function FormularioAvisoDePagamento({
         <label className="rotulo" htmlFor="observacao">
           Quer deixar um recado? <span className="font-normal">(opcional)</span>
         </label>
-        <input
+        {/* Caixa de duas linhas: o recado cabe inteiro no celular, sem rolar de lado. */}
+        <textarea
           id="observacao"
           name="observacao"
-          className="campo"
-          placeholder="Paguei pelo banco X às 14h, em nome de..."
+          rows={2}
+          className="campo resize-y"
+          placeholder="Ex.: paguei às 14h, da conta da Ana"
           maxLength={300}
         />
       </div>

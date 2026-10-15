@@ -58,7 +58,18 @@ export default async function PaginaVencimentos({
   const JANELA_EM_DIAS = 60;
   const limite = somarDiasPuros(hoje, JANELA_EM_DIAS);
 
-  const [lista, combinados, totalEmAberto] = await Promise.all([
+  /*
+    Os números do topo saem do banco, e não da lista: a lista para em cem
+    itens, e a soma não pode parar junto. Só conta entra no dinheiro; prazo de
+    contrato aparece na lista, mas não é valor a pagar.
+  */
+  const contasEmAberto = {
+    usuarioId: usuario.id,
+    pago: false,
+    tipo: "conta",
+  } as const;
+
+  const [lista, combinados, totalEmAberto, aPagar, atrasado] = await Promise.all([
     prisma.vencimento.findMany({
       where: {
         usuarioId: usuario.id,
@@ -91,15 +102,25 @@ export default async function PaginaVencimentos({
       },
     }),
     prisma.vencimento.count({ where: { usuarioId: usuario.id, pago: false } }),
+    // Tudo o que está em aberto na tela: o atrasado e o que vence na janela.
+    prisma.vencimento.aggregate({
+      where: {
+        ...contasEmAberto,
+        ...(mostrarTudo ? {} : { data: { lte: limite } }),
+      },
+      _sum: { valorCentavos: true },
+      _count: { _all: true },
+    }),
+    // A parte disso que já passou da data. Está dentro do "A pagar".
+    prisma.vencimento.aggregate({
+      where: { ...contasEmAberto, data: { lt: hoje } },
+      _sum: { valorCentavos: true },
+      _count: { _all: true },
+    }),
   ]);
 
-  const emAberto = lista.filter((item) => !item.pago);
-  const aPagar = emAberto
-    .filter((item) => item.tipo === "conta")
-    .reduce((soma, item) => soma + (item.valorCentavos ?? 0), 0);
-  const atrasados = emAberto.filter(
-    (item) => situacaoDoVencimento(item, hoje) === "atrasado",
-  );
+  const quantasAtrasadas = atrasado._count._all;
+  const valorAtrasado = atrasado._sum.valorCentavos ?? 0;
 
   return (
     <div className="space-y-7">
@@ -111,23 +132,26 @@ export default async function PaginaVencimentos({
         <section className="grid grid-cols-2 gap-3 sm:gap-4">
           <Indicador
             rotulo="A pagar"
-            valor={emReais(aPagar)}
+            valor={emReais(aPagar._sum.valorCentavos ?? 0)}
             detalhe={
-              mostrarTudo
-                ? `${emAberto.length} em aberto`
-                : `${emAberto.length} ${emAberto.length === 1 ? "vence" : "vencem"} em até ${JANELA_EM_DIAS} dias`
+              quantasAtrasadas > 0
+                ? `${aPagar._count._all} em aberto, ${quantasAtrasadas} ${
+                    quantasAtrasadas === 1 ? "atrasada" : "atrasadas"
+                  }`
+                : `${aPagar._count._all} em aberto`
             }
             tom="destaque"
           />
+          {/* O atrasado já está somado no "A pagar"; o cartão diz isso com todas as letras. */}
           <Indicador
             rotulo="Atrasado"
-            valor={emReais(
-              atrasados.reduce((soma, item) => soma + (item.valorCentavos ?? 0), 0),
-            )}
+            valor={emReais(valorAtrasado)}
             detalhe={
-              atrasados.length === 1 ? "1 passou da data" : `${atrasados.length} passaram da data`
+              quantasAtrasadas > 0
+                ? "Já está somado no A pagar"
+                : "Nenhuma conta passou da data"
             }
-            tom={atrasados.length > 0 ? "atencao" : "neutro"}
+            tom={quantasAtrasadas > 0 ? "atencao" : "neutro"}
             atraso={80}
           />
         </section>
@@ -180,9 +204,14 @@ export default async function PaginaVencimentos({
               return (
                 <li key={item.id}>
                   <Cartao destaque={situacao === "atrasado"}>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-carvao">{item.descricao}</p>
+                    {/*
+                      Sem quebra de linha entre as duas colunas: a descrição
+                      longa quebra dentro da dela, à esquerda, e o valor com a
+                      situação ficam sempre à direita, iguais em todo cartão.
+                    */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold break-words text-carvao">{item.descricao}</p>
                         <p className="mt-0.5 text-sm text-carvao-suave">
                           {item.pago && item.pagoEm
                             ? `Pago em ${dataPuraCurta(item.pagoEm)}`
@@ -191,17 +220,17 @@ export default async function PaginaVencimentos({
                           {item.repeticaoId ? " · todo mês" : ""}
                         </p>
                       </div>
-                      <div className="shrink-0 text-right">
+                      <div className="flex shrink-0 flex-col items-end gap-1">
                         {item.valorCentavos ? (
-                          <p className="font-display text-lg font-semibold tabular-nums text-carvao">
+                          <p className="font-display text-lg font-semibold whitespace-nowrap tabular-nums text-carvao">
                             {emReais(item.valorCentavos)}
                           </p>
                         ) : null}
-                        <div className="mt-1">
+                        <span className="whitespace-nowrap">
                           <Etiqueta tom={TOM_DO_VENCIMENTO[situacao]}>
                             {ROTULO_DO_VENCIMENTO[situacao]}
                           </Etiqueta>
-                        </div>
+                        </span>
                       </div>
                     </div>
 

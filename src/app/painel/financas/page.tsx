@@ -1,141 +1,156 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirFinanceiro } from "@/lib/guardas";
 import { BotaoConfirmar } from "@/componentes/botoes";
 import { Vazio } from "@/componentes/avisos";
 import {
-  dataCurta,
-  diaDaSemanaCurto,
+  competenciaAtual,
+  dataPuraCurta,
+  deDataPura,
   emReais,
+  inicioDoProximoMes,
   paraDataLocal,
   somarDias,
 } from "@/lib/formato";
+import {
+  escolherMes,
+  lancamentoEmReais,
+  mesValido,
+  nomeDoMes,
+  porDiaDaSemana,
+  resumoDoMes,
+  saldoEmReais,
+  somarMeses,
+} from "@/lib/financas";
+import {
+  atendimentosDoGrafico,
+  movimentoDoMes,
+  primeiroMesComMovimento,
+} from "@/lib/financas-consultas";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
-import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
+import { GraficoPorDiaDaSemana } from "./grafico";
 import { excluirLancamento } from "./acoes";
 
 export const metadata = { title: "Finanças" };
 export const dynamic = "force-dynamic";
 
-const NOMES_DOS_DIAS = [
-  "Segunda-feira",
-  "Terça-feira",
-  "Quarta-feira",
-  "Quinta-feira",
-  "Sexta-feira",
-  "Sábado",
-  "Domingo",
-];
+const ENDERECO = "/painel/financas";
 
-export default async function PaginaFinancas() {
+export default async function PaginaFinancas({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string | string[] }>;
+}) {
   const { usuario } = await exigirFinanceiro();
+  const { mes: pedido } = await searchParams;
 
   const agora = new Date();
-  const inicioDoMes = new Date(
-    Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), 1),
-  );
-  const inicioDoGrafico = somarDias(agora, -90);
+  const atual = competenciaAtual(agora);
+  const anoAtual = Number(atual.slice(0, 4));
 
-  const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo] =
-    await Promise.all([
-      prisma.agendamento.findMany({
-        where: {
-          usuarioId: usuario.id,
-          status: "concluido",
-          inicio: { gte: inicioDoMes },
-        },
-        select: { servico: { select: { precoCentavos: true } } },
-      }),
-      prisma.lancamento.findMany({
-        where: { usuarioId: usuario.id, data: { gte: inicioDoMes } },
-        orderBy: { data: "desc" },
-      }),
-      prisma.agendamento.findMany({
-        where: {
-          usuarioId: usuario.id,
-          status: "concluido",
-          inicio: { gte: inicioDoGrafico },
-        },
-        select: { inicio: true, servico: { select: { precoCentavos: true } } },
-      }),
-    ]);
+  /*
+    O mês pedido já vai na primeira ida ao banco, junto com a busca do primeiro
+    mês com movimento. Só quem pede um mês de antes do começo da conta faz a
+    segunda viagem, mandado para o primeiro mês que tem o que mostrar.
+  */
+  const provavel = mesValido(pedido) && pedido < atual ? pedido : atual;
 
-  const atendimentosCentavos = atendimentosDoMes.reduce(
-    (soma, item) => soma + item.servico.precoCentavos,
-    0,
-  );
-  const entradasManuais = lancamentosDoMes
-    .filter((item) => item.tipo === "entrada")
-    .reduce((soma, item) => soma + item.valorCentavos, 0);
-  const saidas = lancamentosDoMes
-    .filter((item) => item.tipo === "saida")
-    .reduce((soma, item) => soma + item.valorCentavos, 0);
+  const [primeiro, movimento, doGrafico] = await Promise.all([
+    primeiroMesComMovimento(prisma, usuario),
+    movimentoDoMes(prisma, usuario.id, provavel),
+    atendimentosDoGrafico(prisma, usuario.id, agora),
+  ]);
 
-  const entradas = atendimentosCentavos + entradasManuais;
-  const imposto = Math.round((entradas * usuario.impostoPercentual) / 100);
-  const sobrou = entradas - saidas - imposto;
+  const mes = escolherMes(pedido, { atual, primeiro });
+  if (mes !== provavel) redirect(enderecoDoMes(mes, atual));
 
-  // Segunda a domingo, na ordem em que a semana é vivida no estúdio.
-  const porDia = new Map<string, { atendimentos: number; centavos: number }>();
-  for (const atendimento of atendimentosDoPeriodo) {
-    const chave = diaDaSemanaCurto(atendimento.inicio);
-    const atual = porDia.get(chave) ?? { atendimentos: 0, centavos: 0 };
-    porDia.set(chave, {
-      atendimentos: atual.atendimentos + 1,
-      centavos: atual.centavos + atendimento.servico.precoCentavos,
-    });
-  }
-
-  // A referência é uma segunda-feira conhecida, só para extrair as siglas na ordem.
-  const segundaDeReferencia = new Date(Date.UTC(2026, 0, 5, 12));
-  const dias: DiaDoGrafico[] = NOMES_DOS_DIAS.map((nomeCompleto, posicao) => {
-    const rotulo = diaDaSemanaCurto(somarDias(segundaDeReferencia, posicao));
-    const dados = porDia.get(rotulo) ?? { atendimentos: 0, centavos: 0 };
-    return { rotulo, nomeCompleto, ...dados };
+  const resumo = resumoDoMes({
+    atendimentos: movimento.atendimentos,
+    lancamentos: movimento.lancamentos,
+    impostoPercentual: usuario.impostoPercentual,
   });
+  const dias = porDiaDaSemana(doGrafico);
 
-  const maiorLinha = Math.max(entradas, saidas + imposto, 1);
+  const ehAtual = mes === atual;
+  const nome = nomeDoMes(mes, anoAtual);
+  const nomeNoTitulo = nome.charAt(0).toUpperCase() + nome.slice(1);
+  const anterior = mes > primeiro ? somarMeses(mes, -1) : null;
+  const seguinte = mes < atual ? somarMeses(mes, 1) : null;
+
+  const negativo = resumo.sobrou < 0;
+  const maiorLinha = Math.max(resumo.entradas, resumo.saidas + resumo.imposto, 1);
+
+  // O último dia do mês atual: lançamento é o que já aconteceu ou acontece
+  // neste mês. Conta de mês que vem mora em Vencimentos.
+  const ultimoDiaPermitido = paraDataLocal(somarDias(inicioDoProximoMes(agora), -1));
 
   return (
     <div className="space-y-8">
       <section className="animar-entrada">
         <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">
-          Suas finanças
+          Suas finanças em {nome}
         </h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
-          Tudo o que entrou e o que saiu neste mês, reunido num lugar só. Os
-          atendimentos concluídos entram sozinhos; o resto você registra abaixo.
+          Tudo o que entrou e o que saiu {ehAtual ? "neste mês" : `em ${nome}`}, reunido
+          num lugar só. Os atendimentos concluídos entram sozinhos; o resto você
+          registra abaixo.
         </p>
       </section>
 
+      {anterior || seguinte ? (
+        <nav aria-label="Outros meses" className="flex items-center gap-3">
+          {anterior ? (
+            <Link href={enderecoDoMes(anterior, atual)} className="botao-suave px-4">
+              <span aria-hidden>‹</span>
+              <span className="sr-only">Ver </span>
+              {nomeDoMes(anterior, anoAtual)}
+            </Link>
+          ) : null}
+          {seguinte ? (
+            <Link href={enderecoDoMes(seguinte, atual)} className="botao-suave ml-auto px-4">
+              <span className="sr-only">Ver </span>
+              {nomeDoMes(seguinte, anoAtual)}
+              <span aria-hidden>›</span>
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
+
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Indicador titulo="Entrou" valor={emReais(entradas)} tom="boa" atraso={0}>
-          {emReais(atendimentosCentavos)} de atendimentos
+        <Indicador titulo="Entrou" valor={emReais(resumo.entradas)} tom="boa" atraso={0}>
+          <span className="whitespace-nowrap">{emReais(resumo.atendimentosCentavos)}</span> de
+          atendimentos
         </Indicador>
-        <Indicador titulo="Saiu" valor={emReais(saidas)} tom="neutra" atraso={80}>
-          {lancamentosDoMes.filter((item) => item.tipo === "saida").length} despesas
-          registradas
+        <Indicador titulo="Saiu" valor={emReais(resumo.saidas)} tom="neutra" atraso={80}>
+          {resumo.quantasDespesas === 1
+            ? "1 despesa registrada"
+            : `${resumo.quantasDespesas} despesas registradas`}
         </Indicador>
         <Indicador
           titulo="Imposto estimado"
-          valor={emReais(imposto)}
+          valor={emReais(resumo.imposto)}
           tom="neutra"
           atraso={160}
         >
           {usuario.impostoPercentual}% sobre o que entrou
         </Indicador>
+        {/* Mês no vermelho se lê como falta, e não como uma sobra com sinal de menos. */}
         <Indicador
-          titulo="Sobrou para você"
-          valor={emReais(sobrou)}
-          tom={sobrou >= 0 ? "destaque" : "atencao"}
+          titulo={negativo ? (ehAtual ? "Faltou neste mês" : "Faltou no mês") : "Sobrou para você"}
+          valor={saldoEmReais(resumo.sobrou)}
+          tom={negativo ? "atencao" : "destaque"}
           atraso={240}
         >
-          depois das despesas e do imposto
+          {negativo
+            ? "as despesas e o imposto passaram do que entrou"
+            : "depois das despesas e do imposto"}
         </Indicador>
       </section>
 
       <section className="cartao animar-entrada">
         <h2 className="font-display text-xl font-semibold text-carvao">
-          O mês em uma olhada
+          {nomeNoTitulo} em uma olhada
         </h2>
         <p className="mt-1 text-sm text-carvao-suave">
           As barras mostram o tamanho de cada valor em relação ao maior deles.
@@ -144,32 +159,32 @@ export default async function PaginaFinancas() {
         <div className="mt-5 space-y-4">
           <LinhaDoResumo
             rotulo="Atendimentos concluídos"
-            valor={atendimentosCentavos}
+            valor={resumo.atendimentosCentavos}
             maior={maiorLinha}
             cor="bg-terracota"
           />
           <LinhaDoResumo
             rotulo="Outras entradas"
-            valor={entradasManuais}
+            valor={resumo.entradasManuais}
             maior={maiorLinha}
             cor="bg-oliva"
           />
           <LinhaDoResumo
             rotulo="Despesas"
-            valor={saidas}
+            valor={resumo.saidas}
             maior={maiorLinha}
             cor="bg-carvao-suave"
           />
           <LinhaDoResumo
             rotulo="Imposto estimado"
-            valor={imposto}
+            valor={resumo.imposto}
             maior={maiorLinha}
             cor="bg-carvao-suave/60"
           />
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-areia-escura/60 pt-5">
-          <div>
+        <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-areia-escura/60 pt-5">
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-carvao">
               Percentual do imposto
             </p>
@@ -192,45 +207,51 @@ export default async function PaginaFinancas() {
           Aluguel, material, um produto vendido. Tudo o que não passa pela agenda.
         </p>
         <div className="mt-5">
-          <FormularioLancamento hoje={paraDataLocal(agora)} />
+          <FormularioLancamento hoje={paraDataLocal(agora)} ultimoDia={ultimoDiaPermitido} />
         </div>
       </section>
 
       <section className="space-y-4">
         <h2 className="font-display text-xl font-semibold text-carvao">
-          Lançamentos deste mês
+          {ehAtual ? "Lançamentos deste mês" : `Lançamentos de ${nome}`}
         </h2>
 
-        {lancamentosDoMes.length === 0 ? (
+        {movimento.lancamentos.length === 0 ? (
           <Vazio
-            titulo="Nenhum lançamento ainda"
-            texto="Assim que você registrar a primeira despesa ou entrada, ela aparece aqui."
+            titulo={ehAtual ? "Nenhum lançamento ainda" : `Nenhum lançamento em ${nome}`}
+            texto={
+              ehAtual
+                ? "Assim que você registrar a primeira despesa ou entrada, ela aparece aqui."
+                : "Os atendimentos concluídos do mês continuam somados no resumo lá em cima."
+            }
           />
         ) : (
           <ul className="space-y-3">
-            {lancamentosDoMes.map((lancamento) => {
+            {movimento.lancamentos.map((lancamento) => {
               const entrada = lancamento.tipo === "entrada";
 
               return (
                 <li
                   key={lancamento.id}
-                  className="cartao flex flex-wrap items-center justify-between gap-4"
+                  className="cartao flex items-start justify-between gap-3 p-4 sm:p-6"
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-carvao">{lancamento.descricao}</p>
-                    <p className="mt-0.5 text-sm text-carvao-suave">
-                      {dataCurta(lancamento.data)}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold break-words text-carvao">
+                      {lancamento.descricao}
+                    </p>
+                    <p className="mt-0.5 text-sm break-words text-carvao-suave">
+                      {dataPuraCurta(deDataPura(lancamento.dia)!)}
                       {lancamento.categoria ? ` · ${lancamento.categoria}` : ""}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 flex-col items-end gap-2">
                     <span
-                      className={`font-display text-lg font-semibold tabular-nums ${
+                      className={`font-display text-lg font-semibold whitespace-nowrap tabular-nums ${
                         entrada ? "text-terracota" : "text-carvao"
                       }`}
                     >
-                      {entrada ? "+" : "−"} {emReais(lancamento.valorCentavos)}
+                      {lancamentoEmReais(lancamento.tipo, lancamento.valorCentavos)}
                     </span>
                     <form action={excluirLancamento}>
                       <input type="hidden" name="id" value={lancamento.id} />
@@ -251,6 +272,11 @@ export default async function PaginaFinancas() {
   );
 }
 
+/** O mês atual mora no endereço sem parâmetro, que é o da navegação. */
+function enderecoDoMes(mes: string, atual: string) {
+  return mes === atual ? ENDERECO : `${ENDERECO}?mes=${mes}`;
+}
+
 function Indicador({
   titulo,
   valor,
@@ -268,16 +294,25 @@ function Indicador({
     boa: "text-terracota",
     neutra: "text-carvao",
     destaque: "text-terracota",
-    atencao: "text-carvao",
+    // As mesmas cores da etiqueta "Atrasada": vermelho é o que pede atenção.
+    atencao: "text-rose-800 dark:text-rose-300",
   } as const;
 
   return (
-    <div className="cartao animar-entrada" style={{ animationDelay: `${atraso}ms` }}>
+    <div
+      className={`cartao animar-entrada min-w-0 p-4 sm:p-6 ${
+        tom === "atencao"
+          ? "border-rose-300/70 bg-rose-50 dark:border-rose-400/30 dark:bg-rose-400/10"
+          : ""
+      }`}
+      style={{ animationDelay: `${atraso}ms` }}
+    >
       <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
         {titulo}
       </p>
+      {/* Valor numa linha só: o sinal e os centavos nunca descem sozinhos. */}
       <p
-        className={`mt-2 font-display text-2xl font-semibold tabular-nums ${cores[tom]}`}
+        className={`mt-2 font-display text-xl font-semibold whitespace-nowrap tabular-nums sm:text-2xl ${cores[tom]}`}
       >
         {valor}
       </p>
@@ -302,8 +337,8 @@ function LinhaDoResumo({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm text-carvao-suave">{rotulo}</p>
-        <p className="text-sm font-semibold tabular-nums text-carvao">
+        <p className="min-w-0 text-sm text-carvao-suave">{rotulo}</p>
+        <p className="shrink-0 text-sm font-semibold whitespace-nowrap tabular-nums text-carvao">
           {emReais(valor)}
         </p>
       </div>

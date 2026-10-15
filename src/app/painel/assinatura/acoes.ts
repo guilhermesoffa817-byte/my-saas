@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirUsuario } from "@/lib/guardas";
-import { planoPorCodigo } from "@/lib/assinatura";
+import { PLANOS, codigoDoPlano } from "@/lib/assinatura";
 import { competenciaAtual } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -13,7 +13,14 @@ export async function avisarPagamento(
   dados: FormData,
 ): Promise<Resposta> {
   const usuario = await exigirUsuario();
-  const plano = planoPorCodigo(dados.get("plano"));
+
+  // Sem um plano reconhecido, nada é registrado. Cair no mensal por conta
+  // própria liberaria o plano errado quando o Pix fosse confirmado.
+  const codigo = codigoDoPlano(dados.get("plano"));
+  if (!codigo) {
+    return { erro: "Escolha um dos planos acima antes de avisar o Pix." };
+  }
+  const plano = PLANOS[codigo];
 
   const observacao = (() => {
     const valor = dados.get("observacao");

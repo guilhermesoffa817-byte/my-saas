@@ -24,6 +24,14 @@ export type Plano = {
   periodo: string;
   valorCentavos: number;
   dias: number;
+  /** Quantos meses um pagamento cobre. Serve para comparar o anual com o mensal. */
+  meses: 1 | 12;
+  /**
+   * O que aparece no extrato de quem paga e no da nossa conta. Um por plano,
+   * para que a conferência saiba pelo extrato qual plano foi pago. Só letras e
+   * números, até 25 caracteres, que é o limite do código Pix.
+   */
+  identificadorPix: string;
   /** Só os planos VIP abrem a aba Finanças. */
   financeiro: boolean;
 };
@@ -36,6 +44,8 @@ export const PLANOS: Record<CodigoPlano, Plano> = {
     periodo: "por mês",
     valorCentavos: MENSAL_CENTAVOS,
     dias: DIAS_POR_CICLO,
+    meses: 1,
+    identificadorPix: "BOSSAMENSAL",
     financeiro: false,
   },
   anual: {
@@ -45,6 +55,8 @@ export const PLANOS: Record<CodigoPlano, Plano> = {
     periodo: "por ano",
     valorCentavos: ANUAL_CENTAVOS,
     dias: 365,
+    meses: 12,
+    identificadorPix: "BOSSAANUAL",
     financeiro: false,
   },
   vip_mensal: {
@@ -54,6 +66,8 @@ export const PLANOS: Record<CodigoPlano, Plano> = {
     periodo: "por mês",
     valorCentavos: VIP_MENSAL_CENTAVOS,
     dias: DIAS_POR_CICLO,
+    meses: 1,
+    identificadorPix: "BOSSAVIP",
     financeiro: true,
   },
   vip_anual: {
@@ -63,6 +77,8 @@ export const PLANOS: Record<CodigoPlano, Plano> = {
     periodo: "por ano",
     valorCentavos: VIP_ANUAL_CENTAVOS,
     dias: 365,
+    meses: 12,
+    identificadorPix: "BOSSAVIPANUAL",
     financeiro: true,
   },
 };
@@ -74,23 +90,85 @@ export const ECONOMIA_VIP_ANUAL_CENTAVOS = VIP_MENSAL_CENTAVOS * 12 - VIP_ANUAL_
 export const ECONOMIA_ANUAL_CENTAVOS = MENSAL_CENTAVOS * 12 - ANUAL_CENTAVOS;
 export const MESES_DE_BRINDE = Math.round(ECONOMIA_ANUAL_CENTAVOS / MENSAL_CENTAVOS);
 
-/** Traduz o que veio do formulário ou do banco; o que não reconhecer vira mensal. */
-export function planoPorCodigo(valor: unknown): Plano {
-  if (typeof valor === "string" && valor in PLANOS) {
-    return PLANOS[valor as CodigoPlano];
-  }
-  return PLANOS.mensal;
+/**
+ * O código do plano, só quando é um dos quatro. A conferência é pelas chaves
+ * próprias, e não com `in`, porque `"toString" in PLANOS` também é verdade, e
+ * um formulário adulterado viraria um plano sem preço.
+ */
+export function codigoDoPlano(valor: unknown): CodigoPlano | null {
+  return typeof valor === "string" && Object.prototype.hasOwnProperty.call(PLANOS, valor)
+    ? (valor as CodigoPlano)
+    : null;
 }
 
-/** A aba Finanças só abre para quem está com um plano VIP em dia. */
-export function temFinanceiro(
-  assinatura: { status: string; plano: string; validaAte: Date } | null | undefined,
+/** Traduz o que veio do formulário ou do banco; o que não reconhecer vira mensal. */
+export function planoPorCodigo(valor: unknown): Plano {
+  return PLANOS[codigoDoPlano(valor) ?? "mensal"];
+}
+
+type AssinaturaComPlano = { status: string; plano: string; validaAte: Date };
+
+/** Assinatura paga e dentro do prazo. Teste grátis e Pix em conferência não contam. */
+export function pagandoEmDia(
+  assinatura: AssinaturaComPlano | null | undefined,
   agora = new Date(),
 ) {
   if (!assinatura) return false;
   if (assinatura.validaAte.getTime() <= agora.getTime()) return false;
-  if (assinatura.status !== "ativa") return false;
-  return planoPorCodigo(assinatura.plano).financeiro;
+  return assinatura.status === "ativa";
+}
+
+/** A aba Finanças só abre para quem está com um plano VIP em dia. */
+export function temFinanceiro(
+  assinatura: AssinaturaComPlano | null | undefined,
+  agora = new Date(),
+) {
+  if (!pagandoEmDia(assinatura, agora)) return false;
+  return planoPorCodigo(assinatura?.plano).financeiro;
+}
+
+/**
+ * Por qual plano a tela de pagamento começa.
+ *
+ * Quem renova sem mexer em nada paga o plano que já tem. Antes a tela abria
+ * sempre no Essencial mensal, e a cliente VIP que confirmava sem olhar pagava
+ * menos e perdia a aba Finanças quando o Pix era conferido. Quem está no teste
+ * grátis, ou tem um plano que não reconhecemos, começa pelo mensal. Quem chega
+ * pela porta da aba Finanças começa pelo VIP mensal, a não ser que já seja VIP.
+ */
+export function planoParaRenovar(
+  assinatura: { status: string; plano: string } | null | undefined,
+  querVip = false,
+): CodigoPlano {
+  const atual =
+    assinatura && assinatura.status !== "teste"
+      ? (codigoDoPlano(assinatura.plano) ?? "mensal")
+      : "mensal";
+
+  if (querVip && PLANOS[atual].familia !== "vip") return "vip_mensal";
+  return atual;
+}
+
+/** Quanto o plano vale por mês: o anual entra dividido por doze. Em centavos. */
+export function valorMensalEquivalente(plano: Plano) {
+  return Math.round(plano.valorCentavos / plano.meses);
+}
+
+/**
+ * A receita recorrente do mês: cada assinatura paga e em dia entra com o valor
+ * mensal do plano dela. O arredondamento fica para o fim, para que vários
+ * anuais somados não percam um centavo cada.
+ */
+export function receitaRecorrente(
+  assinaturas: (AssinaturaComPlano | null | undefined)[],
+  agora = new Date(),
+) {
+  const total = assinaturas.reduce((soma, assinatura) => {
+    if (!pagandoEmDia(assinatura, agora)) return soma;
+    const plano = planoPorCodigo(assinatura?.plano);
+    return soma + plano.valorCentavos / plano.meses;
+  }, 0);
+  return Math.round(total);
 }
 
 /** Mantido para as telas que só falam do mensal. */
@@ -203,7 +281,7 @@ export function pixCopiaECola({
   nome,
   cidade = "SAO PAULO",
   valorCentavos,
-  identificador = "ASSINATURA",
+  identificador = PLANOS.mensal.identificadorPix,
 }: {
   chave: string;
   nome: string;

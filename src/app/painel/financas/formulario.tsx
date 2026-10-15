@@ -5,7 +5,14 @@ import { salvarImposto, salvarLancamento } from "./acoes";
 import { BotaoEnviar } from "@/componentes/botoes";
 import { Aviso } from "@/componentes/avisos";
 
-export function FormularioLancamento({ hoje }: { hoje: string }) {
+export function FormularioLancamento({
+  hoje,
+  ultimoDia,
+}: {
+  hoje: string;
+  /** O último dia aceito: o fim do mês atual. */
+  ultimoDia: string;
+}) {
   const [estado, acao] = useActionState(salvarLancamento, null);
   const [tipo, definirTipo] = useState<"entrada" | "saida">("saida");
   const formulario = useRef<HTMLFormElement>(null);
@@ -49,6 +56,7 @@ export function FormularioLancamento({ hoje }: { hoje: string }) {
           id="descricao"
           name="descricao"
           required
+          maxLength={120}
           className="campo"
           placeholder={tipo === "saida" ? "Aluguel da sala" : "Venda de produto"}
         />
@@ -73,7 +81,14 @@ export function FormularioLancamento({ hoje }: { hoje: string }) {
           <label className="rotulo" htmlFor="data">
             Data
           </label>
-          <input id="data" name="data" type="date" defaultValue={hoje} className="campo" />
+          <input
+            id="data"
+            name="data"
+            type="date"
+            defaultValue={hoje}
+            max={ultimoDia}
+            className="campo"
+          />
         </div>
 
         <div>
@@ -83,6 +98,7 @@ export function FormularioLancamento({ hoje }: { hoje: string }) {
           <input
             id="categoria"
             name="categoria"
+            maxLength={40}
             className="campo"
             placeholder="Material"
             list="categorias-sugeridas"
@@ -110,23 +126,36 @@ export function FormularioImposto({ percentual }: { percentual: number }) {
   const [estado, acao] = useActionState(salvarImposto, null);
 
   return (
-    <form action={acao} className="flex flex-wrap items-end gap-3">
-      <div className="w-28">
+    <form action={acao} className="space-y-3">
+      <div>
         <label className="rotulo" htmlFor="percentual">
           Percentual
         </label>
-        <input
-          id="percentual"
-          name="percentual"
-          inputMode="decimal"
-          defaultValue={percentual}
-          className="campo"
-        />
-      </div>
+        {/* Campo e botão na mesma linha e na mesma altura. */}
+        <div className="flex items-stretch gap-2">
+          <div className="relative w-24">
+            <input
+              id="percentual"
+              name="percentual"
+              inputMode="decimal"
+              required
+              maxLength={5}
+              defaultValue={percentual}
+              className="campo pr-8 text-right tabular-nums"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-carvao-suave"
+            >
+              %
+            </span>
+          </div>
 
-      <BotaoEnviar variante="suave" enviando="Salvando...">
-        Salvar
-      </BotaoEnviar>
+          <BotaoEnviar variante="suave" enviando="Salvando...">
+            Salvar
+          </BotaoEnviar>
+        </div>
+      </div>
 
       {estado?.erro ? <Aviso tom="erro">{estado.erro}</Aviso> : null}
       {estado?.recado ? <Aviso tom="boa">{estado.recado}</Aviso> : null}
