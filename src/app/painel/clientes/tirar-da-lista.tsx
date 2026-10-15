@@ -31,7 +31,7 @@ export function BotaoTirarDaLista({
       {voltarParaLista ? <input type="hidden" name="voltarParaLista" value="1" /> : null}
       <BotaoConfirmar
         pergunta={perguntaParaTirarDaLista({ nome, comHistorico, horariosMarcados })}
-        className="text-rose-700 hover:border-rose-300 hover:text-rose-700"
+        className="text-rose-600 hover:border-rose-300 hover:text-rose-600"
       >
         {comHistorico ? "Arquivar" : "Apagar"}
       </BotaoConfirmar>

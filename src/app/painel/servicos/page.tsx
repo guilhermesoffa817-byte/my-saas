@@ -82,12 +82,14 @@ export default async function PaginaServicos() {
                 ) : null}
 
                 {/*
-                  As ações dividem a mesma linha enquanto cabem e descem juntas
-                  quando não cabem. Aberta, a edição ocupa a largura toda.
+                  As três ações cabem numa linha só em 390px: as duas de caixa
+                  com um respiro lateral menor, e o "Apagar" sem caixa, em
+                  vermelho. Num celular mais estreito, descem juntas. Aberta, a
+                  edição ocupa a largura toda.
                 */}
                 <div className="mt-4 flex flex-wrap items-start gap-2">
                   <details className="open:w-full">
-                    <summary className="botao-suave cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <summary className="botao-suave cursor-pointer list-none px-4 [&::-webkit-details-marker]:hidden">
                       Editar
                     </summary>
                     <div className="mt-4 rounded-2xl bg-creme p-4">
@@ -110,7 +112,7 @@ export default async function PaginaServicos() {
                   */}
                   <form action={alternarServico}>
                     <input type="hidden" name="id" value={servico.id} />
-                    <BotaoEnviar variante="suave">
+                    <BotaoEnviar variante="suave" className="px-4">
                       {servico.ativo ? "Tirar do cardápio" : "Voltar ao cardápio"}
                     </BotaoEnviar>
                   </form>
@@ -125,7 +127,8 @@ export default async function PaginaServicos() {
                       <input type="hidden" name="id" value={servico.id} />
                       <BotaoConfirmar
                         pergunta={`Apagar ${servico.nome} de vez? Ele ainda não tem nenhum atendimento, então some da lista.`}
-                        className="text-rose-700 hover:border-rose-300 hover:text-rose-700"
+                        variante="texto"
+                        className="min-h-11 text-rose-600"
                       >
                         Apagar
                       </BotaoConfirmar>

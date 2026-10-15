@@ -104,6 +104,7 @@ export default async function PaginaDoCliente({
             vencimento: true,
             situacao: true,
             pagaEm: true,
+            agendamento: { select: { servico: { select: { nome: true } } } },
           },
         })
       : Promise.resolve([]),
@@ -118,6 +119,7 @@ export default async function PaginaDoCliente({
             vencimento: true,
             situacao: true,
             pagaEm: true,
+            agendamento: { select: { servico: { select: { nome: true } } } },
           },
         })
       : Promise.resolve([]),
@@ -483,6 +485,7 @@ function ListaDeCobrancas({
     vencimento: Date;
     situacao: string;
     pagaEm: Date | null;
+    agendamento: { servico: { nome: string } } | null;
   }[];
   hoje: Date;
 }) {
@@ -495,13 +498,19 @@ function ListaDeCobrancas({
             <Link href={`/painel/cobrancas/${cobranca.id}`} className="block">
               <Cartao className="transition hover:border-terracota/50">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 text-sm text-carvao-suave">
-                    {naTela === "paga"
-                      ? cobranca.pagaEm
-                        ? `Paga em ${dataPuraCurta(cobranca.pagaEm)}`
-                        : "Paga"
-                      : `${prazoPorExtenso(cobranca.vencimento, hoje)} · ${dataPuraCurta(cobranca.vencimento)}`}
-                  </p>
+                  <div className="min-w-0">
+                    {/* Cobrança de um horário diz de qual serviço é; a solta, não tem de onde. */}
+                    <p className="font-semibold break-words text-carvao">
+                      {cobranca.agendamento?.servico.nome ?? "Cobrança avulsa"}
+                    </p>
+                    <p className="mt-0.5 text-sm text-carvao-suave">
+                      {naTela === "paga"
+                        ? cobranca.pagaEm
+                          ? `Paga em ${dataPuraCurta(cobranca.pagaEm)}`
+                          : "Paga"
+                        : `${prazoPorExtenso(cobranca.vencimento, hoje)} · ${dataPuraCurta(cobranca.vencimento)}`}
+                    </p>
+                  </div>
                   <div className="shrink-0 text-right">
                     <p className="font-display font-semibold whitespace-nowrap tabular-nums text-carvao">
                       {emReais(cobranca.valorCentavos)}
