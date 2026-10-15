@@ -47,6 +47,7 @@ export function FormularioCliente({
             id={`nome-${cliente?.id ?? "nova"}`}
             name="nome"
             required
+            maxLength={120}
             defaultValue={cliente?.nome}
             className="campo"
             placeholder="Marina Alves"
@@ -61,6 +62,8 @@ export function FormularioCliente({
             id={`telefone-${cliente?.id ?? "nova"}`}
             name="telefone"
             required
+            type="tel"
+            maxLength={30}
             defaultValue={cliente?.telefone}
             className="campo"
             placeholder="(66) 99251-3501"
@@ -77,6 +80,7 @@ export function FormularioCliente({
             id={`email-${cliente?.id ?? "nova"}`}
             name="email"
             type="email"
+            maxLength={160}
             defaultValue={cliente?.email ?? ""}
             className="campo"
             placeholder="marina@email.com"
@@ -119,6 +123,7 @@ export function FormularioCliente({
           <input
             id={`endereco-${cliente?.id ?? "nova"}`}
             name="endereco"
+            maxLength={200}
             defaultValue={cliente?.endereco ?? ""}
             className="campo"
             placeholder="Rua das Flores, 120, Centro"
@@ -134,6 +139,7 @@ export function FormularioCliente({
           id={`observacoes-${cliente?.id ?? "nova"}`}
           name="observacoes"
           rows={3}
+          maxLength={2000}
           defaultValue={cliente?.observacoes ?? ""}
           className="campo resize-y"
           placeholder="Pele sensível, prefere horários de manhã..."
