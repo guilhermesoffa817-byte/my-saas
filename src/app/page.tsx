@@ -9,7 +9,8 @@ import {
   ECONOMIA_ANUAL_CENTAVOS,
   ECONOMIA_VIP_ANUAL_CENTAVOS,
 } from "@/lib/assinatura";
-import { emReais } from "@/lib/formato";
+import { competenciaAtual, emReais } from "@/lib/formato";
+import { EMPRESA, whatsappDoBossa } from "@/lib/empresa";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -29,7 +30,10 @@ const problemas = [
   },
   {
     dor: "Tem gente devendo e você não lembra quem",
-    solucao: "O Bossa mostra quem cobrar hoje e abre o WhatsApp com a mensagem pronta.",
+    // A lista de quem cobrar a cada dia é do VIP (lib/recursos.ts); cobrar pelo
+    // WhatsApp é de todos. A frase diz as duas coisas para não prometer demais.
+    solucao:
+      "Cobrança pelo WhatsApp com o Pix pronto, em todos os planos. No VIP, o Bossa ainda lembra quem cobrar a cada dia.",
   },
   {
     dor: "Não sabe quanto ganhou no mês",
@@ -64,11 +68,13 @@ const dadosParaOGoogle = {
     price: (plano.valorCentavos / 100).toFixed(2),
     priceCurrency: "BRL",
     availability: "https://schema.org/InStock",
-    url: `${ENDERECO_DO_SITE}/criar-conta`,
+    url: `${ENDERECO_DO_SITE}/criar-conta?plano=${plano.familia}`,
   })),
 };
 
 export default function PaginaInicial() {
+  const contatoWhatsApp = whatsappDoBossa("Oi! Vim pelo site do Bossa e queria tirar uma dúvida.");
+
   return (
     <div className="min-h-screen">
       <script
@@ -189,6 +195,7 @@ export default function PaginaInicial() {
             {[
               {
                 nome: "Essencial",
+                cadastro: "/criar-conta",
                 mensal: PLANOS.mensal.valorCentavos,
                 anual: PLANOS.anual.valorCentavos,
                 economia: ECONOMIA_ANUAL_CENTAVOS,
@@ -202,6 +209,8 @@ export default function PaginaInicial() {
               },
               {
                 nome: "VIP",
+                // O cadastro mostra o preço do VIP para quem veio deste cartão.
+                cadastro: "/criar-conta?plano=vip",
                 mensal: PLANOS.vip_mensal.valorCentavos,
                 anual: PLANOS.vip_anual.valorCentavos,
                 economia: ECONOMIA_VIP_ANUAL_CENTAVOS,
@@ -217,7 +226,7 @@ export default function PaginaInicial() {
             ].map((plano) => (
               <div
                 key={plano.nome}
-                className={`cartao animar-entrada ${
+                className={`cartao animar-entrada flex flex-col ${
                   plano.destaque ? "border-terracota ring-1 ring-terracota/25" : ""
                 }`}
               >
@@ -244,7 +253,7 @@ export default function PaginaInicial() {
                   brinde.
                 </p>
 
-                <ul className="mt-5 space-y-2 text-sm text-carvao-suave">
+                <ul className="mt-5 mb-6 space-y-2 text-sm text-carvao-suave">
                   {plano.itens.map((item) => (
                     <li key={item} className="flex gap-2.5">
                       <span
@@ -256,9 +265,11 @@ export default function PaginaInicial() {
                   ))}
                 </ul>
 
+                {/* `mt-auto` empurra o botão para o pé do cartão: os dois ficam alinhados
+                    mesmo quando um plano tem mais itens que o outro. */}
                 <Link
-                  href="/criar-conta"
-                  className={`mt-6 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
+                  href={plano.cadastro}
+                  className={`mt-auto w-full ${plano.destaque ? "botao" : "botao-suave"}`}
                 >
                   Testar {DIAS_DE_TESTE} dias grátis
                 </Link>
@@ -291,10 +302,51 @@ export default function PaginaInicial() {
       </main>
 
       <footer className="border-t border-areia-escura/60">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-carvao-suave">
-          <Marca />
-          <p>{FRASE_DA_MARCA.charAt(0).toUpperCase() + FRASE_DA_MARCA.slice(1)}.</p>
+        <div className="mx-auto grid max-w-6xl gap-6 px-5 py-8 text-sm text-carvao-suave sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="min-w-0 space-y-2">
+            <Marca />
+            <p>{FRASE_DA_MARCA.charAt(0).toUpperCase() + FRASE_DA_MARCA.slice(1)}.</p>
+          </div>
+
+          <nav aria-label="Rodapé" className="min-w-0 space-y-2 sm:text-right">
+            <p className="flex flex-wrap gap-x-5 gap-y-2 sm:justify-end">
+              <Link href="/termos" className="font-semibold hover:text-terracota">
+                Termos de uso
+              </Link>
+              <Link href="/privacidade" className="font-semibold hover:text-terracota">
+                Política de privacidade
+              </Link>
+            </p>
+            {contatoWhatsApp || EMPRESA.email ? (
+              <p className="flex flex-wrap gap-x-5 gap-y-2 sm:justify-end">
+                <span>Fale com a gente:</span>
+                {contatoWhatsApp ? (
+                  <a
+                    href={contatoWhatsApp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold whitespace-nowrap hover:text-terracota"
+                  >
+                    WhatsApp {EMPRESA.whatsapp}
+                  </a>
+                ) : null}
+                {EMPRESA.email ? (
+                  <a
+                    href={`mailto:${EMPRESA.email}`}
+                    className="font-semibold wrap-anywhere hover:text-terracota"
+                  >
+                    {EMPRESA.email}
+                  </a>
+                ) : null}
+              </p>
+            ) : null}
+          </nav>
         </div>
+
+        <p className="mx-auto max-w-6xl px-5 pb-8 text-xs text-carvao-suave">
+          © {competenciaAtual().slice(0, 4)} {EMPRESA.nome ?? NOME_DO_PRODUTO}
+          {EMPRESA.documento ? ` · ${EMPRESA.documento}` : ""}
+        </p>
       </footer>
     </div>
   );

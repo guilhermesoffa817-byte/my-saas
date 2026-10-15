@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { criarConta } from "@/app/acoes/autenticacao";
 import { BotaoEnviar } from "@/componentes/botoes";
@@ -69,7 +70,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             name="telefone"
             required
             className="campo"
-            placeholder="(66) 99251-3501"
+            placeholder="(00) 00000-0000"
             autoComplete="tel"
           />
         </div>
@@ -99,7 +100,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             name="cep"
             inputMode="numeric"
             className="campo"
-            placeholder="78000-000"
+            placeholder="00000-000"
             autoComplete="postal-code"
           />
         </div>
@@ -112,7 +113,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             id="endereco"
             name="endereco"
             className="campo"
-            placeholder="Rua das Flores, 120, Centro, Cuiabá/MT"
+            placeholder="Rua, número, bairro, cidade/UF"
             autoComplete="street-address"
           />
         </div>
@@ -142,10 +143,22 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
         Criar minha conta
       </BotaoEnviar>
 
+      <p className="text-center text-sm leading-relaxed text-carvao-suave">
+        Ao criar a conta, você concorda com os{" "}
+        <Link href="/termos" className="font-semibold text-terracota hover:underline">
+          Termos de uso
+        </Link>{" "}
+        e a{" "}
+        <Link href="/privacidade" className="font-semibold text-terracota hover:underline">
+          Política de privacidade
+        </Link>
+        .
+      </p>
+
       <p className="text-center text-xs leading-relaxed text-carvao-suave">
         O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Seus dados
-        ficam só com a gente. Ao criar a conta você começa no período de teste. O pagamento
-        só é pedido quando ele terminar, e nunca sem avisar.
+        não são vendidos nem usados para propaganda. Você começa no período de teste, e o
+        pagamento só é pedido quando ele terminar, nunca sem avisar.
       </p>
     </form>
   );

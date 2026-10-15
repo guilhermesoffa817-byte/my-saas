@@ -1,6 +1,26 @@
 @import "tailwindcss";
 
 /*
+  O `dark:` do Tailwind, sozinho, só olha a preferência do aparelho. Só que o
+  botão de tema escolhe pelo atributo data-tema no <html>, e aí as telas ficavam
+  meio a meio: as cores da paleta trocavam, e as que usam `dark:` (avisos,
+  erros, etiquetas âmbar) não. Esta variante segue a mesma regra das cores
+  abaixo: escuro quando a pessoa escolheu escuro, ou quando o aparelho está no
+  escuro e ela não escolheu claro.
+*/
+@custom-variant dark {
+  &:where(:root[data-tema="escuro"], :root[data-tema="escuro"] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-tema="claro"]), :root:not([data-tema="claro"]) *) {
+      @slot;
+    }
+  }
+}
+
+/*
   Os nomes das cores continuam os mesmos de antes (terracota, creme, areia...)
   para que nenhuma tela precise ser reescrita. O que mudou foram os valores:
   agora a paleta é azul sobre branco no claro e sobre preto no escuro.
@@ -90,16 +110,21 @@ body {
     @apply mb-1.5 block text-sm font-medium text-carvao-suave;
   }
 
+  /*
+    Botão pode quebrar em duas linhas quando o texto é longo e a tela é estreita;
+    é melhor do que vazar para fora. O `text-center` mantém as duas linhas no
+    meio do botão, em vez de encostadas à esquerda.
+  */
   .botao {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-terracota px-6 py-3
-      text-sm font-semibold text-acento-texto shadow-sm transition
+      text-center text-sm font-semibold text-acento-texto shadow-sm transition
       hover:bg-terracota-escura focus-visible:outline-2 focus-visible:outline-offset-2
       focus-visible:outline-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .botao-suave {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-areia-escura
-      bg-superficie px-5 py-2.5 text-sm font-semibold text-carvao transition
+      bg-superficie px-5 py-2.5 text-center text-sm font-semibold text-carvao transition
       hover:border-terracota hover:text-terracota disabled:cursor-not-allowed disabled:opacity-60;
   }
 
@@ -111,7 +136,7 @@ body {
   /* Ação sem volta: apagar, cancelar. Vermelha para parar o polegar antes do toque. */
   .botao-perigo {
     @apply inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-6 py-3
-      text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700
+      text-center text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700
       focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600
       disabled:cursor-not-allowed disabled:opacity-60;
   }
@@ -119,12 +144,18 @@ body {
   /* Ação secundária, sem caixa, para não competir com a ação principal da tela. */
   .botao-texto {
     @apply inline-flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5
-      text-sm font-semibold text-terracota transition hover:bg-areia/70
+      text-center text-sm font-semibold text-terracota transition hover:bg-areia/70
       disabled:cursor-not-allowed disabled:opacity-60;
   }
 
+  /*
+    Etiqueta é palavra curta: "Em dia", "3 visitas". Espremida por um nome comprido
+    ao lado, ela quebrava em duas linhas e virava um balão torto. Agora ela fica
+    inteira e quem cede espaço é o texto vizinho.
+  */
   .etiqueta {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    @apply inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs
+      font-semibold whitespace-nowrap;
   }
 }
 
