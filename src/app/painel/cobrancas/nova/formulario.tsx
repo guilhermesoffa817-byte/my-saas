@@ -10,12 +10,16 @@ import { criarCobranca, type Resposta } from "../acoes";
 
 export function FormularioDeCobranca({
   clientes,
+  clienteDoHorario,
   clienteEscolhido,
   agendamentoId,
   valorSugerido,
   hoje,
 }: {
   clientes: { id: string; nome: string }[];
+  /** Cobrança de um horário: a cliente é a do horário e não se troca. */
+  clienteDoHorario?: string;
+  /** Cliente que já chega marcada na lista, vinda da ficha dela. Pode trocar. */
   clienteEscolhido?: string;
   agendamentoId?: string;
   valorSugerido: string;
@@ -43,12 +47,13 @@ export function FormularioDeCobranca({
         <input type="hidden" name="agendamentoId" value={agendamentoId} />
       ) : null}
 
-      {clienteEscolhido ? (
-        <input type="hidden" name="clienteId" value={clienteEscolhido} />
+      {clienteDoHorario ? (
+        <input type="hidden" name="clienteId" value={clienteDoHorario} />
       ) : (
         <Escolha
           nome="clienteId"
           rotulo="Cliente"
+          defaultValue={clienteEscolhido ?? ""}
           opcoes={[
             { valor: "", rotulo: "Escolha quem vai pagar" },
             ...clientes.map((cliente) => ({ valor: cliente.id, rotulo: cliente.nome })),
@@ -56,12 +61,22 @@ export function FormularioDeCobranca({
         />
       )}
 
+      {/*
+        A dica só fala de onde veio o valor quando ele veio de algum lugar.
+        Com o campo vazio, dizer "veio do preço do serviço" confunde.
+      */}
       <Campo
         nome="valor"
         rotulo="Valor"
         inputMode="decimal"
         defaultValue={valorSugerido}
-        dica="Veio do preço do serviço. Pode mudar se cobrou outro valor."
+        placeholder="120,00"
+        maxLength={15}
+        dica={
+          valorSugerido
+            ? "Veio do valor combinado no horário. Pode mudar se cobrou outro valor."
+            : "Em reais, do jeito que você escreveria: 120 ou 120,50."
+        }
       />
 
       <Campo

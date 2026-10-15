@@ -248,6 +248,9 @@ export default async function PaginaDaCobranca({
         <Link href="/painel/cobrancas" className="botao-suave">
           Voltar para as cobranças
         </Link>
+        <Link href={`/painel/clientes/${cobranca.cliente.id}`} className="botao-suave">
+          Ver a ficha
+        </Link>
         {aberta ? (
           <form action={cancelarCobranca}>
             <input type="hidden" name="id" value={cobranca.id} />
