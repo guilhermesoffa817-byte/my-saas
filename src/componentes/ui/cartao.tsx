@@ -7,13 +7,16 @@ export function Cartao({
   children,
   className = "",
   destaque = false,
+  style,
 }: {
   children: React.ReactNode;
   className?: string;
   destaque?: boolean;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
+      style={style}
       className={`rounded-2xl border bg-superficie p-4 shadow-[0_10px_40px_-28px_rgba(11,18,32,0.5)] sm:p-5 ${
         destaque ? "border-terracota/40 ring-1 ring-terracota/20" : "border-areia-escura/70"
       } ${className}`}
@@ -76,7 +79,23 @@ export function TituloDaTela({
   );
 }
 
-/** Número grande com rótulo. Usado nos resumos do topo das telas. */
+/**
+ * Quanto cada caractere do valor ocupa, em "em". Medido no navegador, "R$
+ * 123.456,78" na fonte dos títulos dá 0,535 por caractere; a conta usa um
+ * pouco mais, para sobrar folga se a fonte reserva do aparelho entrar no lugar.
+ * Sobrar um pouco de espaço não aparece; faltar vaza para fora do cartão.
+ */
+const LARGURA_DO_CARACTERE = 0.58;
+
+/**
+ * Número grande com rótulo. Usado nos resumos do topo das telas.
+ *
+ * No celular dois indicadores dividem a largura, e "R$ 123.456,78" em letra
+ * grande não cabe em meia tela. Em vez de quebrar o valor em duas linhas ou
+ * deixá-lo vazar, a letra encolhe até caber: o tamanho é o menor entre o normal
+ * e o que a largura do cartão comporta para aquela quantidade de caracteres
+ * (`cqi` é um centésimo da largura útil do cartão).
+ */
 export function Indicador({
   rotulo,
   valor,
@@ -97,13 +116,18 @@ export function Indicador({
         ? "text-amber-700 dark:text-amber-400"
         : "text-carvao";
 
+  const tamanhoQueCabe = 100 / (Math.max(valor.length, 1) * LARGURA_DO_CARACTERE);
+
   return (
-    <Cartao className="animar-entrada" >
-      <div style={{ animationDelay: `${atraso}ms` }}>
+    <Cartao className="animar-entrada min-w-0" style={{ animationDelay: `${atraso}ms` }}>
+      <div className="@container min-w-0">
         <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
           {rotulo}
         </p>
-        <p className={`mt-1.5 font-display text-2xl font-semibold tabular-nums ${cor}`}>
+        <p
+          className={`mt-1.5 font-display text-[length:min(1.25rem,var(--cabe))] leading-tight font-semibold whitespace-nowrap tabular-nums sm:text-[length:min(1.5rem,var(--cabe))] ${cor}`}
+          style={{ "--cabe": `${tamanhoQueCabe.toFixed(2)}cqi` } as React.CSSProperties}
+        >
           {valor}
         </p>
         {detalhe ? <p className="mt-1 text-xs text-carvao-suave">{detalhe}</p> : null}

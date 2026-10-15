@@ -14,6 +14,11 @@ const estilos: Record<Tom, string> = {
   espera: "border-terracota/30 bg-terracota/10 text-terracota",
 };
 
+/**
+ * A etiqueta nunca quebra linha nem encolhe (a regra mora na classe .etiqueta,
+ * em globals.css, para valer também nas etiquetas escritas à mão). Ao lado de
+ * um texto comprido, quem cede é o texto: ele precisa de `min-w-0` para isso.
+ */
 export function Etiqueta({
   tom = "calma",
   children,
@@ -34,7 +39,7 @@ export function Aviso({
   return (
     <p
       role="status"
-      className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed ${estilos[tom]}`}
+      className={`rounded-2xl border px-4 py-3 text-sm leading-relaxed wrap-break-word ${estilos[tom]}`}
     >
       {children}
     </p>
