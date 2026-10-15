@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { exigirAcesso } from "@/lib/guardas";
-import { Vazio } from "@/componentes/avisos";
-import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
+import { Vazio } from "@/componentes/ui/estados";
+import { BotaoConfirmar, BotaoEnviar } from "@/componentes/ui/botao";
 import { emReais } from "@/lib/formato";
 import { FormularioServico } from "./formulario";
 import { alternarServico, removerServico } from "./acoes";
@@ -28,10 +28,11 @@ export default async function PaginaServicos() {
         </p>
       </section>
 
-      <section className="cartao">
+      <section className="cartao p-4 sm:p-6">
         <h2 className="font-display text-xl font-semibold text-carvao">Novo serviço</h2>
         <p className="mt-1 mb-5 text-sm text-carvao-suave">
-          O preço entra no cálculo do faturamento quando o atendimento for concluído.
+          O preço vira o valor combinado de cada horário marcado. Mudar depois vale
+          para os próximos, sem mexer nos que já foram marcados.
         </p>
         <FormularioServico />
       </section>
@@ -50,10 +51,13 @@ export default async function PaginaServicos() {
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {servicos.map((servico) => (
-              <li key={servico.id} className={`cartao ${servico.ativo ? "" : "opacity-70"}`}>
+              <li
+                key={servico.id}
+                className={`cartao min-w-0 p-4 sm:p-6 ${servico.ativo ? "" : "opacity-70"}`}
+              >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-display text-lg font-semibold text-carvao">
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-semibold break-words text-carvao">
                       {servico.nome}
                     </p>
                     <p className="text-sm text-carvao-suave">
@@ -61,25 +65,31 @@ export default async function PaginaServicos() {
                     </p>
                   </div>
                   <span
-                    className={`etiqueta border ${
+                    className={`etiqueta shrink-0 border whitespace-nowrap ${
                       servico.ativo
                         ? "border-oliva/30 bg-oliva/10 text-oliva"
                         : "border-areia-escura bg-areia/50 text-carvao-suave"
                     }`}
                   >
-                    {servico.ativo ? "No cardápio" : "Guardado"}
+                    {servico.ativo ? "No cardápio" : "Fora do cardápio"}
                   </span>
                 </div>
 
                 {servico.descricao ? (
-                  <p className="mt-3 text-sm leading-relaxed text-carvao-suave">
+                  <p className="mt-3 text-sm leading-relaxed break-words text-carvao-suave">
                     {servico.descricao}
                   </p>
                 ) : null}
 
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <details className="w-full">
-                    <summary className="botao-suave cursor-pointer list-none">Editar</summary>
+                {/*
+                  As ações dividem a mesma linha enquanto cabem e descem juntas
+                  quando não cabem. Aberta, a edição ocupa a largura toda.
+                */}
+                <div className="mt-4 flex flex-wrap items-start gap-2">
+                  <details className="open:w-full">
+                    <summary className="botao-suave cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      Editar
+                    </summary>
                     <div className="mt-4 rounded-2xl bg-creme p-4">
                       <FormularioServico
                         servico={{
@@ -93,26 +103,34 @@ export default async function PaginaServicos() {
                     </div>
                   </details>
 
+                  {/*
+                    Tirar do cardápio esconde o serviço na hora de marcar, sem
+                    apagar nada. Antes o botão se chamava "Guardar", e quem
+                    tocava achava que estava salvando.
+                  */}
                   <form action={alternarServico}>
                     <input type="hidden" name="id" value={servico.id} />
                     <BotaoEnviar variante="suave">
-                      {servico.ativo ? "Guardar" : "Voltar para o cardápio"}
+                      {servico.ativo ? "Tirar do cardápio" : "Voltar ao cardápio"}
                     </BotaoEnviar>
                   </form>
 
-                  <form action={removerServico}>
-                    <input type="hidden" name="id" value={servico.id} />
-                    <BotaoConfirmar
-                      pergunta={
-                        servico._count.agendamentos > 0
-                          ? `${servico.nome} já tem atendimentos no histórico, então ele será apenas guardado. Tudo bem?`
-                          : `Apagar ${servico.nome} da sua lista?`
-                      }
-                      className="text-rose-700 hover:border-rose-300 hover:text-rose-700"
-                    >
-                      Apagar
-                    </BotaoConfirmar>
-                  </form>
+                  {/*
+                    Serviço com atendimento no histórico não pode ser apagado:
+                    os horários antigos apontam para ele. Para esse, o caminho
+                    é tirar do cardápio, então o botão de apagar nem aparece.
+                  */}
+                  {servico._count.agendamentos === 0 ? (
+                    <form action={removerServico}>
+                      <input type="hidden" name="id" value={servico.id} />
+                      <BotaoConfirmar
+                        pergunta={`Apagar ${servico.nome} de vez? Ele ainda não tem nenhum atendimento, então some da lista.`}
+                        className="text-rose-700 hover:border-rose-300 hover:text-rose-700"
+                      >
+                        Apagar
+                      </BotaoConfirmar>
+                    </form>
+                  ) : null}
                 </div>
               </li>
             ))}

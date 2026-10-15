@@ -12,6 +12,23 @@ function texto(dados: FormData, campo: string) {
   return typeof valor === "string" ? valor.trim() : "";
 }
 
+/*
+  Limites folgados para qualquer cardápio de verdade. Existem para que um envio
+  forjado não grave um texto enorme, nem um preço que estoure a coluna do banco
+  e quebre a soma do faturamento.
+*/
+const LIMITES = {
+  nome: 80,
+  descricao: 300,
+  /** Cem mil reais, o mesmo teto de uma cobrança. */
+  precoCentavos: 10_000_000,
+};
+
+function atualizarTelas() {
+  revalidatePath("/painel/servicos");
+  revalidatePath("/painel/agenda");
+}
+
 export async function salvarServico(_anterior: Resposta, dados: FormData): Promise<Resposta> {
   const { usuario } = await exigirAcesso();
 
@@ -22,7 +39,16 @@ export async function salvarServico(_anterior: Resposta, dados: FormData): Promi
   const id = texto(dados, "id");
 
   if (nome.length < 2) return { erro: "Dê um nome para o serviço, por favor." };
+  if (nome.length > LIMITES.nome) {
+    return { erro: "Esse nome ficou comprido demais. Pode encurtar?" };
+  }
   if (preco === null) return { erro: "Escreva o preço usando números, como 180 ou 180,50." };
+  if (preco > LIMITES.precoCentavos) {
+    return { erro: "Esse preço ficou alto demais. Pode conferir?" };
+  }
+  if (descricao.length > LIMITES.descricao) {
+    return { erro: "A descrição passou de 300 letras. Pode resumir um pouco?" };
+  }
   if (!Number.isFinite(duracao) || duracao < 5 || duracao > 600) {
     return { erro: "A duração precisa ficar entre 5 e 600 minutos." };
   }
@@ -39,46 +65,59 @@ export async function salvarServico(_anterior: Resposta, dados: FormData): Promi
     if (!existente) return { erro: "Não encontramos esse serviço na sua lista." };
 
     await prisma.servico.update({ where: { id }, data: valores });
-    revalidatePath("/painel/servicos");
-    revalidatePath("/painel/agenda");
+    atualizarTelas();
     return { recado: `${nome} foi atualizado.` };
   }
 
   await prisma.servico.create({ data: { ...valores, usuarioId: usuario.id } });
-  revalidatePath("/painel/servicos");
-  revalidatePath("/painel/agenda");
+  atualizarTelas();
   return { recado: `${nome} já está disponível na hora de agendar.` };
 }
 
 export async function alternarServico(dados: FormData) {
   const { usuario } = await exigirAcesso();
-  const id = typeof dados.get("id") === "string" ? String(dados.get("id")) : "";
-
-  const servico = await prisma.servico.findFirst({ where: { id, usuarioId: usuario.id } });
-  if (!servico) return;
-
-  await prisma.servico.update({ where: { id }, data: { ativo: !servico.ativo } });
-  revalidatePath("/painel/servicos");
-  revalidatePath("/painel/agenda");
-}
-
-/** Apaga o serviço; se ele já tiver histórico, apenas o guarda como inativo. */
-export async function removerServico(dados: FormData) {
-  const { usuario } = await exigirAcesso();
-  const id = typeof dados.get("id") === "string" ? String(dados.get("id")) : "";
+  const id = texto(dados, "id");
+  if (!id) return;
 
   const servico = await prisma.servico.findFirst({
     where: { id, usuarioId: usuario.id },
-    include: { _count: { select: { agendamentos: true } } },
+    select: { ativo: true },
   });
   if (!servico) return;
 
-  if (servico._count.agendamentos > 0) {
-    await prisma.servico.update({ where: { id }, data: { ativo: false } });
-  } else {
-    await prisma.servico.delete({ where: { id } });
+  // A condição leva o estado lido: no toque duplo, o segundo envio não acha
+  // mais o serviço do jeito que estava e não desfaz o primeiro.
+  await prisma.servico.updateMany({
+    where: { id, usuarioId: usuario.id, ativo: servico.ativo },
+    data: { ativo: !servico.ativo },
+  });
+  atualizarTelas();
+}
+
+/**
+ * Apaga o serviço que ainda não tem atendimento nenhum. O que já tem histórico
+ * só sai do cardápio: os horários antigos apontam para ele, e o faturamento
+ * dos meses passados depende disso.
+ *
+ * A condição de "sem atendimento" vai dentro do próprio DELETE: se um horário
+ * for marcado com ele no meio do caminho, o banco não apaga, e o serviço sai
+ * do cardápio no lugar.
+ */
+export async function removerServico(dados: FormData) {
+  const { usuario } = await exigirAcesso();
+  const id = texto(dados, "id");
+  if (!id) return;
+
+  const apagados = await prisma.servico.deleteMany({
+    where: { id, usuarioId: usuario.id, agendamentos: { none: {} } },
+  });
+
+  if (apagados.count === 0) {
+    await prisma.servico.updateMany({
+      where: { id, usuarioId: usuario.id },
+      data: { ativo: false },
+    });
   }
 
-  revalidatePath("/painel/servicos");
-  revalidatePath("/painel/agenda");
+  atualizarTelas();
 }
