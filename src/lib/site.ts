@@ -1,3 +1,6 @@
+import { somarDias } from "@/lib/formato";
+import { podeUsar } from "@/lib/recursos";
+
 /**
  * Dados do site usados pelo Google e pelas redes sociais.
  *
@@ -61,3 +64,33 @@ export const PALAVRAS_CHAVE = [
 
 export const DESCRICAO_CURTA =
   "Bossa é a agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";
+
+/**
+ * As páginas abertas a qualquer visitante, na ordem em que importam para o
+ * Google. O sitemap sai daqui, então página pública nova entra nesta lista e
+ * não precisa ser lembrada em outro lugar. O resto do site fica atrás do login.
+ */
+export const PAGINAS_PUBLICAS: {
+  caminho: string;
+  frequencia: "weekly" | "monthly" | "yearly";
+  prioridade: number;
+}[] = [
+  { caminho: "/", frequencia: "weekly", prioridade: 1 },
+  { caminho: "/criar-conta", frequencia: "monthly", prioridade: 0.8 },
+  { caminho: "/entrar", frequencia: "yearly", prioridade: 0.3 },
+  { caminho: "/termos", frequencia: "yearly", prioridade: 0.2 },
+  { caminho: "/privacidade", frequencia: "yearly", prioridade: 0.2 },
+];
+
+/**
+ * Se o teste grátis já libera os recursos do VIP. O site e os termos dizem isso
+ * por escrito, então a resposta vem da própria regra de lib/recursos.ts, com uma
+ * conta em teste no plano VIP, em vez de uma frase fixa que envelhece calada no
+ * dia em que a regra mudar.
+ */
+export function testeLiberaOVip(agora = new Date()) {
+  const contaEmTeste = {
+    assinatura: { status: "teste", plano: "vip_mensal", validaAte: somarDias(agora, 1) },
+  };
+  return podeUsar(contaEmTeste, "financas", agora);
+}
