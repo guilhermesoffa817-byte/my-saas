@@ -6,13 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { criarSessao, encerrarSessao } from "@/lib/sessao";
 import { DIAS_DE_TESTE } from "@/lib/assinatura";
 import { apenasDigitos, documentoValido, somarDias } from "@/lib/formato";
+import { conferirEntrada } from "@/lib/limite";
 
 export type EstadoFormulario = { erro?: string } | null;
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-// Usado só para gastar o mesmo tempo quando o e-mail não existe.
-const HASH_FALSO = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
 function texto(dados: FormData, campo: string) {
   const valor = dados.get(campo);
@@ -106,16 +104,12 @@ export async function entrar(
     return { erro: "Preencha o e-mail e a senha para continuar." };
   }
 
-  const usuario = await prisma.usuario.findUnique({ where: { email } });
-  const confere = usuario
-    ? await bcrypt.compare(senha, usuario.senhaHash)
-    : await bcrypt.compare(senha, HASH_FALSO);
+  // O freio contra quem fica chutando senha, a conta e a senha moram em
+  // lib/limite.ts, onde o teste consegue percorrer o mesmo caminho.
+  const resultado = await conferirEntrada(prisma, email, senha);
+  if (!resultado.certo) return { erro: resultado.erro };
 
-  if (!usuario || !confere) {
-    return { erro: "E-mail ou senha não batem. Tenta de novo com calma?" };
-  }
-
-  await criarSessao(usuario.id, usuario.sessaoVersao);
+  await criarSessao(resultado.usuario.id, resultado.usuario.sessaoVersao);
   redirect("/painel");
 }
 

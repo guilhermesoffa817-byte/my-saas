@@ -40,6 +40,8 @@ export async function limpar() {
   await db.pagamento.deleteMany();
   await db.assinatura.deleteMany();
   await db.usuario.deleteMany();
+  // Não aponta para conta nenhuma, só para o resumo do e-mail: não sai em cascata.
+  await db.tentativaDeEntrada.deleteMany();
 }
 
 /** Monta um estúdio inteiro: dona, cliente, serviço, horário e cobrança. */

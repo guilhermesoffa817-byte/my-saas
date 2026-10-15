@@ -16,6 +16,12 @@ export type Destino = {
   vip?: boolean;
   /** Quando true, só aparece para a administração do Bossa. */
   admin?: boolean;
+  /**
+   * Quando true, no computador mora no menu do nome, no canto de cima, e não
+   * na faixa de navegação. São telas de cuidar da conta, que se abrem pouco;
+   * tirá-las da faixa é o que faz o resto caber numa linha só.
+   */
+  daConta?: boolean;
 };
 
 /** Os quatro primeiros da barra de baixo. O quinto é sempre "Mais". */
@@ -36,7 +42,7 @@ export const PRINCIPAIS: Destino[] = [
     href: "/painel/cobrancas",
     rotulo: "Cobranças",
     explicacao: "O que você tem a receber dos seus clientes.",
-    icone: "dinheiro",
+    icone: "recibo",
   },
   {
     href: "/painel/clientes",
@@ -80,6 +86,14 @@ export const SECUNDARIOS: Destino[] = [
     rotulo: "Assinatura",
     explicacao: "Seu plano e a forma de pagar.",
     icone: "cartao",
+    daConta: true,
+  },
+  {
+    href: "/painel/conta",
+    rotulo: "Minha conta",
+    explicacao: "Seus dados, sua senha e uma cópia de tudo o que é seu.",
+    icone: "conta",
+    daConta: true,
   },
   {
     href: "/painel/admin",
