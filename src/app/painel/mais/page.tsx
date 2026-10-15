@@ -52,6 +52,19 @@ export default async function PaginaMais() {
           Sair da minha conta
         </BotaoEnviar>
       </form>
+
+      {/* No computador estes links ficam no rodapé, que no celular não aparece. */}
+      <nav
+        aria-label="Documentos do Bossa"
+        className="flex justify-center gap-5 text-sm text-carvao-suave"
+      >
+        <Link href="/privacidade" className="hover:text-terracota hover:underline">
+          Privacidade
+        </Link>
+        <Link href="/termos" className="hover:text-terracota hover:underline">
+          Termos de uso
+        </Link>
+      </nav>
     </div>
   );
 }
