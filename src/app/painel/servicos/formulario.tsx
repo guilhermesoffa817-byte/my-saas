@@ -37,6 +37,7 @@ export function FormularioServico({ servico }: { servico?: ServicoDoFormulario }
             id={`nome-${sufixo}`}
             name="nome"
             required
+            maxLength={80}
             defaultValue={servico?.nome}
             className="campo"
             placeholder="Atendimento completo"
@@ -52,6 +53,7 @@ export function FormularioServico({ servico }: { servico?: ServicoDoFormulario }
             name="preco"
             required
             inputMode="decimal"
+            maxLength={12}
             defaultValue={servico?.preco}
             className="campo"
             placeholder="180,00"
@@ -83,9 +85,10 @@ export function FormularioServico({ servico }: { servico?: ServicoDoFormulario }
         <input
           id={`descricao-${sufixo}`}
           name="descricao"
+          maxLength={300}
           defaultValue={servico?.descricao ?? ""}
           className="campo"
-          placeholder="Higienização, extração, máscara calmante"
+          placeholder="Ex.: higienização e máscara"
         />
       </div>
 

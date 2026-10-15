@@ -1,10 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BotaoCopiar, BotaoEnviar } from "@/componentes/ui/botao";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { registrarLembrete } from "../acoes";
 import { TONS, type Tom } from "@/lib/cobranca";
+
+/**
+ * Faz a caixa crescer até caber o texto inteiro. Com altura fixa, no celular o
+ * código Pix, que fica no fim da mensagem, ficava escondido, e a pessoa
+ * mandava sem conferir se ele estava lá.
+ */
+function ajustarAltura(elemento: HTMLTextAreaElement | null) {
+  if (!elemento) return;
+  elemento.style.height = "auto";
+  // scrollHeight não conta a borda; sem somá-la, a última linha fica cortada.
+  const borda = elemento.offsetHeight - elemento.clientHeight;
+  elemento.style.height = `${elemento.scrollHeight + borda}px`;
+}
 
 /**
  * A mensagem que vai para o WhatsApp.
@@ -31,6 +44,19 @@ export function Mensagem({
   const [tom, setTom] = useState<Tom>(tomSugerido);
   const [texto, setTexto] = useState(textos[tomSugerido]);
   const [mandou, setMandou] = useState(false);
+  const caixa = useRef<HTMLTextAreaElement>(null);
+
+  // A cada troca de tom ou edição, a caixa acompanha o tamanho do texto.
+  useLayoutEffect(() => {
+    ajustarAltura(caixa.current);
+  }, [texto]);
+
+  // Virar o celular muda a largura, e com ela quantas linhas o texto ocupa.
+  useEffect(() => {
+    const ajustar = () => ajustarAltura(caixa.current);
+    window.addEventListener("resize", ajustar);
+    return () => window.removeEventListener("resize", ajustar);
+  }, []);
 
   function trocarTom(novo: Tom) {
     setTom(novo);
@@ -70,11 +96,12 @@ export function Mensagem({
           Mensagem
         </label>
         <textarea
+          ref={caixa}
           id="texto-da-mensagem"
           value={texto}
           onChange={(evento) => setTexto(evento.target.value)}
-          rows={9}
-          className="campo font-sans text-sm leading-relaxed"
+          rows={12}
+          className="campo resize-none overflow-hidden font-sans leading-relaxed"
         />
         <p className="mt-1.5 text-xs leading-relaxed text-carvao-suave">
           Pode editar antes de enviar. O valor, a data e o código Pix foram

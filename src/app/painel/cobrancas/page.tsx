@@ -112,8 +112,13 @@ export default async function PaginaCobrancas({
         </section>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        <Link href="/painel/cobrancas/nova" className="botao">
+      {/*
+        No celular, a ação principal ocupa a linha inteira e as duas outras
+        dividem a de baixo, a mais curta só com o espaço de que precisa. Assim
+        nenhuma quebra no meio e nenhuma sobra pendurada sozinha.
+      */}
+      <div className="grid grid-cols-[1fr_auto] gap-2 sm:flex sm:flex-wrap">
+        <Link href="/painel/cobrancas/nova" className="botao col-span-2">
           Nova cobrança
         </Link>
         <Link

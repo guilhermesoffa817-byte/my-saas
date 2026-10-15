@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirRecurso } from "@/lib/guardas";
+import { valorDoAtendimento } from "@/lib/atendimento";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
+import { Aviso } from "@/componentes/ui/etiqueta";
 import { dataEHora, hojeNoEstudio, paraDataPura } from "@/lib/formato";
 import { FormularioDeCobranca } from "./formulario";
 
@@ -12,10 +15,14 @@ export const dynamic = "force-dynamic";
 export default async function PaginaNovaCobranca({
   searchParams,
 }: {
-  searchParams: Promise<{ agendamento?: string; cliente?: string }>;
+  searchParams: Promise<{ agendamento?: string | string[]; cliente?: string | string[] }>;
 }) {
   const { usuario } = await exigirRecurso("cobrar");
-  const { agendamento: agendamentoId, cliente: clienteId } = await searchParams;
+  const parametros = await searchParams;
+  // Um parâmetro repetido no endereço chega como lista; só um texto simples vale.
+  const agendamentoId =
+    typeof parametros.agendamento === "string" ? parametros.agendamento : undefined;
+  const clienteId = typeof parametros.cliente === "string" ? parametros.cliente : undefined;
 
   // O horário é buscado com o estúdio da sessão junto: um id de outro estúdio
   // simplesmente não encontra nada.
@@ -25,6 +32,7 @@ export default async function PaginaNovaCobranca({
         select: {
           id: true,
           inicio: true,
+          valorCentavos: true,
           cliente: { select: { id: true, nome: true } },
           servico: { select: { nome: true, precoCentavos: true } },
         },
@@ -33,25 +41,33 @@ export default async function PaginaNovaCobranca({
 
   if (agendamentoId && !agendamento) notFound();
 
+  // A ficha que veio pelo endereço, da lista de clientes ou da ficha dela.
+  // Mesma regra: só vale se for deste estúdio.
+  const pedida =
+    !agendamento && clienteId
+      ? await prisma.cliente.findFirst({
+          where: { id: clienteId, usuarioId: usuario.id },
+          select: { id: true, nome: true, arquivadoEm: true },
+        })
+      : null;
+
+  if (clienteId && !agendamento && !pedida) notFound();
+
+  // Ficha arquivada não entra na lista de escolha: ela saiu do dia a dia.
   const clientes = agendamento
     ? []
     : await prisma.cliente.findMany({
-        where: { usuarioId: usuario.id },
+        where: { usuarioId: usuario.id, arquivadoEm: null },
         orderBy: { nome: "asc" },
         select: { id: true, nome: true },
       });
 
-  const escolhido = agendamento?.cliente.id ?? clienteId;
-  if (clienteId && !agendamento) {
-    const existe = await prisma.cliente.findFirst({
-      where: { id: clienteId, usuarioId: usuario.id },
-      select: { id: true },
-    });
-    if (!existe) notFound();
-  }
+  const preEscolhida = pedida && !pedida.arquivadoEm ? pedida.id : undefined;
 
+  // O valor sugerido é o combinado na hora de marcar, não o preço de hoje do
+  // serviço: se o preço subiu depois, a cliente paga o que combinou.
   const valor = agendamento
-    ? (agendamento.servico.precoCentavos / 100).toFixed(2).replace(".", ",")
+    ? (valorDoAtendimento(agendamento) / 100).toFixed(2).replace(".", ",")
     : "";
 
   return (
@@ -66,9 +82,19 @@ export default async function PaginaNovaCobranca({
         Cobrar
       </TituloDaTela>
 
+      {pedida?.arquivadoEm ? (
+        <Aviso tom="atencao">
+          A ficha de {pedida.nome} está arquivada. Para cobrar dela,{" "}
+          <Link href={`/painel/clientes/${pedida.id}`} className="font-semibold underline">
+            desarquive a ficha
+          </Link>{" "}
+          primeiro.
+        </Aviso>
+      ) : null}
+
       {!agendamento && clientes.length === 0 ? (
         <Vazio
-          titulo="Você ainda não tem clientes"
+          titulo="Nenhum cliente na sua lista"
           texto="Para cobrar, primeiro cadastre quem você atende."
           acao={{ rotulo: "Cadastrar um cliente", href: "/painel/clientes" }}
         />
@@ -76,7 +102,8 @@ export default async function PaginaNovaCobranca({
         <Cartao>
           <FormularioDeCobranca
             clientes={clientes}
-            clienteEscolhido={escolhido}
+            clienteDoHorario={agendamento?.cliente.id}
+            clienteEscolhido={preEscolhida}
             agendamentoId={agendamento?.id}
             valorSugerido={valor}
             hoje={paraDataPura(hojeNoEstudio())}

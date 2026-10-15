@@ -27,7 +27,8 @@ function atualizarTelas() {
   revalidatePath("/painel");
   revalidatePath("/painel/cobrancas");
   revalidatePath("/painel/agenda");
-  revalidatePath("/painel/clientes");
+  // "layout" para valer também na ficha de cada cliente, que mostra as cobranças dela.
+  revalidatePath("/painel/clientes", "layout");
   revalidatePath("/painel/financas");
 }
 
@@ -45,6 +46,13 @@ function ehDuplicada(erro: unknown) {
 /* Criar                                                               */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Cem mil reais. Nenhum atendimento de estúdio chega perto; o teto existe para
+ * que um zero a mais digitado sem querer não vire cobrança, e para o número
+ * nunca passar do que a coluna do banco aguenta.
+ */
+const VALOR_MAXIMO_EM_CENTAVOS = 10_000_000;
+
 export async function criarCobranca(
   _anterior: Resposta,
   dados: FormData,
@@ -60,6 +68,9 @@ export async function criarCobranca(
   if (!valorCentavos || valorCentavos <= 0) {
     return { erro: "Informe um valor maior que zero, como 120,00." };
   }
+  if (valorCentavos > VALOR_MAXIMO_EM_CENTAVOS) {
+    return { erro: "Esse valor ficou alto demais para uma cobrança. Pode conferir?" };
+  }
   if (!vencimento) {
     return { erro: "Não consegui entender a data de vencimento. Pode conferir?" };
   }
@@ -68,16 +79,25 @@ export async function criarCobranca(
   // servidor, com o id que veio da sessão, nunca com um id vindo da tela.
   const cliente = await prisma.cliente.findFirst({
     where: { id: clienteId, usuarioId: usuario.id },
-    select: { id: true },
+    select: { id: true, arquivadoEm: true },
   });
   if (!cliente) return { erro: "Não encontramos esse cliente na sua lista." };
 
   if (agendamentoId) {
     const agendamento = await prisma.agendamento.findFirst({
       where: { id: agendamentoId, usuarioId: usuario.id },
-      select: { id: true },
+      select: { id: true, clienteId: true },
     });
     if (!agendamento) return { erro: "Não encontramos esse horário na sua agenda." };
+    // Sem esta conferência, a cobrança de um horário poderia sair no nome de
+    // outra cliente do mesmo estúdio.
+    if (agendamento.clienteId !== cliente.id) {
+      return { erro: "Esse horário é de outro cliente. Abra a cobrança pela agenda de novo." };
+    }
+  } else if (cliente.arquivadoEm) {
+    // Cobrança de um horário antigo continua valendo mesmo com a ficha
+    // arquivada: o atendimento aconteceu. Cobrança solta, não.
+    return { erro: "A ficha desse cliente está arquivada. Desarquive para cobrar." };
   }
 
   try {
@@ -219,7 +239,7 @@ export async function marcarComoPaga(
       Onde este dinheiro aparece no faturamento depende de onde ele nasceu.
 
       Cobrança que veio de um horário da agenda NÃO vira lançamento: o
-      faturamento do mês já soma o preço do serviço de todo atendimento
+      faturamento do mês já soma o valor combinado de todo atendimento
       concluído. Criar um lançamento aqui contaria o mesmo dinheiro duas vezes
       e mudaria o sentido de um número que a pessoa já conhece.
 
@@ -282,6 +302,10 @@ export async function salvarAjustesDeCobranca(
   if (pixChave && !pixCidade) {
     return { erro: "O código Pix também precisa da cidade de quem recebe." };
   }
+  // Nenhuma chave Pix passa de 77 letras, e o código só usa o começo da cidade.
+  if (pixChave.length > 100 || pixCidade.length > 60) {
+    return { erro: "A chave ou a cidade ficou comprida demais. Pode conferir?" };
+  }
 
   /*
     Caixa de seleção desabilitada não é enviada pelo navegador, e ausência aqui
@@ -316,6 +340,7 @@ export async function mudarLembretesDoCliente(dados: FormData) {
   const { usuario } = await exigirAcesso();
   const id = texto(dados, "id");
   const semLembretes = texto(dados, "semLembretes") === "1";
+  if (!id) return;
 
   await prisma.cliente.updateMany({
     where: { id, usuarioId: usuario.id },
