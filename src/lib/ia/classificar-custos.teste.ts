@@ -80,7 +80,7 @@ describe("montarLote", () => {
 
   it("divide em lotes do tamanho certo", () => {
     expect(emLotes([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
-    expect(emLotes(Array.from({ length: 130 }), TAMANHO_DO_LOTE).map((l) => l.length)).toEqual([60, 60, 10]);
+    expect(emLotes(Array.from({ length: 130 }), TAMANHO_DO_LOTE).map((l) => l.length)).toEqual([30, 30, 30, 30, 10]);
   });
 });
 

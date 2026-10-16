@@ -17,7 +17,7 @@ import {
   reservarUsoDeIa,
   usoDeIaNoMes,
 } from "@/lib/ia/franquia";
-import { classificarComFranquia, type ItemParaIA } from "@/lib/ia/classificar-custos";
+import { TAMANHO_DO_LOTE, classificarComFranquia, type ItemParaIA } from "@/lib/ia/classificar-custos";
 
 const AGORA = new Date("2026-10-15T15:00:00.000Z");
 
@@ -354,6 +354,36 @@ describe.skipIf(!TEM_BANCO)("custos no banco", () => {
       const linhas = await db.usoDeIa.findMany({ where: { usuarioId: um.usuario.id } });
       expect(linhas).toHaveLength(1);
       expect(linhas[0]).toMatchObject({ recurso: "classificacao", unidades: 3, tokensEntrada: 400 });
+    });
+
+    it("entrega cada lote assim que ele termina, e uma falha ao gravar não derruba os outros", async () => {
+      const db = await banco();
+      const { cliente, pedidos } = apiFalsa(recusaUma);
+      const entregues: string[][] = [];
+      let primeira = true;
+      const resultado = await classificarComFranquia(db, {
+        cliente,
+        usuarioId: um.usuario.id,
+        limite: 300,
+        // A despesa recusada é a 2ª: o 1º lote se divide, o 2º não.
+        despesas: despesas(TAMANHO_DO_LOTE + 5),
+        maximo: 180,
+        anteriores: new Set(),
+        aoTerminarLote: async (sugestoes) => {
+          entregues.push(sugestoes.map((s) => s.lancamentoId));
+          if (primeira) {
+            primeira = false;
+            throw new Error("banco fora do ar");
+          }
+        },
+      });
+
+      expect(entregues).toHaveLength(2);
+      expect(entregues.flat()).toHaveLength(TAMANHO_DO_LOTE + 4);
+      expect(resultado.sugestoes).toHaveLength(TAMANHO_DO_LOTE + 4);
+      expect(resultado.recusadas).toEqual(["lanc-2"]);
+      expect(resultado.erro).toMatch(/parte das sugestões/);
+      expect(pedidos.length).toBeGreaterThan(2);
     });
 
     it("quando a franquia não cobre tudo, manda só o que cabe", async () => {

@@ -21,7 +21,7 @@ describe("liberação por plano", () => {
     expect(podeUsar({ assinatura: null }, "cobrar", AGORA)).toBe(true);
   });
 
-  it("guarda lembretes, vencimentos, documentos, finanças, equipe e custos para o VIP", () => {
+  it("guarda lembretes, vencimentos, documentos, finanças, equipe, custos e assistente para o VIP", () => {
     for (const recurso of [
       "lembretes",
       "vencimentos",
@@ -29,6 +29,7 @@ describe("liberação por plano", () => {
       "financas",
       "equipe",
       "custos",
+      "assistente",
     ] as const) {
       expect(podeUsar(comPlano("mensal"), recurso, AGORA)).toBe(false);
       expect(podeUsar(comPlano("anual"), recurso, AGORA)).toBe(false);

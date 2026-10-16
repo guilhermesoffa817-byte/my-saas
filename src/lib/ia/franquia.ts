@@ -180,3 +180,32 @@ export async function devolverUsoDeIa(
     return 0;
   }
 }
+
+/**
+ * Soma os tokens de UMA chamada a uma reserva que já existe. É o par de
+ * `atualizarUsoDeIa` para quem grava aos pedaços: o assistente faz uma chamada
+ * por pedido (a hospedagem corta pedidos longos) e não guarda as anteriores
+ * para somar. Nunca lança: o uso já está contado pela reserva, e uma falha
+ * aqui só deixa os tokens sem registro.
+ */
+export async function somarAoUsoDeIa(
+  db: Banco,
+  params: { id: string; usuarioId: string; uso: UsoDaApi },
+) {
+  const soma = somarUso([params.uso]);
+  try {
+    const mudou = await db.usoDeIa.updateMany({
+      where: { id: params.id, usuarioId: params.usuarioId },
+      data: {
+        tokensEntrada: { increment: soma.tokensEntrada },
+        tokensSaida: { increment: soma.tokensSaida },
+        tokensCacheLeitura: { increment: soma.tokensCacheLeitura },
+        tokensCacheEscrita: { increment: soma.tokensCacheEscrita },
+        buscasNaWeb: { increment: soma.buscasNaWeb },
+      },
+    });
+    return mudou.count > 0;
+  } catch {
+    return false;
+  }
+}

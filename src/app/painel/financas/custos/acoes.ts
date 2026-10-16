@@ -27,8 +27,8 @@ import { iaConfigurada } from "@/lib/ia/cliente";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
-/** Lotes por clique: três lotes de 60 em paralelo cabem no tempo da página. */
-const LOTES_POR_VEZ = 3;
+/** Lotes por clique: cinco lotes de 30 em paralelo, 150 despesas no máximo. */
+const LOTES_POR_VEZ = 5;
 
 function texto(dados: FormData, campo: string) {
   const valor = dados.get(campo);
@@ -107,20 +107,21 @@ export async function sugerirClassificacao(_anterior: Resposta, dados: FormData)
           maximo: TAMANHO_DO_LOTE * LOTES_POR_VEZ,
           anteriores: descricoesAnteriores(movimento.despesas, mes),
           nomes,
+          // Grava lote a lote: se a hospedagem cortar o pedido, o que já voltou fica.
+          aoTerminarLote: async (sugestoes) => {
+            // Primeiro o await, depois a soma: os lotes terminam em paralelo, e
+            // `porIa += await ...` leria o total antigo e perderia a soma de outro lote.
+            const gravadas = await gravarClassificacoes(
+              prisma,
+              usuario.id,
+              sugestoes.map((s) => ({ id: s.lancamentoId, natureza: s.natureza, motivo: s.motivo })),
+              "ia",
+            );
+            porIa += gravadas;
+          },
         });
         erroDaIa = resultado.erro;
         recusadas = resultado.recusadas.length;
-
-        try {
-          porIa = await gravarClassificacoes(
-            prisma,
-            usuario.id,
-            resultado.sugestoes.map((s) => ({ id: s.lancamentoId, natureza: s.natureza, motivo: s.motivo })),
-            "ia",
-          );
-        } catch {
-          erroDaIa ??= "Não consegui salvar as sugestões da IA.";
-        }
 
         semIa = Math.max(0, plano.paraIa.length - porIa - recusadas);
         if (semIa > 0) {

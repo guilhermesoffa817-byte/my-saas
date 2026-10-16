@@ -90,6 +90,13 @@ export const SECUNDARIOS: Destino[] = [
     vip: true,
   },
   {
+    href: "/painel/assistente",
+    rotulo: "Assistente",
+    explicacao: "Pergunte sobre o seu negócio e receba sugestões com os seus números.",
+    icone: "conversa",
+    vip: true,
+  },
+  {
     href: "/painel/assinatura",
     rotulo: "Assinatura",
     explicacao: "Seu plano e a forma de pagar.",

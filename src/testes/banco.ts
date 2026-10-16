@@ -32,6 +32,8 @@ export async function banco(): Promise<PrismaClient> {
 export async function limpar() {
   const db = await banco();
   // O pagamento da equipe vem antes: ele segura o lançamento e o colaborador.
+  await db.mensagemDeIa.deleteMany();
+  await db.conversaDeIa.deleteMany();
   await db.usoDeIa.deleteMany();
   await db.pagamentoDeColaborador.deleteMany();
   await db.ausenciaDoColaborador.deleteMany();

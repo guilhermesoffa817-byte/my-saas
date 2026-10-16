@@ -44,23 +44,41 @@ function escapar(texto: string) {
   return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Ligações de nome composto: sozinhas não identificam ninguém e aparecem em toda frase. */
+const PARTICULAS = new Set(["das", "dos", "del", "della", "van", "von", "der"]);
+
+/**
+ * Tira o acento de cada caractere sem mudar o tamanho do texto: a posição de
+ * cada letra no texto dobrado é a mesma no original. Assim dá para achar o
+ * nome sem acento e trocar no texto de verdade.
+ */
+function dobrarAcentos(texto: string) {
+  return Array.from(texto, (caractere) => {
+    const base = Array.from(caractere.normalize("NFD"))[0] ?? caractere;
+    return base.length === caractere.length ? base : caractere;
+  }).join("");
+}
+
 /**
  * Troca por "[nome]" cada pedaço (de 3 letras ou mais) dos nomes que o Bossa
  * conhece: clientes, gente da equipe e a própria dona. Uma despesa como
- * "Vale para Rafael Lima" vira "Vale para [nome]".
+ * "Vale para Rafael Lima" vira "Vale para [nome]". Acento não conta: a dona
+ * que digita "Julia" para a cliente "Júlia" também tem o nome escondido.
  *
  * Pode esconder demais (uma cliente de sobrenome "Luz" apaga a palavra em
  * "conta de luz"), e isso é aceitável: as regras já rodaram no texto original,
- * e na dúvida é melhor a IA saber menos do que saber o nome de alguém.
+ * e na dúvida é melhor a IA saber menos do que saber o nome de alguém. Só as
+ * ligações ("dos", "das"...) ficam, porque não dizem de quem se trata.
  */
 export function ocultarNomes(texto: string, nomes: string[]) {
   const partes = [
     ...new Set(
       nomes.flatMap((nome) =>
-        nome
+        dobrarAcentos(nome.normalize("NFC"))
+          .toLowerCase()
           .trim()
           .split(/\s+/)
-          .filter((parte) => parte.length >= 3),
+          .filter((parte) => parte.length >= 3 && !PARTICULAS.has(parte)),
       ),
     ),
   ].sort((a, b) => b.length - a.length);
@@ -69,5 +87,16 @@ export function ocultarNomes(texto: string, nomes: string[]) {
     `(?<![\\p{L}\\p{N}])(?:${partes.map(escapar).join("|")})(?![\\p{L}\\p{N}])`,
     "giu",
   );
-  return texto.replace(padrao, "[nome]").replace(/\[nome\](\s+\[nome\])+/g, "[nome]");
+
+  const original = texto.normalize("NFC");
+  const dobrado = dobrarAcentos(original);
+  let resultado = "";
+  let ate = 0;
+  for (const achado of dobrado.matchAll(padrao)) {
+    const inicio = achado.index ?? 0;
+    resultado += original.slice(ate, inicio) + "[nome]";
+    ate = inicio + achado[0].length;
+  }
+  resultado += original.slice(ate);
+  return resultado.replace(/\[nome\](\s+\[nome\])+/g, "[nome]");
 }

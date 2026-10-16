@@ -5,6 +5,7 @@ import { podeUsar } from "@/lib/recursos";
 import { agoraDoPedido } from "@/lib/agora";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
+import { Icone } from "@/componentes/ui/icones";
 import {
   Etiqueta,
   ROTULO_DA_COBRANCA,
@@ -66,6 +67,7 @@ export default async function PaginaPainel() {
   const temLembretes = podeUsar(usuario, "lembretes");
   const temVencimentos = podeUsar(usuario, "vencimentos");
   const temDocumentos = podeUsar(usuario, "documentos");
+  const temAssistente = podeUsar(usuario, "assistente");
 
   const [hojeLista, concluidosNoMes, cobrancasAbertas, vencimentosProximos, documentosProntos] =
     await Promise.all([
@@ -276,6 +278,22 @@ export default async function PaginaPainel() {
           </ul>
         )}
       </Secao>
+
+      {temAssistente ? (
+        <Link href="/painel/assistente" className="block">
+          <Cartao className="transition hover:border-terracota/50">
+            <div className="flex items-start gap-3">
+              <Icone nome="conversa" className="mt-0.5 h-5 w-5 shrink-0 text-terracota" />
+              <div className="min-w-0">
+                <p className="font-semibold text-carvao">Pergunte ao assistente</p>
+                <p className="mt-0.5 text-sm text-carvao-suave">
+                  “Como foi meu último mês?” “Em que dia a agenda fica mais vazia?” Ele responde com os seus números.
+                </p>
+              </div>
+            </div>
+          </Cartao>
+        </Link>
+      ) : null}
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Indicador

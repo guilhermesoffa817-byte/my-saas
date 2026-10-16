@@ -17,7 +17,8 @@ export type Recurso =
   | "documentos"
   | "financas"
   | "equipe"
-  | "custos";
+  | "custos"
+  | "assistente";
 
 const SO_NO_VIP: Record<Recurso, boolean> = {
   /** Cobrar pelo WhatsApp é dos dois planos: é o que traz dinheiro para o estúdio. */
@@ -30,6 +31,8 @@ const SO_NO_VIP: Record<Recurso, boolean> = {
   equipe: true,
   /** Custos operacionais mora dentro de Finanças, que já é do VIP. */
   custos: true,
+  /** O assistente lê o financeiro e tem custo por pergunta: só no VIP. */
+  assistente: true,
 };
 
 /** Quantas leituras de documento o plano dá por mês. */

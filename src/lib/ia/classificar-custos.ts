@@ -20,8 +20,11 @@ import { ocultarNomes, sanitizarParaIA } from "./sanitizar";
  * banco: cada item ganha um número que só vale nesta chamada.
  */
 
-/** Lote máximo por chamada. */
-export const TAMANHO_DO_LOTE = 60;
+/**
+ * Lote máximo por chamada. Pequeno de propósito: os lotes saem em paralelo, e
+ * uma resposta curta chega antes do corte de tempo da hospedagem.
+ */
+export const TAMANHO_DO_LOTE = 30;
 
 /**
  * O formato da resposta. Escrito à mão, como o da leitura de documentos, para
@@ -250,6 +253,14 @@ export async function classificarLote(
  */
 const ERROS_SEM_COBRANCA = new Set(["limite", "sobrecarga", "servidor", "config", "pedido"]);
 
+/**
+ * Prazos de um clique. A página declara 120 s (`maxDuration`), mas há
+ * hospedagem que corta antes; com lotes pequenos em paralelo, a resposta
+ * costuma voltar bem antes disso, e cada lote é gravado ao terminar.
+ */
+const PRAZO_DO_CLIQUE_MS = 55_000;
+const PRAZO_PARA_DIVIDIR_MS = 25_000;
+
 /** Em quantas partes um lote recusado é dividido para achar a despesa recusada. */
 const PARTES_NA_DIVISAO = 4;
 
@@ -341,6 +352,13 @@ export async function classificarComFranquia(
     prazoMs?: number;
     /** Depois disso, um lote recusado não é mais dividido neste clique. */
     prazoParaDividirMs?: number;
+    /**
+     * Recebe as sugestões de cada lote assim que ele termina, para a tela
+     * gravar na hora. Se a hospedagem cortar o pedido no meio, o que já
+     * voltou da IA fica salvo, em vez de se perder com o resto. Um erro aqui
+     * não derruba os outros lotes: vira a mensagem de erro do resultado.
+     */
+    aoTerminarLote?: (sugestoes: SugestaoDeCusto[]) => Promise<void>;
   },
 ): Promise<ResultadoComFranquia> {
   const vazio: ResultadoComFranquia = {
@@ -375,13 +393,26 @@ export async function classificarComFranquia(
     modelo: params.modelo,
     nomes: params.nomes,
     anteriores: params.anteriores,
-    signal: AbortSignal.timeout(params.prazoMs ?? 100_000),
-    dividirAte: Date.now() + (params.prazoParaDividirMs ?? 60_000),
+    signal: AbortSignal.timeout(params.prazoMs ?? PRAZO_DO_CLIQUE_MS),
+    dividirAte: Date.now() + (params.prazoParaDividirMs ?? PRAZO_PARA_DIVIDIR_MS),
   };
 
-  const resultados = await Promise.all(lotes.map((lote) => classificarDividindo(lote, contexto)));
+  let erroAoGravar: string | null = null;
+  const resultados = await Promise.all(
+    lotes.map(async (lote) => {
+      const resultado = await classificarDividindo(lote, contexto);
+      if (params.aoTerminarLote && resultado.sugestoes.length > 0) {
+        try {
+          await params.aoTerminarLote(resultado.sugestoes);
+        } catch {
+          erroAoGravar ??= "Não consegui salvar parte das sugestões da IA.";
+        }
+      }
+      return resultado;
+    }),
+  );
 
-  let erro: string | null = null;
+  let erro: string | null = erroAoGravar;
   let enviados = 0;
   const usos: UsoDaApi[] = [];
   for (const [indice, resultado] of resultados.entries()) {

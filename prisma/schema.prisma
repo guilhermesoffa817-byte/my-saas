@@ -36,6 +36,11 @@ model Usuario {
   lembreteTresDias  Boolean  @default(true)
   lembreteSeteDias  Boolean  @default(true)
   papel             String   @default("dona")
+  /// Ramo do negócio em poucas palavras ("salão de beleza", "barbearia").
+  /// Opcional: só serve para o assistente pesquisar tendências do ramo.
+  ramo              String?
+  /// Quando a dona leu e aceitou o aviso do assistente de IA. Vazio = ainda não.
+  iaAceitaEm        DateTime?
   /// Sobe a cada troca de senha. A sessão carrega esse número, então quem
   /// entrou com a senha antiga perde o acesso quando a senha muda.
   sessaoVersao      Int      @default(0)
@@ -56,6 +61,8 @@ model Usuario {
   ausencias          AusenciaDoColaborador[]
   pagamentosDaEquipe PagamentoDeColaborador[]
   usosDeIa           UsoDeIa[]
+  conversasDeIa      ConversaDeIa[]
+  mensagensDeIa      MensagemDeIa[]
 
   @@index([indicadoPor])
 }
@@ -486,4 +493,68 @@ model UsoDeIa {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, recurso, criadoEm])
+}
+
+/// Uma conversa com o assistente de negócios.
+///
+/// O prompt de sistema e a lista de ferramentas ficam congelados aqui, como
+/// TEXTO, no momento em que a conversa nasce. A API amarra o raciocínio guardado
+/// a esses dois: se o ramo, a cidade ou o texto do código mudarem depois, a
+/// conversa antiga segue com o que tinha e não quebra.
+model ConversaDeIa {
+  id           String   @id @default(cuid())
+  usuarioId    String
+  titulo       String
+  /// O prompt de sistema usado na criação.
+  sistema      String
+  /// A lista de ferramentas enviada à API, em JSON, exatamente como foi.
+  ferramentas  String
+  criadoEm     DateTime @default(now())
+  /// Sobe a cada pergunta e resposta. Conversa parada há 90 dias é apagada.
+  atualizadoEm DateTime @updatedAt
+
+  usuario   Usuario        @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  mensagens MensagemDeIa[]
+
+  @@index([usuarioId, atualizadoEm])
+}
+
+/// Cada mensagem trocada com a API, só por acréscimo.
+///
+/// `conteudo` guarda os blocos exatamente como foram enviados ou recebidos
+/// (raciocínio incluído), em TEXTO JSON: jsonb reordenaria as chaves, e a API
+/// recusa um histórico que mude entre um pedido e outro. Esse conteúdo nunca
+/// vai ao navegador; a tela recebe só `textoNaTela`.
+model MensagemDeIa {
+  id             String   @id @default(cuid())
+  usuarioId      String
+  conversaId     String
+  /// Posição na conversa, a partir de 0. Única: dois pedidos ao mesmo tempo
+  /// não conseguem gravar duas mensagens no mesmo lugar.
+  ordem          Int
+  /// user ou assistant.
+  papel          String
+  conteudo       String
+  /// A pergunta digitada, ou o texto visível da resposta. Vazio nos
+  /// resultados de ferramenta.
+  textoNaTela    String?
+  /// Só nas respostas: end_turn, tool_use, pause_turn, max_tokens...
+  motivoParada   String?
+  /// Só nas perguntas: andamento, concluida, recusada, cortada, voltas,
+  /// interrompida ou erro.
+  situacao       String?
+  /// Só nas perguntas: a reserva da franquia, feita uma vez por pergunta.
+  usoDeIaId      String?
+  /// Só nas perguntas: quantas chamadas à API já foram feitas para ela.
+  chamadas       Int      @default(0)
+  /// Mensagens de uma pergunta recusada ou sem resposta saem do histórico
+  /// enviado à API, mas ficam registradas.
+  descartada     Boolean  @default(false)
+  criadoEm       DateTime @default(now())
+
+  usuario  Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  conversa ConversaDeIa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
+
+  @@unique([conversaId, ordem])
+  @@index([usuarioId])
 }

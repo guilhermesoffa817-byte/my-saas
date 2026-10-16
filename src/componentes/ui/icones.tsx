@@ -24,6 +24,9 @@ const TRACOS: Record<string, string> = {
   mais: "M4.5 7h15m-15 5h15m-15 5h15",
   balanca:
     "M12 4v16m-5 0h10M5 7.5h14M7 7.5l-3 6a3 3 0 0 0 6 0l-3-6Zm10 0-3 6a3 3 0 0 0 6 0l-3-6Z",
+  /** Balão de conversa com linhas de texto: o assistente. Nada de robô nem estrelinha. */
+  conversa:
+    "M20.5 11.5c0 4.14-3.8 7.5-8.5 7.5-1.2 0-2.35-.22-3.39-.62L4 19.5l1.2-3.6C4.13 14.65 3.5 13.13 3.5 11.5 3.5 7.36 7.3 4 12 4s8.5 3.36 8.5 7.5ZM8.5 10h7m-7 3.5h4.5",
   cracha:
     "M10 3.5h4M7.5 5h9A1.5 1.5 0 0 1 18 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 18.5v-12A1.5 1.5 0 0 1 7.5 5Zm4.5 7.25a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-3 4.25c.4-1.5 1.6-2.4 3-2.4s2.6.9 3 2.4",
 };

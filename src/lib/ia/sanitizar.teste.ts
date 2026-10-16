@@ -49,6 +49,20 @@ describe("ocultarNomes", () => {
     expect(ocultarNomes("Banana e limão", ["Ana Lima"])).toBe("Banana e limão");
   });
 
+  it("acha o nome com ou sem acento e devolve o resto do texto intacto", () => {
+    expect(ocultarNomes("Pagamento Julia — manutenção", ["Júlia Conceição"])).toBe(
+      "Pagamento [nome] — manutenção",
+    );
+    expect(ocultarNomes("Reembolso Júlia Conceicao", ["Julia Conceição"])).toBe("Reembolso [nome]");
+    // Texto em NFD (acento separado da letra) também.
+    expect(ocultarNomes("Vale Ju\u0301lia", ["Júlia"])).toBe("Vale [nome]");
+  });
+
+  it("não apaga as ligações de nome composto", () => {
+    expect(ocultarNomes("Compra dos produtos", ["Maria dos Santos"])).toBe("Compra dos produtos");
+    expect(ocultarNomes("Vale Maria dos Santos", ["Maria dos Santos"])).toBe("Vale [nome] dos [nome]");
+  });
+
   it("sem nomes, devolve o texto como veio", () => {
     expect(ocultarNomes("Aluguel", [])).toBe("Aluguel");
   });
