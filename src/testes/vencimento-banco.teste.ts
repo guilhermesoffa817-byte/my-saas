@@ -1,7 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { TEM_BANCO, banco, limpar, montarEstudio } from "./banco";
 import { ocorrenciasQueFaltam } from "@/lib/vencimento";
-import { deDataPura, paraDataPura } from "@/lib/formato";
+import { dataCurta, deDataPura, inicioDaCompetencia, paraDataPura } from "@/lib/formato";
+import { pagarVencimento } from "@/lib/vencimento-operacoes";
 
 const dia = (texto: string) => deDataPura(texto)!;
 
@@ -133,5 +134,46 @@ describe.skipIf(!TEM_BANCO)("vencimentos no banco", () => {
     });
     const lido = await db.vencimento.findUniqueOrThrow({ where: { id: vencimento.id } });
     expect(paraDataPura(lido.data)).toBe("2027-01-01");
+  });
+
+  it("a saída criada ao pagar aparece nas Finanças no dia do pagamento", async () => {
+    const db = await banco();
+    const vencimento = await db.vencimento.create({
+      data: {
+        usuarioId: estudio.usuario.id,
+        descricao: "Conta de luz",
+        valorCentavos: 24000,
+        data: dia("2026-10-10"),
+      },
+    });
+
+    const pago = await pagarVencimento(db, estudio.usuario.id, vencimento.id, dia("2026-11-01"));
+    expect(pago).toEqual({ resultado: "pago", tipo: "conta" });
+
+    const lido = await db.vencimento.findUniqueOrThrow({ where: { id: vencimento.id } });
+    const lancamento = await db.lancamento.findUniqueOrThrow({ where: { id: lido.lancamentoId! } });
+    // A tela de Finanças mostra a data no fuso do estúdio: tem de ser dia 1º,
+    // e o lançamento tem de cair em novembro, não no fim de outubro.
+    expect(dataCurta(lancamento.data)).toBe("01/11/2026");
+    expect(lancamento.data.getTime()).toBeGreaterThanOrEqual(inicioDaCompetencia("2026-11").getTime());
+    expect(paraDataPura(lido.pagoEm!)).toBe("2026-11-01");
+
+    // Pagar de novo não lança outra saída.
+    expect(await pagarVencimento(db, estudio.usuario.id, vencimento.id, dia("2026-11-01"))).toEqual({
+      resultado: "ja_pago",
+      tipo: "conta",
+    });
+    expect(await db.lancamento.count({ where: { usuarioId: estudio.usuario.id } })).toBe(1);
+  });
+
+  it("não paga o vencimento de outro estúdio pela função da tela", async () => {
+    const db = await banco();
+    const outro = await montarEstudio("vizinho2");
+    const vencimento = await db.vencimento.create({
+      data: { usuarioId: outro.usuario.id, descricao: "Aluguel", valorCentavos: 1000, data: dia("2026-10-10") },
+    });
+    expect(await pagarVencimento(db, estudio.usuario.id, vencimento.id, dia("2026-10-10"))).toEqual({
+      erro: "Não encontramos esse vencimento.",
+    });
   });
 });

@@ -17,7 +17,7 @@ export default async function LayoutPainel({
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-areia-escura/60 bg-superficie/85 backdrop-blur">
+      <header className="nao-imprimir sticky top-0 z-30 border-b border-areia-escura/60 bg-superficie/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5">
           <Marca href="/painel" />
           <div className="flex items-center gap-2 sm:gap-3">
@@ -43,7 +43,7 @@ export default async function LayoutPainel({
       </header>
 
       {!situacao.liberada ? (
-        <div className="bg-terracota/10 text-carvao">
+        <div className="nao-imprimir bg-terracota/10 text-carvao">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
             <span>{situacao.recado}</span>
             <Link
@@ -55,7 +55,7 @@ export default async function LayoutPainel({
           </div>
         </div>
       ) : situacao.emTeste ? (
-        <div className="bg-areia/60 text-carvao">
+        <div className="nao-imprimir bg-areia/60 text-carvao">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
             <span>{situacao.recado}</span>
             <Link
@@ -71,7 +71,7 @@ export default async function LayoutPainel({
       {/* A folga embaixo é o espaço da barra de navegação do celular. */}
       <main className="mx-auto max-w-6xl px-5 pt-6 pb-28 md:pt-8 md:pb-10">{children}</main>
 
-      <footer className="mx-auto hidden max-w-6xl px-5 pb-10 text-sm text-carvao-suave md:block">
+      <footer className="nao-imprimir mx-auto hidden max-w-6xl px-5 pb-10 text-sm text-carvao-suave md:block">
         <p>{usuario.nomeNegocio} · qualquer dúvida, estamos aqui para ajudar.</p>
       </footer>
 

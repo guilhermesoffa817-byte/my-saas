@@ -4,12 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirAcesso } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
-import {
-  deDataPura,
-  hojeNoEstudio,
-  paraCentavos,
-  paraDataPura,
-} from "@/lib/formato";
+import { deDataPura, hojeNoEstudio, paraCentavos, paraDataPura } from "@/lib/formato";
+import { FORMAS_DE_PAGAMENTO, receberCobranca } from "@/lib/cobranca-operacoes";
 import {
   lembreteDeHoje,
   type CodigoDoMomento,
@@ -167,8 +163,6 @@ export async function registrarLembrete(dados: FormData) {
 /* Receber                                                             */
 /* ------------------------------------------------------------------ */
 
-const FORMAS = ["pix", "dinheiro", "cartao", "outra"] as const;
-
 export async function marcarComoPaga(
   _anterior: Resposta,
   dados: FormData,
@@ -179,72 +173,17 @@ export async function marcarComoPaga(
   const forma = texto(dados, "forma");
   const pagaEm = deDataPura(texto(dados, "pagaEm") || paraDataPura(hojeNoEstudio()));
 
-  if (!FORMAS.includes(forma as (typeof FORMAS)[number])) {
+  if (!FORMAS_DE_PAGAMENTO.includes(forma as (typeof FORMAS_DE_PAGAMENTO)[number])) {
     return { erro: "Escolha como o cliente pagou." };
   }
   if (!pagaEm) return { erro: "Não consegui entender a data do pagamento." };
 
-  const cobranca = await prisma.cobranca.findFirst({
-    where: { id, usuarioId: usuario.id },
-    select: {
-      id: true,
-      situacao: true,
-      valorCentavos: true,
-      agendamentoId: true,
-      cliente: { select: { nome: true } },
-    },
-  });
-  if (!cobranca) return { erro: "Não encontramos essa cobrança." };
-  if (cobranca.situacao === "paga") {
+  // A trava do mês fechado e a proteção contra toque duplo moram em receberCobranca.
+  const recebida = await receberCobranca(prisma, usuario.id, { id, forma, pagaEm });
+  if ("erro" in recebida) return { erro: recebida.erro };
+  if (recebida.resultado === "ja_paga") {
     return { recado: "Essa cobrança já estava marcada como paga." };
   }
-  if (cobranca.situacao === "cancelada") {
-    return { erro: "Essa cobrança foi cancelada. Crie outra se precisar cobrar de novo." };
-  }
-
-  await prisma.$transaction(async (tx) => {
-    /*
-      A condição `situacao: "aberta"` dentro do próprio UPDATE é o que impede o
-      dinheiro de entrar duas vezes. Se dois toques chegarem juntos, o primeiro
-      muda uma linha e o segundo muda zero; só quem mudou linha segue adiante e
-      cria o lançamento.
-    */
-    const mudadas = await tx.cobranca.updateMany({
-      where: { id: cobranca.id, usuarioId: usuario.id, situacao: "aberta" },
-      data: { situacao: "paga", formaDePagamento: forma, pagaEm },
-    });
-    if (mudadas.count === 0) return;
-
-    /*
-      Onde este dinheiro aparece no faturamento depende de onde ele nasceu.
-
-      Cobrança que veio de um horário da agenda NÃO vira lançamento: o
-      faturamento do mês já soma o preço do serviço de todo atendimento
-      concluído. Criar um lançamento aqui contaria o mesmo dinheiro duas vezes
-      e mudaria o sentido de um número que a pessoa já conhece.
-
-      Cobrança solta, criada pela ficha do cliente, não tem atendimento por
-      trás, então ela precisa virar entrada para aparecer no mês.
-    */
-    if (cobranca.agendamentoId) return;
-
-    const lancamento = await tx.lancamento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo: "entrada",
-        descricao: `Cobrança de ${cobranca.cliente.nome}`,
-        categoria: "Cobrança",
-        valorCentavos: cobranca.valorCentavos,
-        data: pagaEm,
-      },
-      select: { id: true },
-    });
-
-    await tx.cobranca.update({
-      where: { id: cobranca.id },
-      data: { lancamentoId: lancamento.id },
-    });
-  });
 
   atualizarTelas();
   return { recado: "Pagamento registrado. Obrigado por manter a conta em dia." };

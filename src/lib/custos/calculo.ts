@@ -1,3 +1,4 @@
+import { somarMeses } from "@/lib/formato";
 import { ehRetirada } from "./regras";
 
 /**
@@ -216,11 +217,7 @@ export function mesValido(mes: unknown): mes is string {
 
 /** "AAAA-MM" somado de `meses` (negativo volta). Conta pura, sem fuso. */
 export function deslocarMes(mes: string, meses: number) {
-  const [ano, mesDoAno] = mes.split("-").map(Number);
-  const total = ano * 12 + (mesDoAno - 1) + meses;
-  const novoAno = Math.floor(total / 12);
-  const novoMes = total - novoAno * 12 + 1;
-  return `${novoAno}-${String(novoMes).padStart(2, "0")}`;
+  return somarMeses(mes, meses);
 }
 
 /** "2026-10" → "out". */

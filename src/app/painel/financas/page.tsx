@@ -4,13 +4,17 @@ import { exigirFinanceiro } from "@/lib/guardas";
 import { BotaoConfirmar } from "@/componentes/botoes";
 import { Vazio } from "@/componentes/avisos";
 import {
+  competenciaAtual,
   dataCurta,
   diaDaSemanaCurto,
   emReais,
   inicioDoMes as inicioDoMesNoFuso,
+  inicioDoProximoMes,
   paraDataLocal,
   somarDias,
 } from "@/lib/formato";
+import { mesesFechados } from "@/lib/fechamento/trava";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
 import { excluirLancamento } from "./acoes";
@@ -28,27 +32,37 @@ const NOMES_DOS_DIAS = [
   "Domingo",
 ];
 
-export default async function PaginaFinancas() {
+export default async function PaginaFinancas({
+  searchParams,
+}: {
+  searchParams: Promise<{ aviso?: string }>;
+}) {
   const { usuario } = await exigirFinanceiro();
+  const { aviso } = await searchParams;
 
   const agora = new Date();
   // O mês começa à meia-noite de São Paulo, igual à tela de Custos. Contado em
   // UTC, o que entrou entre 21h e meia-noite do último dia caía no mês seguinte.
   const inicioDoMes = inicioDoMesNoFuso(agora);
+  // E termina à meia-noite do dia 1º seguinte: lançamento com data futura, ou
+  // atendimento concluído adiantado, não entra no mês de agora.
+  const fimDoMes = inicioDoProximoMes(agora);
   const inicioDoGrafico = somarDias(agora, -90);
 
-  const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo] =
+  const mesAtual = competenciaAtual(agora);
+
+  const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo, fechados] =
     await Promise.all([
       prisma.agendamento.findMany({
         where: {
           usuarioId: usuario.id,
           status: "concluido",
-          inicio: { gte: inicioDoMes },
+          inicio: { gte: inicioDoMes, lt: fimDoMes },
         },
         select: { servico: { select: { precoCentavos: true } } },
       }),
       prisma.lancamento.findMany({
-        where: { usuarioId: usuario.id, data: { gte: inicioDoMes } },
+        where: { usuarioId: usuario.id, data: { gte: inicioDoMes, lt: fimDoMes } },
         orderBy: { data: "desc" },
         // Saída que nasceu de um pagamento da Equipe só muda pela Equipe.
         include: { pagamentoDeColaborador: { select: { competencia: true } } },
@@ -61,7 +75,9 @@ export default async function PaginaFinancas() {
         },
         select: { inicio: true, servico: { select: { precoCentavos: true } } },
       }),
+      mesesFechados(prisma, usuario.id),
     ]);
+  const mesFechado = fechados.has(mesAtual);
 
   const atendimentosCentavos = atendimentosDoMes.reduce(
     (soma, item) => soma + item.servico.precoCentavos,
@@ -111,6 +127,21 @@ export default async function PaginaFinancas() {
         </p>
       </section>
 
+      <AvisoDeMesFechado aviso={aviso} mes={mesAtual} />
+
+      {mesFechado ? (
+        <div className="cartao animar-entrada border-terracota/40">
+          <p className="font-semibold text-carvao">Este mês está fechado.</p>
+          <p className="mt-1 text-sm text-carvao-suave">
+            Os lançamentos dele não mudam até você reabrir. Lançamentos de outros meses
+            seguem normais.
+          </p>
+          <Link href={`/painel/financas/relatorio?mes=${mesAtual}`} className="botao-suave mt-4">
+            Ver o fechamento
+          </Link>
+        </div>
+      ) : null}
+
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Indicador titulo="Entrou" valor={emReais(entradas)} tom="boa" atraso={0}>
           {emReais(atendimentosCentavos)} de atendimentos
@@ -136,6 +167,33 @@ export default async function PaginaFinancas() {
           depois das despesas e do imposto
         </Indicador>
       </section>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href={`/painel/financas/relatorio?mes=${mesAtual}`}
+          className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+        >
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-carvao">Relatório do mês</p>
+            <p className="mt-0.5 text-sm text-carvao-suave">
+              Tudo do mês para o contador, em planilha ou PDF, e o fechamento.
+            </p>
+          </div>
+          <span className="botao-suave">Ver relatório</span>
+        </Link>
+        <Link
+          href="/painel/financas/contador"
+          className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+        >
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-carvao">Acesso do contador</p>
+            <p className="mt-0.5 text-sm text-carvao-suave">
+              Um link só de leitura para o contador ver os relatórios sem senha.
+            </p>
+          </div>
+          <span className="botao-suave">Gerenciar</span>
+        </Link>
+      </div>
 
       <Link
         href="/painel/financas/custos"
@@ -249,7 +307,9 @@ export default async function PaginaFinancas() {
                     >
                       {entrada ? "+" : "−"} {emReais(lancamento.valorCentavos)}
                     </span>
-                    {lancamento.pagamentoDeColaborador ? (
+                    {mesFechado ? (
+                      <span className="text-xs font-semibold text-carvao-suave">Mês fechado</span>
+                    ) : lancamento.pagamentoDeColaborador ? (
                       /*
                         Apagar aqui deixaria o pagamento da Equipe sem a saída
                         dele. O caminho é a Equipe, que apaga os dois juntos.

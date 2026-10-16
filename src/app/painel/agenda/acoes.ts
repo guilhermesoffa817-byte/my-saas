@@ -1,10 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import type { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { travarAgendaDoEstudio } from "@/lib/agenda-trava";
 import { exigirAcesso } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { ausenciaNoDia } from "@/lib/equipe-operacoes";
+import {
+  STATUS_DO_HORARIO,
+  apagarHorario,
+  mudarStatusDoHorario,
+  type StatusDoHorario,
+} from "@/lib/agenda-operacoes";
 import { ROTULO_DA_AUSENCIA, ehTipoDeAusencia } from "@/lib/equipe";
 import {
   dataEHora,
@@ -17,9 +26,6 @@ import {
 } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
-
-const STATUS_VALIDOS = ["agendado", "concluido", "cancelado"] as const;
-type Status = (typeof STATUS_VALIDOS)[number];
 
 function texto(dados: FormData, campo: string) {
   const valor = dados.get(campo);
@@ -59,11 +65,32 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
     if (problema) return { erro: problema };
   }
 
-  const conflito = await horarioOcupado({
-    usuarioId: usuario.id,
-    inicio,
-    duracaoMin: servico.duracaoMin,
-    colaboradorId,
+  /*
+    Conferir e gravar acontecem dentro da mesma transação, com a agenda do
+    estúdio travada: um cliente marcando pelo link no mesmo segundo espera
+    esta gravação terminar e, quando confere, já vê o horário ocupado.
+  */
+  const conflito = await prisma.$transaction(async (tx) => {
+    await travarAgendaDoEstudio(tx, usuario.id);
+    const encontrado = await horarioOcupado(tx, {
+      usuarioId: usuario.id,
+      inicio,
+      duracaoMin: servico.duracaoMin,
+      colaboradorId,
+    });
+    if (encontrado) return encontrado;
+
+    await tx.agendamento.create({
+      data: {
+        usuarioId: usuario.id,
+        clienteId,
+        servicoId,
+        inicio,
+        observacoes: observacoes || null,
+        colaboradorId,
+      },
+    });
+    return null;
   });
 
   if (conflito) {
@@ -71,17 +98,6 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
       erro: `Esse horário esbarra no atendimento de ${conflito.cliente.nome}, às ${hora(conflito.inicio)}. Que tal outro horário?`,
     };
   }
-
-  await prisma.agendamento.create({
-    data: {
-      usuarioId: usuario.id,
-      clienteId,
-      servicoId,
-      inicio,
-      observacoes: observacoes || null,
-      colaboradorId,
-    },
-  });
 
   atualizarTelas();
   return { recado: `Marcado! ${cliente.nome} em ${dataEHora(inicio)}.` };
@@ -125,7 +141,9 @@ async function conferirQuemAtende(
  * entre atendimentos da mesma pessoa; os sem "quem atende" são da própria dona
  * e se chocam entre si, como sempre foi para quem trabalha sozinha.
  */
-async function horarioOcupado({
+async function horarioOcupado(
+  db: Prisma.TransactionClient,
+  {
   usuarioId,
   inicio,
   duracaoMin,
@@ -140,7 +158,7 @@ async function horarioOcupado({
 }) {
   const fim = new Date(inicio.getTime() + duracaoMin * 60 * 1000);
 
-  const candidatos = await prisma.agendamento.findMany({
+  const candidatos = await db.agendamento.findMany({
     where: {
       usuarioId,
       colaboradorId,
@@ -163,27 +181,16 @@ export async function mudarStatus(dados: FormData) {
   const { usuario } = await exigirAcesso();
 
   const id = texto(dados, "id");
-  const status = texto(dados, "status") as Status;
-  if (!STATUS_VALIDOS.includes(status)) return;
+  const status = texto(dados, "status") as StatusDoHorario;
+  if (!STATUS_DO_HORARIO.includes(status)) return;
 
-  const agendamento = await prisma.agendamento.findFirst({
-    where: { id, usuarioId: usuario.id },
+  // Concluir ou desfazer a conclusão mexe no dinheiro do mês: passa pela trava.
+  const feito = await mudarStatusDoHorario(prisma, usuario.id, {
+    id,
+    status,
+    cancelarCobranca: texto(dados, "cobranca") === "cancelar",
   });
-  if (!agendamento) return;
-
-  await prisma.agendamento.update({ where: { id }, data: { status } });
-
-  /*
-    Cancelar o horário não cancela a cobrança por conta própria: o atendimento
-    pode ter sido desmarcado e o valor seguir devido. A tela pergunta, e a
-    resposta chega aqui. Sem resposta, a cobrança fica como está.
-  */
-  if (status === "cancelado" && texto(dados, "cobranca") === "cancelar") {
-    await prisma.cobranca.updateMany({
-      where: { agendamentoId: id, usuarioId: usuario.id, situacao: "aberta" },
-      data: { situacao: "cancelada" },
-    });
-  }
+  if ("erro" in feito) voltarComMesFechado(feito.inicio);
 
   atualizarTelas();
 }
@@ -192,11 +199,13 @@ export async function excluirAgendamento(dados: FormData) {
   const { usuario } = await exigirAcesso();
   const id = texto(dados, "id");
 
-  const agendamento = await prisma.agendamento.findFirst({
-    where: { id, usuarioId: usuario.id },
-  });
-  if (!agendamento) return;
+  const apagado = await apagarHorario(prisma, usuario.id, id);
+  if ("erro" in apagado) voltarComMesFechado(apagado.inicio);
 
-  await prisma.agendamento.delete({ where: { id } });
   atualizarTelas();
+}
+
+/** Volta para o dia do horário com o recado do mês fechado. */
+function voltarComMesFechado(inicio: Date): never {
+  redirect(`/painel/agenda?dia=${paraDataLocal(inicio)}&aviso=mes-fechado`);
 }

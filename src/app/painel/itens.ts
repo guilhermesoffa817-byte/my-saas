@@ -55,6 +55,12 @@ export const SECUNDARIOS: Destino[] = [
     icone: "etiqueta",
   },
   {
+    href: "/painel/agendamento-online",
+    rotulo: "Agendamento online",
+    explicacao: "Seu link para o cliente marcar o horário sozinho.",
+    icone: "link",
+  },
+  {
     href: "/painel/vencimentos",
     rotulo: "Vencimentos",
     explicacao: "Contas a pagar e prazos de contrato.",
@@ -80,6 +86,13 @@ export const SECUNDARIOS: Destino[] = [
     rotulo: "Finanças",
     explicacao: "O que entra, o que sai e o imposto estimado.",
     icone: "grafico",
+    vip: true,
+  },
+  {
+    href: "/painel/financas/relatorio",
+    rotulo: "Relatório",
+    explicacao: "O mês para o contador: planilha, PDF, fechamento e link de acesso.",
+    icone: "prancheta",
     vip: true,
   },
   {

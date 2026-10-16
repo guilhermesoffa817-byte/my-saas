@@ -13,6 +13,11 @@ serviços, faturamento do mês e assinatura a partir de **R$ 169,00 ao mês**, p
 - **Painel** com atendimentos do dia, concluídos no mês e faturamento calculado sozinho.
 - **Finanças (plano VIP)**: entradas, despesas, imposto estimado e um gráfico dos dias
   da semana que mais rendem.
+- **Relatório do mês e fechamento (plano VIP)**: o mês inteiro em Excel, CSV ou PDF
+  (pelo "Imprimir" do navegador); "Fechar o mês" guarda o resumo e trava tudo o que é
+  dinheiro com data nele até a dona reabrir, e a reabertura fica registrada.
+- **Acesso do contador (plano VIP)**: um link secreto, só de leitura, com os relatórios
+  dos últimos doze meses e os downloads. A dona desliga ou troca quando quiser.
 - **Assinatura por Pix**: QR Code, chave para copiar, aviso de pagamento com um clique
   e histórico dos meses.
 - **Área de administração** para conferir os Pix recebidos, liberar mais 30 dias de

@@ -15,8 +15,8 @@ import {
   apenasDigitos,
   deDataLocal,
   deDataPura,
-  deHorarioLocal,
   documentoValido,
+  inicioDaCompetencia,
   paraCentavos,
   paraDataPura,
 } from "@/lib/formato";
@@ -43,6 +43,7 @@ import {
   type Vinculo,
 } from "@/lib/equipe";
 import { naturezaDoPagamentoDaEquipe } from "@/lib/custos/regras";
+import { conferirMesesAbertos, mesDoDiaPuro, mesDoInstante } from "@/lib/fechamento/trava";
 
 type Banco = PrismaClient;
 type Ler = (campo: string) => string;
@@ -400,6 +401,12 @@ export async function registrarPagamento(
   entrada: EntradaDoPagamento,
 ): Promise<Falha | { id: string; lancamentoId: string }> {
   return db.$transaction(async (tx) => {
+    // O dinheiro sai no dia do pagamento: é esse mês que não pode estar fechado.
+    const fechado = await conferirMesesAbertos(tx, usuarioId, [
+      mesDoDiaPuro(deDataPura(entrada.pagoEm)!),
+    ]);
+    if (fechado) return { erro: fechado.erro };
+
     const colaborador = await tx.colaborador.findFirst({
       where: { id: entrada.colaboradorId, usuarioId, anonimizadoEm: null },
       select: { id: true, nome: true, vinculo: true },
@@ -448,14 +455,34 @@ export async function registrarPagamento(
   });
 }
 
-/** Apaga o pagamento e a saída que ele criou, juntos. Devolve false se não for do estúdio. */
-export async function excluirPagamento(db: Banco, usuarioId: string, id: string) {
+/**
+ * Apaga o pagamento e a saída que ele criou, juntos. Devolve false se não for
+ * do estúdio, e `{ erro }` se o mês da saída estiver fechado.
+ */
+export async function excluirPagamento(
+  db: Banco,
+  usuarioId: string,
+  id: string,
+): Promise<boolean | (Falha & { competencia: string })> {
   return db.$transaction(async (tx) => {
     const pagamento = await tx.pagamentoDeColaborador.findFirst({
       where: { id, usuarioId },
-      select: { id: true, lancamentoId: true },
+      select: {
+        id: true,
+        lancamentoId: true,
+        competencia: true,
+        pagoEm: true,
+        lancamento: { select: { data: true } },
+      },
     });
     if (!pagamento) return false;
+
+    const fechado = await conferirMesesAbertos(tx, usuarioId, [
+      mesDoDiaPuro(pagamento.pagoEm),
+      mesDoInstante(pagamento.lancamento.data),
+    ]);
+    if (fechado) return { erro: fechado.erro, competencia: pagamento.competencia };
+
     await tx.pagamentoDeColaborador.deleteMany({ where: { id: pagamento.id, usuarioId } });
     await tx.lancamento.deleteMany({ where: { id: pagamento.lancamentoId, usuarioId } });
     return true;
@@ -469,8 +496,8 @@ export async function excluirPagamento(db: Banco, usuarioId: string, id: string)
 /** O primeiro instante do mês e o do mês seguinte, no fuso do estúdio. */
 export function instantesDoMes(mes: string) {
   return {
-    de: deHorarioLocal(`${mes}-01T00:00`)!,
-    ate: deHorarioLocal(`${somarMesesACompetencia(mes, 1)}-01T00:00`)!,
+    de: inicioDaCompetencia(mes),
+    ate: inicioDaCompetencia(somarMesesACompetencia(mes, 1)),
   };
 }
 

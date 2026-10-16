@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { PrismaClient } from "@/generated/prisma";
-import { deHorarioLocal, emReais } from "@/lib/formato";
+import { deHorarioLocal, emReais, somarMeses } from "@/lib/formato";
 
 /**
  * O que toda ferramenta do assistente recebe do SERVIDOR. O estúdio vem da
@@ -58,10 +58,7 @@ export function mesValido(mes: unknown): mes is string {
 
 /** "AAAA-MM" somado de `meses` (negativo volta). */
 export function deslocarMes(mes: string, meses: number) {
-  const [ano, mesDoAno] = mes.split("-").map(Number);
-  const total = ano * 12 + (mesDoAno - 1) + meses;
-  const novoAno = Math.floor(total / 12);
-  return `${novoAno}-${String(total - novoAno * 12 + 1).padStart(2, "0")}`;
+  return somarMeses(mes, meses);
 }
 
 export type Periodo = { inicio: string; fim: string };

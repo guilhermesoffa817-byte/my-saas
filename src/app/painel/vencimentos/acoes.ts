@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirRecurso } from "@/lib/guardas";
 import {
@@ -10,6 +11,7 @@ import {
   paraDataPura,
 } from "@/lib/formato";
 import { ocorrenciasQueFaltam } from "@/lib/vencimento";
+import { apagarVencimento, pagarVencimento } from "@/lib/vencimento-operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -156,49 +158,14 @@ export async function marcarComoPago(
   const pagoEm = deDataPura(texto(dados, "pagoEm") || paraDataPura(hojeNoEstudio()));
   if (!pagoEm) return { erro: "Não consegui entender a data do pagamento." };
 
-  const vencimento = await prisma.vencimento.findFirst({
-    where: { id, usuarioId: usuario.id },
-    select: { id: true, pago: true, tipo: true, descricao: true, categoria: true, valorCentavos: true },
-  });
-  if (!vencimento) return { erro: "Não encontramos esse vencimento." };
-  if (vencimento.pago) return { recado: "Esse já estava marcado como pago." };
-
-  await prisma.$transaction(async (tx) => {
-    /*
-      A condição `pago: false` dentro do próprio UPDATE é o que impede a saída
-      de ser lançada duas vezes. O segundo toque muda zero linhas e para aqui.
-    */
-    const mudados = await tx.vencimento.updateMany({
-      where: { id: vencimento.id, usuarioId: usuario.id, pago: false },
-      data: { pago: true, pagoEm },
-    });
-    if (mudados.count === 0) return;
-
-    // Prazo de contrato não é dinheiro: marcar como resolvido não lança nada.
-    if (vencimento.tipo !== "conta" || !vencimento.valorCentavos) return;
-
-    const lancamento = await tx.lancamento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo: "saida",
-        descricao: vencimento.descricao,
-        categoria: vencimento.categoria ?? "Conta",
-        valorCentavos: vencimento.valorCentavos,
-        data: pagoEm,
-      },
-      select: { id: true },
-    });
-
-    await tx.vencimento.update({
-      where: { id: vencimento.id },
-      data: { lancamentoId: lancamento.id },
-    });
-  });
+  const pago = await pagarVencimento(prisma, usuario.id, id, pagoEm);
+  if ("erro" in pago) return { erro: pago.erro };
+  if (pago.resultado === "ja_pago") return { recado: "Esse já estava marcado como pago." };
 
   atualizarTelas();
   return {
     recado:
-      vencimento.tipo === "conta"
+      pago.tipo === "conta"
         ? "Pago. A saída já entrou nas suas finanças."
         : "Marcado como resolvido.",
   };
@@ -208,21 +175,9 @@ export async function excluirVencimento(dados: FormData) {
   const { usuario } = await exigirRecurso("vencimentos");
   const id = texto(dados, "id");
 
-  const vencimento = await prisma.vencimento.findFirst({
-    where: { id, usuarioId: usuario.id },
-    select: { id: true, lancamentoId: true },
-  });
-  if (!vencimento) return;
-
-  await prisma.$transaction(async (tx) => {
-    // O lançamento sai junto: o dinheiro só existia por causa deste vencimento.
-    if (vencimento.lancamentoId) {
-      await tx.lancamento.deleteMany({
-        where: { id: vencimento.lancamentoId, usuarioId: usuario.id },
-      });
-    }
-    await tx.vencimento.deleteMany({ where: { id: vencimento.id, usuarioId: usuario.id } });
-  });
+  // O lançamento do pagamento sai junto, se o mês dele não estiver fechado.
+  const apagado = await apagarVencimento(prisma, usuario.id, id);
+  if ("erro" in apagado) redirect("/painel/vencimentos?aviso=mes-fechado");
 
   atualizarTelas();
 }

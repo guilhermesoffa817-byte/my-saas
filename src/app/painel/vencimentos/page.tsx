@@ -9,6 +9,7 @@ import {
   TOM_DO_VENCIMENTO,
 } from "@/componentes/ui/etiqueta";
 import { BotaoConfirmar } from "@/componentes/ui/botao";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import {
   dataPuraCurta,
   emReais,
@@ -27,10 +28,10 @@ export const dynamic = "force-dynamic";
 export default async function PaginaVencimentos({
   searchParams,
 }: {
-  searchParams: Promise<{ ver?: string }>;
+  searchParams: Promise<{ ver?: string; aviso?: string }>;
 }) {
   const { usuario } = await exigirRecurso("vencimentos");
-  const { ver } = await searchParams;
+  const { ver, aviso } = await searchParams;
   const mostrarPagos = ver === "pagos";
   const mostrarTudo = ver === "tudo";
 
@@ -106,6 +107,8 @@ export default async function PaginaVencimentos({
       <TituloDaTela explicacao="Tudo o que tem data: contas a pagar e prazos de contrato.">
         Vencimentos
       </TituloDaTela>
+
+      <AvisoDeMesFechado aviso={aviso} />
 
       {!mostrarPagos ? (
         <section className="grid grid-cols-2 gap-3 sm:gap-4">

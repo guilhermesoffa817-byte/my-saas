@@ -17,6 +17,7 @@ import {
   somarDias,
   telefoneBonito,
 } from "@/lib/formato";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
@@ -27,10 +28,10 @@ export const dynamic = "force-dynamic";
 export default async function PaginaAgenda({
   searchParams,
 }: {
-  searchParams: Promise<{ dia?: string }>;
+  searchParams: Promise<{ dia?: string; aviso?: string }>;
 }) {
   const { usuario } = await exigirAcesso();
-  const { dia } = await searchParams;
+  const { dia, aviso } = await searchParams;
 
   const agora = new Date();
   const diaEscolhido = (dia ? deDataLocal(dia) : null) ?? deDataLocal(paraDataLocal(agora))!;
@@ -107,6 +108,8 @@ export default async function PaginaAgenda({
           os clientes forem saindo.
         </p>
       </section>
+
+      <AvisoDeMesFechado aviso={aviso} mes={chaveDoDia.slice(0, 7)} />
 
       <section className="cartao">
         <h2 className="font-display text-xl font-semibold text-carvao">Marcar um horário</h2>

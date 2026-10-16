@@ -138,18 +138,36 @@ export function inicioDoDia(data: Date) {
   return deHorarioLocal(`${paraDataLocal(data)}T00:00`)!;
 }
 
+/**
+ * O primeiro instante de um mês "AAAA-MM": meia-noite do dia 1º em São Paulo.
+ *
+ * É a única conta de "começo do mês" do Bossa. Antes cada tela tinha a sua, e
+ * uma delas contava em UTC: o que entrava entre 21h e meia-noite do último dia
+ * caía no mês seguinte. Finanças, Custos, Equipe e a franquia de IA passam por
+ * aqui, então o mês é o mesmo em todo lugar.
+ */
+export function inicioDaCompetencia(mes: string) {
+  const encontrado = /^(\d{4})-(\d{2})$/.exec(mes.trim());
+  if (!encontrado) throw new Error(`Mês inválido: ${mes}`);
+  return deHorarioLocal(`${encontrado[1]}-${encontrado[2]}-01T00:00`)!;
+}
+
+/** "AAAA-MM" somado de `meses` (negativo volta). */
+export function somarMeses(mes: string, meses: number) {
+  const [ano, mesDoAno] = mes.split("-").map(Number);
+  const total = ano * 12 + (mesDoAno - 1) + meses;
+  const novoAno = Math.floor(total / 12);
+  return `${novoAno}-${String(total - novoAno * 12 + 1).padStart(2, "0")}`;
+}
+
 /** Primeiro instante do mês (no fuso de São Paulo) da data informada. */
 export function inicioDoMes(data: Date) {
-  const p = partesNoFuso(data);
-  return deHorarioLocal(`${p.year}-${String(p.month).padStart(2, "0")}-01T00:00`)!;
+  return inicioDaCompetencia(competenciaAtual(data));
 }
 
 /** Primeiro instante do mês seguinte (no fuso de São Paulo). */
 export function inicioDoProximoMes(data: Date) {
-  const p = partesNoFuso(data);
-  const ano = p.month === 12 ? p.year + 1 : p.year;
-  const mes = p.month === 12 ? 1 : p.month + 1;
-  return deHorarioLocal(`${ano}-${String(mes).padStart(2, "0")}-01T00:00`)!;
+  return inicioDaCompetencia(somarMeses(competenciaAtual(data), 1));
 }
 
 /**
@@ -172,6 +190,18 @@ export function deDataPura(texto: string): Date | null {
   if (Number.isNaN(data.getTime())) return null;
   // Rejeita 31 de fevereiro e companhia, que o Date aceitaria rolando o mês.
   return paraDataPura(data) === limpo ? data : null;
+}
+
+/**
+ * Uma data pura vista como instante: meia-noite daquele dia em São Paulo.
+ *
+ * Serve para quando um dia de calendário (o dia em que a conta foi paga, o dia
+ * em que o cliente pagou) vira lançamento nas Finanças, cuja data é instante e
+ * aparece no fuso do estúdio. Gravar a data pura direto (meia-noite em UTC)
+ * fazia o pagamento do dia 10 aparecer como dia 9.
+ */
+export function instanteDoDiaPuro(data: Date) {
+  return deHorarioLocal(`${paraDataPura(data)}T00:00`)!;
 }
 
 /** O dia de hoje no fuso do estúdio, como data pura. */

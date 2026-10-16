@@ -150,6 +150,10 @@ export async function registrarPagamentoAcao(
 
 export async function excluirPagamentoAcao(dados: FormData) {
   const { usuario } = await exigirRecurso("equipe");
-  await excluirPagamento(prisma, usuario.id, leitor(dados)("id"));
+  const apagado = await excluirPagamento(prisma, usuario.id, leitor(dados)("id"));
+  // Mês fechado: o pagamento fica, e o recado vai no endereço da própria aba.
+  if (typeof apagado === "object") {
+    redirect(`/painel/equipe?aba=pagamentos&mes=${apagado.competencia}&aviso=mes-fechado`);
+  }
   atualizarTelas({ financas: true });
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirRecurso } from "@/lib/guardas";
 import { agoraDoPedido } from "@/lib/agora";
+import { MES_FECHADO } from "@/lib/fechamento/trava";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import { Aviso, Etiqueta } from "@/componentes/ui/etiqueta";
@@ -76,6 +77,7 @@ const AVISOS: Record<string, { tom: "boa" | "erro"; texto: string }> = {
       "Pessoa removida. CPF, Pix, contato, observações e ausências foram apagados; os pagamentos continuam nas Finanças como “Ex-colaborador”, sem o nome.",
   },
   "nao-encontrado": { tom: "erro", texto: "Não encontramos essa pessoa na sua equipe." },
+  "mes-fechado": { tom: "erro", texto: MES_FECHADO },
 };
 
 export default async function PaginaEquipe({

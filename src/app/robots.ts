@@ -11,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/painel", "/painel/", "/acoes", "/acoes/"],
+      disallow: ["/painel", "/painel/", "/acoes", "/acoes/", "/contador/"],
     },
     sitemap: `${ENDERECO_DO_SITE}/sitemap.xml`,
     host: ENDERECO_DO_SITE,

@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { apagarCliente } from "@/lib/cliente-operacoes";
 import { exigirAcesso } from "@/lib/guardas";
 import { apenasDigitos, cpfValido, deDataLocal } from "@/lib/formato";
 
@@ -81,10 +83,10 @@ export async function excluirCliente(dados: FormData) {
   const { usuario } = await exigirAcesso();
   const id = texto(dados, "id");
 
-  const cliente = await prisma.cliente.findFirst({ where: { id, usuarioId: usuario.id } });
-  if (!cliente) return;
+  // Cliente com atendimento concluído ou pagamento num mês fechado não sai.
+  const apagado = await apagarCliente(prisma, usuario.id, id);
+  if ("erro" in apagado) redirect("/painel/clientes?aviso=mes-fechado");
 
-  await prisma.cliente.delete({ where: { id } });
   revalidatePath("/painel/clientes");
   revalidatePath("/painel/agenda");
   revalidatePath("/painel");

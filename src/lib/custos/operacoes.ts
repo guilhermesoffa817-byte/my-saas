@@ -7,7 +7,7 @@
  * sozinho.
  */
 import type { PrismaClient } from "@/generated/prisma";
-import { competenciaAtual, deHorarioLocal, paraDataLocal } from "@/lib/formato";
+import { competenciaAtual, inicioDaCompetencia, paraDataLocal } from "@/lib/formato";
 import {
   deslocarMes,
   ehNatureza,
@@ -22,7 +22,7 @@ type Banco = PrismaClient;
 
 /** O primeiro instante do mês "AAAA-MM", à meia-noite de São Paulo. */
 export function inicioDoMesTexto(mes: string) {
-  return deHorarioLocal(`${mes}-01T00:00`)!;
+  return inicioDaCompetencia(mes);
 }
 
 /** Os seis meses que terminam em `mes`: de onde a tendência e a comparação saem. */

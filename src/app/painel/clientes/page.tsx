@@ -7,6 +7,7 @@ import { mudarLembretesDoCliente } from "../cobrancas/acoes";
 import { cpfBonito, dataCurta, paraDataLocal, telefoneBonito } from "@/lib/formato";
 import { FormularioCliente } from "./formulario";
 import { excluirCliente } from "./acoes";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 
 export const metadata = { title: "Clientes" };
 export const dynamic = "force-dynamic";
@@ -14,10 +15,10 @@ export const dynamic = "force-dynamic";
 export default async function PaginaClientes({
   searchParams,
 }: {
-  searchParams: Promise<{ busca?: string }>;
+  searchParams: Promise<{ busca?: string; aviso?: string }>;
 }) {
   const { usuario } = await exigirAcesso();
-  const { busca = "" } = await searchParams;
+  const { busca = "", aviso } = await searchParams;
   const termo = busca.trim();
 
   const clientes = await prisma.cliente.findMany({
@@ -47,6 +48,8 @@ export default async function PaginaClientes({
           observações que fazem toda a diferença no atendimento.
         </p>
       </section>
+
+      <AvisoDeMesFechado aviso={aviso} />
 
       <section className="cartao">
         <h2 className="font-display text-xl font-semibold text-carvao">Novo cliente</h2>

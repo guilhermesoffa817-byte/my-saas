@@ -58,6 +58,8 @@ export default async function PaginaServicos() {
                     </p>
                     <p className="text-sm text-carvao-suave">
                       {emReais(servico.precoCentavos)} · {servico.duracaoMin} min
+                      {/* Escolhido em Agendamento online: some só do link, não da agenda. */}
+                      {servico.ativo && !servico.agendavelOnline ? " · fora do link" : ""}
                     </p>
                   </div>
                   <span

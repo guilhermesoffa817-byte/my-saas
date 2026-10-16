@@ -10,18 +10,18 @@ datasource db {
 }
 
 model Usuario {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   nome              String
-  email             String   @unique
+  email             String    @unique
   senhaHash         String
   nomeNegocio       String
   telefone          String?
   /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
   documento         String?
   /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
-  impostoPercentual Int      @default(6)
+  impostoPercentual Int       @default(6)
   /// Código do link de indicação desta pessoa. Só quem indica tem um.
-  codigoIndicacao   String?  @unique
+  codigoIndicacao   String?   @unique
   /// Código de quem trouxe esta conta, guardado no momento do cadastro.
   indicadoPor       String?
   cep               String?
@@ -31,11 +31,11 @@ model Usuario {
   /// Cidade de quem recebe. O código Pix exige, junto com o nome.
   pixCidade         String?
   /// Quando lembrar: véspera, no dia, três dias depois, sete dias depois.
-  lembreteAntes     Boolean  @default(true)
-  lembreteNoDia     Boolean  @default(true)
-  lembreteTresDias  Boolean  @default(true)
-  lembreteSeteDias  Boolean  @default(true)
-  papel             String   @default("dona")
+  lembreteAntes     Boolean   @default(true)
+  lembreteNoDia     Boolean   @default(true)
+  lembreteTresDias  Boolean   @default(true)
+  lembreteSeteDias  Boolean   @default(true)
+  papel             String    @default("dona")
   /// Ramo do negócio em poucas palavras ("salão de beleza", "barbearia").
   /// Opcional: só serve para o assistente pesquisar tendências do ramo.
   ramo              String?
@@ -43,26 +43,32 @@ model Usuario {
   iaAceitaEm        DateTime?
   /// Sobe a cada troca de senha. A sessão carrega esse número, então quem
   /// entrou com a senha antiga perde o acesso quando a senha muda.
-  sessaoVersao      Int      @default(0)
-  criadoEm          DateTime @default(now())
+  sessaoVersao      Int       @default(0)
+  criadoEm          DateTime  @default(now())
 
-  assinatura         Assinatura?
-  clientes           Cliente[]
-  servicos           Servico[]
-  agendamentos       Agendamento[]
-  pagamentos         Pagamento[]
-  lancamentos        Lancamento[]
-  cobrancas          Cobranca[]
-  vencimentos        Vencimento[]
-  repeticoes         RepeticaoDeVencimento[]
-  documentos         Documento[]
-  pedidosDeSenha     PedidoDeSenha[]
-  colaboradores      Colaborador[]
-  ausencias          AusenciaDoColaborador[]
-  pagamentosDaEquipe PagamentoDeColaborador[]
-  usosDeIa           UsoDeIa[]
-  conversasDeIa      ConversaDeIa[]
-  mensagensDeIa      MensagemDeIa[]
+  assinatura              Assinatura?
+  clientes                Cliente[]
+  servicos                Servico[]
+  agendamentos            Agendamento[]
+  pagamentos              Pagamento[]
+  lancamentos             Lancamento[]
+  cobrancas               Cobranca[]
+  vencimentos             Vencimento[]
+  repeticoes              RepeticaoDeVencimento[]
+  documentos              Documento[]
+  pedidosDeSenha          PedidoDeSenha[]
+  colaboradores           Colaborador[]
+  ausencias               AusenciaDoColaborador[]
+  pagamentosDaEquipe      PagamentoDeColaborador[]
+  usosDeIa                UsoDeIa[]
+  conversasDeIa           ConversaDeIa[]
+  mensagensDeIa           MensagemDeIa[]
+  agendaOnline            AgendaOnline?
+  faixasDeAtendimento     FaixaDeAtendimento[]
+  tentativasDeAgendamento TentativaDeAgendamento[]
+  fechamentos             FechamentoDoMes[]
+  registrosDeFechamento   RegistroDeFechamento[]
+  acessosDoContador       AcessoDoContador[]
 
   @@index([indicadoPor])
 }
@@ -119,14 +125,16 @@ model Cliente {
 }
 
 model Servico {
-  id            String   @id @default(cuid())
-  usuarioId     String
-  nome          String
-  precoCentavos Int
-  duracaoMin    Int      @default(60)
-  descricao     String?
-  ativo         Boolean  @default(true)
-  criadoEm      DateTime @default(now())
+  id              String   @id @default(cuid())
+  usuarioId       String
+  nome            String
+  precoCentavos   Int
+  duracaoMin      Int      @default(60)
+  descricao       String?
+  ativo           Boolean  @default(true)
+  /// Aparece na página pública de agendamento. Só vale para serviço ativo.
+  agendavelOnline Boolean  @default(true)
+  criadoEm        DateTime @default(now())
 
   usuario      Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   agendamentos Agendamento[]
@@ -135,17 +143,23 @@ model Servico {
 }
 
 model Agendamento {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   usuarioId     String
   clienteId     String
   servicoId     String
   inicio        DateTime
-  status        String   @default("agendado")
+  status        String    @default("agendado")
   observacoes   String?
   /// Quem da equipe atende. Vazio é a própria dona, ou conta sem equipe.
   /// Remover o colaborador só solta o horário: o atendimento continua na agenda.
   colaboradorId String?
-  criadoEm      DateTime @default(now())
+  /// "link" quando o próprio cliente marcou pela página pública. Vazio é o
+  /// que a dona marcou no painel, como sempre foi.
+  origem        String?
+  /// Quando a dona viu, no Início, o horário que chegou pelo link. Enquanto
+  /// estiver vazio, o horário aparece em destaque como novidade.
+  vistoEm       DateTime?
+  criadoEm      DateTime  @default(now())
 
   usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
@@ -526,35 +540,170 @@ model ConversaDeIa {
 /// recusa um histórico que mude entre um pedido e outro. Esse conteúdo nunca
 /// vai ao navegador; a tela recebe só `textoNaTela`.
 model MensagemDeIa {
-  id             String   @id @default(cuid())
-  usuarioId      String
-  conversaId     String
+  id           String   @id @default(cuid())
+  usuarioId    String
+  conversaId   String
   /// Posição na conversa, a partir de 0. Única: dois pedidos ao mesmo tempo
   /// não conseguem gravar duas mensagens no mesmo lugar.
-  ordem          Int
+  ordem        Int
   /// user ou assistant.
-  papel          String
-  conteudo       String
+  papel        String
+  conteudo     String
   /// A pergunta digitada, ou o texto visível da resposta. Vazio nos
   /// resultados de ferramenta.
-  textoNaTela    String?
+  textoNaTela  String?
   /// Só nas respostas: end_turn, tool_use, pause_turn, max_tokens...
-  motivoParada   String?
+  motivoParada String?
   /// Só nas perguntas: andamento, concluida, recusada, cortada, voltas,
   /// interrompida ou erro.
-  situacao       String?
+  situacao     String?
   /// Só nas perguntas: a reserva da franquia, feita uma vez por pergunta.
-  usoDeIaId      String?
+  usoDeIaId    String?
   /// Só nas perguntas: quantas chamadas à API já foram feitas para ela.
-  chamadas       Int      @default(0)
+  chamadas     Int      @default(0)
   /// Mensagens de uma pergunta recusada ou sem resposta saem do histórico
   /// enviado à API, mas ficam registradas.
-  descartada     Boolean  @default(false)
-  criadoEm       DateTime @default(now())
+  descartada   Boolean  @default(false)
+  criadoEm     DateTime @default(now())
 
   usuario  Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   conversa ConversaDeIa @relation(fields: [conversaId], references: [id], onDelete: Cascade)
 
   @@unique([conversaId, ordem])
   @@index([usuarioId])
+}
+
+/// A página pública em que o cliente marca o próprio horário: /agendar/<link>.
+///
+/// Uma por estúdio. Nasce desligada: a dona escolhe o endereço, os horários e
+/// os serviços antes de divulgar. Desligar não apaga nada, só tira a página do ar.
+model AgendaOnline {
+  id                 String   @id @default(cuid())
+  usuarioId          String   @unique
+  /// Só letras minúsculas sem acento, números e hífen, de 3 a 40 caracteres.
+  link               String   @unique
+  ativa              Boolean  @default(false)
+  /// Quanto tempo antes, no mínimo, o cliente pode marcar. Em minutos.
+  antecedenciaMin    Int      @default(120)
+  /// Até quantos dias à frente a página oferece horário.
+  diasAFrente        Int      @default(30)
+  /// Com equipe (plano VIP), o cliente escolhe quem atende. Desligado, todo
+  /// horário pelo link cai na agenda da própria dona.
+  escolherQuemAtende Boolean  @default(false)
+  /// Quando o cliente escolhe quem atende, a dona também aparece na lista?
+  donaAtende         Boolean  @default(true)
+  criadoEm           DateTime @default(now())
+  atualizadoEm       DateTime @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+}
+
+/// Um intervalo de atendimento num dia da semana: "terça, das 9h às 12h".
+/// Dia com almoço tem duas linhas. Minutos desde a meia-noite, no fuso do
+/// estúdio, para a conta de horário livre não depender de texto.
+model FaixaDeAtendimento {
+  id          String @id @default(cuid())
+  usuarioId   String
+  /// 0 = domingo, 1 = segunda ... 6 = sábado.
+  diaDaSemana Int
+  inicioMin   Int
+  /// Até 1440, que é a meia-noite do fim do dia.
+  fimMin      Int
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, diaDaSemana])
+}
+
+/// Cada vez que alguém tenta confirmar um horário pela página pública.
+///
+/// Serve só para segurar robô e abuso: IP e telefone nunca ficam em texto, só
+/// embaralhados com o segredo do servidor, e a linha é apagada depois de um dia.
+model TentativaDeAgendamento {
+  id           String   @id @default(cuid())
+  /// O estúdio do link usado.
+  usuarioId    String
+  ipHash       String
+  telefoneHash String?
+  sucesso      Boolean  @default(false)
+  criadoEm     DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([ipHash, criadoEm])
+  @@index([telefoneHash, criadoEm])
+  @@index([criadoEm])
+}
+
+/// Um mês fechado: o relatório como estava no momento em que a dona fechou.
+///
+/// Enquanto `fechado` for true, nenhum caminho do Bossa cria, muda ou apaga
+/// dinheiro com data naquele mês (ver lib/fechamento/trava.ts). Reabrir só
+/// desliga a trava: a linha fica, e fechar de novo grava um resumo novo.
+model FechamentoDoMes {
+  id           String    @id @default(cuid())
+  usuarioId    String
+  /// "AAAA-MM", contado no fuso do estúdio. Um por mês em cada estúdio.
+  competencia  String
+  fechado      Boolean   @default(true)
+  /// O relatório inteiro do mês, em centavos inteiros, congelado ao fechar.
+  /// É o que a dona e o contador veem enquanto o mês estiver fechado.
+  resumo       Json
+  fechadoEm    DateTime  @default(now())
+  /// A última vez que o mês foi reaberto. Vazio se nunca foi.
+  reabertoEm   DateTime?
+  criadoEm     DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, competencia])
+}
+
+/// Cada vez que um mês foi fechado ou reaberto, só por acréscimo. É o registro
+/// que mostra ao contador que um número mudou depois de fechado, e quando.
+model RegistroDeFechamento {
+  id          String   @id @default(cuid())
+  usuarioId   String
+  competencia String
+  /// fechou ou reabriu.
+  acao        String
+  criadoEm    DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, competencia, criadoEm])
+}
+
+/// O link secreto que a dona entrega ao contador: /contador/<código>.
+///
+/// O código não fica aqui, só o SHA-256 dele, como no pedido de senha: quem
+/// abrir o banco não consegue montar o link. Gerar outro revoga o anterior.
+model AcessoDoContador {
+  id             String    @id @default(cuid())
+  usuarioId      String
+  codigoHash     String    @unique
+  criadoEm       DateTime  @default(now())
+  /// Preenchido quando a dona revoga ou gera outro link. Revogado não abre mais.
+  revogadoEm     DateTime?
+  /// A última vez que o link foi aberto, para a dona saber se o contador viu.
+  ultimoAcessoEm DateTime?
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, revogadoEm])
+}
+
+/// Cada tentativa de abrir /contador/<código> com um código que não vale.
+///
+/// Serve só para segurar quem tenta adivinhar links: o IP fica embaralhado com
+/// o segredo do servidor, nunca em texto, e a linha some depois de um dia. Não
+/// tem estúdio porque código errado não aponta para estúdio nenhum.
+model TentativaDoContador {
+  id       String   @id @default(cuid())
+  ipHash   String
+  criadoEm DateTime @default(now())
+
+  @@index([ipHash, criadoEm])
+  @@index([criadoEm])
 }

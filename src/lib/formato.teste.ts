@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  competenciaAtual,
+  dataCurta,
   dataPuraCurta,
   deDataPura,
+  inicioDaCompetencia,
+  inicioDoMes,
+  inicioDoProximoMes,
+  instanteDoDiaPuro,
+  somarMeses,
   diferencaEmDias,
   hojeNoEstudio,
   paraDataPura,
@@ -63,5 +70,44 @@ describe("datas puras", () => {
     expect(paraDataPura(hojeNoEstudio(new Date("2026-10-05T21:01:00.000Z")))).toBe(
       "2026-10-05",
     );
+  });
+});
+
+describe("começo do mês no fuso do estúdio", () => {
+  it("o mês começa à meia-noite de São Paulo, não à de UTC", () => {
+    // 23:30 do dia 31 em São Paulo já é dia 1º em UTC. Ainda é outubro.
+    const fimDeOutubro = new Date("2026-11-01T02:30:00.000Z");
+    expect(competenciaAtual(fimDeOutubro)).toBe("2026-10");
+    expect(inicioDoMes(fimDeOutubro).toISOString()).toBe("2026-10-01T03:00:00.000Z");
+    expect(inicioDoProximoMes(fimDeOutubro).toISOString()).toBe("2026-11-01T03:00:00.000Z");
+  });
+
+  it("vira o ano", () => {
+    const reveillon = new Date("2027-01-01T02:59:00.000Z"); // 23:59 do dia 31 em SP
+    expect(inicioDoMes(reveillon).toISOString()).toBe("2026-12-01T03:00:00.000Z");
+    expect(inicioDoProximoMes(reveillon).toISOString()).toBe("2027-01-01T03:00:00.000Z");
+  });
+
+  it("um helper só para o mês em texto", () => {
+    expect(inicioDaCompetencia("2026-10").toISOString()).toBe("2026-10-01T03:00:00.000Z");
+    expect(somarMeses("2026-12", 1)).toBe("2027-01");
+    expect(somarMeses("2026-01", -1)).toBe("2025-12");
+    expect(() => inicioDaCompetencia("2026-1")).toThrow();
+  });
+});
+
+describe("dia puro que vira lançamento", () => {
+  it("a conta paga no dia 10 aparece no dia 10, e não no dia 9", () => {
+    const pagoEm = deDataPura("2026-10-10")!;
+    // O erro antigo: o dia puro mostrado no fuso do estúdio volta um dia.
+    expect(dataCurta(pagoEm)).toBe("09/10/2026");
+    // O certo: meia-noite do dia 10 em São Paulo.
+    expect(dataCurta(instanteDoDiaPuro(pagoEm))).toBe("10/10/2026");
+    expect(instanteDoDiaPuro(pagoEm).toISOString()).toBe("2026-10-10T03:00:00.000Z");
+  });
+
+  it("o pagamento do dia 1º fica no mês certo", () => {
+    const instante = instanteDoDiaPuro(deDataPura("2026-11-01")!);
+    expect(instante.getTime()).toBeGreaterThanOrEqual(inicioDaCompetencia("2026-11").getTime());
   });
 });
