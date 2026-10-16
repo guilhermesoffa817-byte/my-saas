@@ -11,7 +11,13 @@ import {
   registrarPagamento,
   salvarColaborador,
 } from "@/lib/equipe-operacoes";
-import { apagarVencimento, pagarVencimento } from "@/lib/vencimento-operacoes";
+import {
+  apagarVencimento,
+  completarRepeticao,
+  criarVencimento,
+  encerrarRepeticao,
+  pagarVencimento,
+} from "@/lib/vencimento-operacoes";
 import { receberCobranca } from "@/lib/cobranca-operacoes";
 import { apagarHorario, mudarStatusDoHorario } from "@/lib/agenda-operacoes";
 import { apagarCliente } from "@/lib/cliente-operacoes";
@@ -228,6 +234,60 @@ describe.skipIf(!TEM_BANCO)("fechamento do mês no banco", () => {
       expect(conta.pago).toBe(false);
 
       expect(await totalDeSetembro()).toEqual(antes);
+    });
+
+    it("vencimento: criar ou apagar conta com data no mês fechado", async () => {
+      const db = await banco();
+      const uid = estudio.usuario.id;
+      const contasAntes = (await relatorioAoVivo(db, uid, SETEMBRO, AGORA)).contasAPagar;
+
+      const conta = { tipo: "conta", descricao: "Gás", categoria: null, valorCentavos: 9000 };
+      expect(await criarVencimento(db, uid, { ...conta, data: dia("2026-09-28") })).toEqual({ erro: MES_FECHADO });
+      // A conta ainda em aberto também é número do mês: não some por baixo.
+      expect(await apagarVencimento(db, uid, setembro.conta.id)).toEqual({ erro: MES_FECHADO });
+      expect(await db.vencimento.count({ where: { id: setembro.conta.id } })).toBe(1);
+
+      const depois = (await relatorioAoVivo(db, uid, SETEMBRO, AGORA)).contasAPagar;
+      expect(depois.totalCentavos).toBe(contasAntes.totalCentavos);
+      expect(depois.quantidade).toBe(contasAntes.quantidade);
+
+      // Prazo de contrato não é dinheiro, e outubro segue aberto.
+      expect(
+        await criarVencimento(db, uid, { ...conta, tipo: "prazo", valorCentavos: null, data: dia("2026-09-28") }),
+      ).toHaveProperty("id");
+      const outubro = await criarVencimento(db, uid, { ...conta, data: dia("2026-10-28") });
+      if (!("id" in outubro)) throw new Error(outubro.erro);
+      expect(await apagarVencimento(db, uid, outubro.id)).toEqual({ resultado: "apagado" });
+    });
+
+    it("repetição: não gera nem apaga data de um mês fechado", async () => {
+      const db = await banco();
+      const uid = estudio.usuario.id;
+      const hoje = dia("2026-10-16");
+      const repeticao = await db.repeticaoDeVencimento.create({
+        data: { usuarioId: uid, descricao: "Internet", valorCentavos: 12000, primeira: dia("2026-10-20") },
+      });
+      // Outubro já tem a data dele quando o mês é fechado.
+      expect(await completarRepeticao(db, uid, repeticao.id, hoje)).toBeGreaterThan(1);
+      expect(await fecharMes(db, uid, "2026-10", AGORA)).toHaveProperty("resultado", "fechado");
+
+      // Encerrar o combinado tira as datas futuras, menos a de outubro fechado.
+      expect(await encerrarRepeticao(db, uid, repeticao.id, hoje)).toBe(true);
+      const restantes = await db.vencimento.findMany({ where: { repeticaoId: repeticao.id }, select: { data: true } });
+      expect(restantes.map((item) => item.data.toISOString().slice(0, 10))).toEqual(["2026-10-20"]);
+
+      // Um combinado novo não cria data dentro do mês fechado.
+      const outra = await db.repeticaoDeVencimento.create({
+        data: { usuarioId: uid, descricao: "Água", valorCentavos: 8000, primeira: dia("2026-10-25") },
+      });
+      expect(await completarRepeticao(db, uid, outra.id, hoje)).toBeGreaterThan(0);
+      const datas = await db.vencimento.findMany({ where: { repeticaoId: outra.id }, select: { data: true } });
+      expect(datas.some((item) => item.data.toISOString().startsWith("2026-10"))).toBe(false);
+      expect(datas.some((item) => item.data.toISOString().startsWith("2026-11"))).toBe(true);
+
+      // Reaberto o mês, a próxima visita completa a data que faltava.
+      await reabrirMes(db, uid, "2026-10", AGORA);
+      expect(await completarRepeticao(db, uid, outra.id, hoje)).toBe(1);
     });
 
     it("cobrança: marcar como paga, avulsa ou da agenda", async () => {

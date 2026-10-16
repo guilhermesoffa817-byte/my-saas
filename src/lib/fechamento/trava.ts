@@ -3,8 +3,8 @@
  *
  * Todo caminho que cria, muda ou apaga dinheiro com data num mês passa por
  * `conferirMesesAbertos` antes de gravar: lançamento das Finanças, pagamento da
- * Equipe, vencimento pago, cobrança recebida, atendimento concluído e cliente
- * apagado com atendimento concluído. Se um dos meses tocados estiver fechado,
+ * Equipe, conta a pagar criada, gerada, paga ou apagada, cobrança recebida,
+ * atendimento concluído e cliente apagado com atendimento concluído. Se um dos meses tocados estiver fechado,
  * nada é gravado e a tela mostra `MES_FECHADO`.
  *
  * A conferência só vale dentro da mesma transação da gravação, e as duas pegam

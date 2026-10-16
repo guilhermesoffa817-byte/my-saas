@@ -98,6 +98,25 @@ ASSINATURA_VALOR_CENTAVOS="16900"   # R$ 169,00 ao mês
 ASSINATURA_ANUAL_CENTAVOS="169000"  # R$ 1.690,00 ao ano
 ```
 
+### Privacidade e termos
+
+As páginas `/privacidade` e `/termos` leem quem responde pelo Bossa destas
+variáveis. Enquanto estiverem em branco, a página mostra `[PREENCHER: ...]`:
+
+```env
+RESPONSAVEL_NOME="Nome completo ou razão social"
+RESPONSAVEL_DOCUMENTO="CPF ou CNPJ"
+CONTATO_EMAIL="contato@seudominio.com.br"
+ENCARREGADO_DE_DADOS="Nome do encarregado"
+```
+
+As duas páginas são montadas na publicação: depois de mudar uma dessas
+variáveis, publique o site de novo.
+
+Os dois textos foram escritos a partir do que o código faz hoje e trazem marcas
+`[REVISAR COM ADVOGADO]` e `[EXEMPLO]` nos pontos que precisam de revisão
+jurídica antes de valer como versão final.
+
 > A chave entra no QR Code exatamente como estiver escrita aqui. Use o mesmo formato
 > que está cadastrado no banco — chaves de telefone costumam ser registradas como
 > `+5566992513501`, enquanto CPF, e-mail e chave aleatória vão do jeito que são.

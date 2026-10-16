@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { criarConta } from "@/app/acoes/autenticacao";
 import { BotaoEnviar } from "@/componentes/botoes";
@@ -143,9 +144,21 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
       </BotaoEnviar>
 
       <p className="text-center text-xs leading-relaxed text-carvao-suave">
-        O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Seus dados
-        ficam só com a gente. Ao criar a conta você começa no período de teste. O pagamento
-        só é pedido quando ele terminar, e nunca sem avisar.
+        O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Ao criar a
+        conta você começa no período de teste. O pagamento só é pedido quando ele terminar, e
+        nunca sem avisar.
+      </p>
+
+      <p className="text-center text-xs leading-relaxed text-carvao-suave">
+        Ao criar a conta, você concorda com os{" "}
+        <Link href="/termos" target="_blank" className="font-semibold text-terracota underline">
+          Termos de uso
+        </Link>{" "}
+        e com a{" "}
+        <Link href="/privacidade" target="_blank" className="font-semibold text-terracota underline">
+          Política de privacidade
+        </Link>
+        .
       </p>
     </form>
   );

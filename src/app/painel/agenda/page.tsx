@@ -18,6 +18,7 @@ import {
   telefoneBonito,
 } from "@/lib/formato";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
+import { HORARIO_JA_OCUPADO } from "@/lib/agenda-operacoes";
 import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
@@ -110,6 +111,7 @@ export default async function PaginaAgenda({
       </section>
 
       <AvisoDeMesFechado aviso={aviso} mes={chaveDoDia.slice(0, 7)} />
+      {aviso === "horario-ocupado" ? <Aviso tom="erro">{HORARIO_JA_OCUPADO}</Aviso> : null}
 
       <section className="cartao">
         <h2 className="font-display text-xl font-semibold text-carvao">Marcar um horário</h2>

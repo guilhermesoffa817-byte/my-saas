@@ -320,7 +320,10 @@ function Moldura({ agenda, children }: { agenda?: AgendaPublica; children: React
       </header>
       <main>{children}</main>
       <footer className="mt-10 text-center text-xs text-carvao-suave">
-        Agenda online feita com {NOME_DO_PRODUTO}
+        Agenda online feita com {NOME_DO_PRODUTO} ·{" "}
+        <Link href="/privacidade" className="underline underline-offset-2 hover:text-terracota">
+          Privacidade
+        </Link>
       </footer>
     </div>
   );

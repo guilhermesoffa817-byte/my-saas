@@ -15,6 +15,7 @@ import {
   type AgendaPublica,
   type PedidoDeAgendamento,
 } from "@/lib/agendamento-online/operacoes";
+import { HORARIO_JA_OCUPADO, mudarStatusDoHorario } from "@/lib/agenda-operacoes";
 
 /**
  * Agendamento online no banco de verdade: a página é pública, então o que se
@@ -113,6 +114,39 @@ describe.skipIf(!TEM_BANCO)("agendamento online no banco", () => {
       erro: "O agendamento online está indisponível no momento.",
     });
     expect(await db.agendamento.count({ where: { usuarioId: um.usuario.id, origem: "link" } })).toBe(0);
+  });
+
+  it("horário cancelado e ocupado pelo link não volta para agendado por cima do novo", async () => {
+    const db = await banco();
+    // A dona tinha um atendimento às 10h de terça e cancelou.
+    const antigo = await db.agendamento.create({
+      data: {
+        usuarioId: um.usuario.id,
+        clienteId: um.cliente.id,
+        servicoId: um.servico.id,
+        inicio: sp("2026-10-20T10:00"),
+        status: "cancelado",
+      },
+    });
+    // O horário voltou para a página, e um cliente marcou.
+    const marcado = await agendarPeloLink(db, pedido(um, "estudio-um"), {
+      ipHash: "ip-reativar",
+      embaralharTelefone,
+      agora: AGORA,
+    });
+    expect(marcado).toHaveProperty("ok", true);
+
+    // Desfazer o cancelamento agora poria dois clientes no mesmo horário.
+    expect(
+      await mudarStatusDoHorario(db, um.usuario.id, { id: antigo.id, status: "agendado", cancelarCobranca: false }),
+    ).toMatchObject({ erro: HORARIO_JA_OCUPADO, motivo: "ocupado" });
+    expect((await db.agendamento.findUniqueOrThrow({ where: { id: antigo.id } })).status).toBe("cancelado");
+
+    // Sem ninguém no lugar, a volta é livre, como sempre foi.
+    await db.agendamento.updateMany({ where: { usuarioId: um.usuario.id, origem: "link" }, data: { status: "cancelado" } });
+    expect(
+      await mudarStatusDoHorario(db, um.usuario.id, { id: antigo.id, status: "agendado", cancelarCobranca: false }),
+    ).toMatchObject({ resultado: "feito" });
   });
 
   it("só mostra os serviços que a dona deixou aparecer", async () => {

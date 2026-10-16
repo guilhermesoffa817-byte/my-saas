@@ -62,6 +62,14 @@ export function limiteDeIa(
   return LEITURAS_POR_MES_NO_VIP;
 }
 
+/** Todos os recursos, na ordem da tabela. Serve para conferir listas que dependem dela. */
+export const RECURSOS = Object.keys(SO_NO_VIP) as Recurso[];
+
+/** Se o recurso é só do VIP. A tela de planos e o teste dela leem daqui. */
+export function soNoVip(recurso: Recurso) {
+  return SO_NO_VIP[recurso];
+}
+
 export function podeUsar(
   usuario: { assinatura?: { status: string; plano: string; validaAte: Date } | null },
   recurso: Recurso,

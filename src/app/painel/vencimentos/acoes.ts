@@ -10,8 +10,13 @@ import {
   paraCentavos,
   paraDataPura,
 } from "@/lib/formato";
-import { ocorrenciasQueFaltam } from "@/lib/vencimento";
-import { apagarVencimento, pagarVencimento } from "@/lib/vencimento-operacoes";
+import {
+  apagarVencimento,
+  completarRepeticao,
+  criarVencimento,
+  encerrarRepeticao as encerrarDoBanco,
+  pagarVencimento,
+} from "@/lib/vencimento-operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -65,16 +70,14 @@ export async function salvarVencimento(
   }
 
   if (!repete) {
-    await prisma.vencimento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo,
-        descricao,
-        categoria: categoria || null,
-        valorCentavos,
-        data,
-      },
+    const criado = await criarVencimento(prisma, usuario.id, {
+      tipo,
+      descricao,
+      categoria: categoria || null,
+      valorCentavos,
+      data,
     });
+    if ("erro" in criado) return { erro: criado.erro };
     atualizarTelas();
     return { recado: "Vencimento guardado." };
   }
@@ -92,7 +95,7 @@ export async function salvarVencimento(
     select: { id: true },
   });
 
-  await completarRepeticao(repeticao.id, usuario.id);
+  await completarRepeticao(prisma, usuario.id, repeticao.id, hojeNoEstudio());
 
   atualizarTelas();
   return {
@@ -100,52 +103,6 @@ export async function salvarVencimento(
       ? "Combinado guardado. As datas foram geradas até o fim dele."
       : "Combinado guardado. O Bossa mantém sempre os próximos doze meses.",
   };
-}
-
-/**
- * Completa as ocorrências que faltam de uma repetição.
- *
- * É chamada quando a tela abre e quando o combinado é criado. Não existe tarefa
- * agendada: a cada visita o Bossa compara o que deveria existir com o que
- * existe e grava a diferença. O par repetição e data é único no banco, então
- * duas visitas ao mesmo tempo não criam a mesma data duas vezes.
- */
-export async function completarRepeticao(repeticaoId: string, usuarioId: string) {
-  const repeticao = await prisma.repeticaoDeVencimento.findFirst({
-    where: { id: repeticaoId, usuarioId, ativa: true },
-    select: {
-      id: true,
-      tipo: true,
-      descricao: true,
-      categoria: true,
-      valorCentavos: true,
-      primeira: true,
-      ate: true,
-      vencimentos: { select: { data: true } },
-    },
-  });
-  if (!repeticao) return;
-
-  const faltam = ocorrenciasQueFaltam({
-    primeira: repeticao.primeira,
-    ate: repeticao.ate,
-    jaGravadas: repeticao.vencimentos.map((item) => item.data),
-    hoje: hojeNoEstudio(),
-  });
-  if (faltam.length === 0) return;
-
-  await prisma.vencimento.createMany({
-    data: faltam.map((data) => ({
-      usuarioId,
-      repeticaoId: repeticao.id,
-      tipo: repeticao.tipo,
-      descricao: repeticao.descricao,
-      categoria: repeticao.categoria,
-      valorCentavos: repeticao.valorCentavos,
-      data,
-    })),
-    skipDuplicates: true,
-  });
 }
 
 export async function marcarComoPago(
@@ -175,7 +132,7 @@ export async function excluirVencimento(dados: FormData) {
   const { usuario } = await exigirRecurso("vencimentos");
   const id = texto(dados, "id");
 
-  // O lançamento do pagamento sai junto, se o mês dele não estiver fechado.
+  // Conta de mês fechado fica; o lançamento do pagamento sai junto, se o mês dele estiver aberto.
   const apagado = await apagarVencimento(prisma, usuario.id, id);
   if ("erro" in apagado) redirect("/painel/vencimentos?aviso=mes-fechado");
 
@@ -186,24 +143,8 @@ export async function encerrarRepeticao(dados: FormData) {
   const { usuario } = await exigirRecurso("vencimentos");
   const id = texto(dados, "id");
 
-  await prisma.$transaction(async (tx) => {
-    const mudadas = await tx.repeticaoDeVencimento.updateMany({
-      where: { id, usuarioId: usuario.id, ativa: true },
-      data: { ativa: false },
-    });
-    if (mudadas.count === 0) return;
-
-    // As datas futuras que ninguém pagou somem; o que já foi pago fica no
-    // histórico, porque aquilo aconteceu de verdade.
-    await tx.vencimento.deleteMany({
-      where: {
-        repeticaoId: id,
-        usuarioId: usuario.id,
-        pago: false,
-        data: { gt: hojeNoEstudio() },
-      },
-    });
-  });
+  // As datas futuras que ninguém pagou somem, menos as de um mês já fechado.
+  await encerrarDoBanco(prisma, usuario.id, id, hojeNoEstudio());
 
   atualizarTelas();
 }

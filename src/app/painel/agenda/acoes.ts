@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { travarAgendaDoEstudio } from "@/lib/agenda-trava";
 import { exigirAcesso } from "@/lib/guardas";
@@ -11,6 +10,7 @@ import { ausenciaNoDia } from "@/lib/equipe-operacoes";
 import {
   STATUS_DO_HORARIO,
   apagarHorario,
+  horarioOcupado,
   mudarStatusDoHorario,
   type StatusDoHorario,
 } from "@/lib/agenda-operacoes";
@@ -22,7 +22,6 @@ import {
   hora,
   paraDataLocal,
   primeiroNome,
-  somarDias,
 } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -136,47 +135,6 @@ async function conferirQuemAtende(
   return null;
 }
 
-/**
- * Com equipe, duas pessoas atendem ao mesmo tempo. O choque de horário só vale
- * entre atendimentos da mesma pessoa; os sem "quem atende" são da própria dona
- * e se chocam entre si, como sempre foi para quem trabalha sozinha.
- */
-async function horarioOcupado(
-  db: Prisma.TransactionClient,
-  {
-  usuarioId,
-  inicio,
-  duracaoMin,
-  ignorarId,
-  colaboradorId = null,
-}: {
-  usuarioId: string;
-  inicio: Date;
-  duracaoMin: number;
-  ignorarId?: string;
-  colaboradorId?: string | null;
-}) {
-  const fim = new Date(inicio.getTime() + duracaoMin * 60 * 1000);
-
-  const candidatos = await db.agendamento.findMany({
-    where: {
-      usuarioId,
-      colaboradorId,
-      status: { not: "cancelado" },
-      inicio: { gte: somarDias(inicio, -1), lte: somarDias(inicio, 1) },
-      ...(ignorarId ? { id: { not: ignorarId } } : {}),
-    },
-    include: { cliente: true, servico: true },
-  });
-
-  return candidatos.find((item) => {
-    const fimExistente = new Date(
-      item.inicio.getTime() + item.servico.duracaoMin * 60 * 1000,
-    );
-    return item.inicio < fim && inicio < fimExistente;
-  });
-}
-
 export async function mudarStatus(dados: FormData) {
   const { usuario } = await exigirAcesso();
 
@@ -190,7 +148,10 @@ export async function mudarStatus(dados: FormData) {
     status,
     cancelarCobranca: texto(dados, "cobranca") === "cancelar",
   });
-  if ("erro" in feito) voltarComMesFechado(feito.inicio);
+  if ("erro" in feito) {
+    if (feito.motivo === "ocupado") voltarComAviso(feito.inicio, "horario-ocupado");
+    voltarComMesFechado(feito.inicio);
+  }
 
   atualizarTelas();
 }
@@ -207,5 +168,10 @@ export async function excluirAgendamento(dados: FormData) {
 
 /** Volta para o dia do horário com o recado do mês fechado. */
 function voltarComMesFechado(inicio: Date): never {
-  redirect(`/painel/agenda?dia=${paraDataLocal(inicio)}&aviso=mes-fechado`);
+  voltarComAviso(inicio, "mes-fechado");
+}
+
+/** Volta para o dia do horário com um recado: mês fechado ou horário já ocupado. */
+function voltarComAviso(inicio: Date, aviso: "mes-fechado" | "horario-ocupado"): never {
+  redirect(`/painel/agenda?dia=${paraDataLocal(inicio)}&aviso=${aviso}`);
 }

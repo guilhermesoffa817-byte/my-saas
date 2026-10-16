@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirRecurso } from "@/lib/guardas";
 import { LEITURAS_POR_MES_NO_VIP } from "@/lib/recursos";
-import { deDataPura, inicioDoMes, paraCentavos } from "@/lib/formato";
+import { deDataPura, hojeNoEstudio, inicioDoMes, paraCentavos } from "@/lib/formato";
 import {
   TAMANHO_MAXIMO_BYTES,
   apagar,
@@ -13,7 +14,8 @@ import {
   envioConfigurado,
   tipoAceito,
 } from "@/lib/arquivos";
-import { completarRepeticao } from "../vencimentos/acoes";
+import { completarRepeticao } from "@/lib/vencimento-operacoes";
+import { MesFechadoErro, exigirMesesAbertos, mesDoDiaPuro } from "@/lib/fechamento/trava";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -185,6 +187,7 @@ export async function aceitarItem(dados: FormData) {
     where: { id, documento: { usuarioId: usuario.id } },
     select: {
       id: true,
+      documentoId: true,
       descricao: true,
       tipo: true,
       valorCentavos: true,
@@ -201,54 +204,68 @@ export async function aceitarItem(dados: FormData) {
 
   let repeticaoId: string | null = null;
 
-  await prisma.$transaction(async (tx) => {
-    const marcados = await tx.itemDoDocumento.updateMany({
-      where: { id: item.id, decisao: null },
-      data: { decisao: "aceito" },
-    });
-    if (marcados.count === 0) return;
+  try {
+    await prisma.$transaction(async (tx) => {
+      const marcados = await tx.itemDoDocumento.updateMany({
+        where: { id: item.id, decisao: null },
+        data: { decisao: "aceito" },
+      });
+      if (marcados.count === 0) return;
 
-    if (item.repeticao === "mensal") {
-      const repeticao = await tx.repeticaoDeVencimento.create({
+      if (item.repeticao === "mensal") {
+        const repeticao = await tx.repeticaoDeVencimento.create({
+          data: {
+            usuarioId: usuario.id,
+            tipo: "conta",
+            descricao: item.descricao,
+            categoria: "Do documento",
+            valorCentavos: item.valorCentavos,
+            primeira: item.data!,
+            ate: item.repeteAte,
+          },
+          select: { id: true },
+        });
+        repeticaoId = repeticao.id;
+        await tx.itemDoDocumento.update({
+          where: { id: item.id },
+          data: { vencimentoId: repeticao.id },
+        });
+        return;
+      }
+
+      /*
+        Conta com valor entra nas "Contas a pagar" do relatório do mês. Num mês
+        fechado ela não entra: o erro desfaz a transação inteira, e o item
+        continua esperando decisão.
+      */
+      if (item.valorCentavos) await exigirMesesAbertos(tx, usuario.id, [mesDoDiaPuro(item.data!)]);
+
+      const vencimento = await tx.vencimento.create({
         data: {
           usuarioId: usuario.id,
           tipo: "conta",
           descricao: item.descricao,
           categoria: "Do documento",
           valorCentavos: item.valorCentavos,
-          primeira: item.data!,
-          ate: item.repeteAte,
+          data: item.data!,
         },
         select: { id: true },
       });
-      repeticaoId = repeticao.id;
       await tx.itemDoDocumento.update({
         where: { id: item.id },
-        data: { vencimentoId: repeticao.id },
+        data: { vencimentoId: vencimento.id },
       });
-      return;
+    });
+  } catch (erro) {
+    if (erro instanceof MesFechadoErro) {
+      redirect(`/painel/documentos/${item.documentoId}?aviso=mes-fechado&mes=${erro.competencia}`);
     }
-
-    const vencimento = await tx.vencimento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo: "conta",
-        descricao: item.descricao,
-        categoria: "Do documento",
-        valorCentavos: item.valorCentavos,
-        data: item.data!,
-      },
-      select: { id: true },
-    });
-    await tx.itemDoDocumento.update({
-      where: { id: item.id },
-      data: { vencimentoId: vencimento.id },
-    });
-  });
+    throw erro;
+  }
 
   // As ocorrências da repetição são geradas fora da transação, porque elas
   // chamam a mesma rotina que a tela de vencimentos usa.
-  if (repeticaoId) await completarRepeticao(repeticaoId, usuario.id);
+  if (repeticaoId) await completarRepeticao(prisma, usuario.id, repeticaoId, hojeNoEstudio());
 
   atualizarTelas();
 }

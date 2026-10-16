@@ -4,6 +4,7 @@ import { podeUsar } from "@/lib/recursos";
 import { qrCodeSvg } from "@/lib/qrcode";
 import { ENDERECO_DO_SITE } from "@/lib/site";
 import { emReais } from "@/lib/formato";
+import { telefoneParaWhatsApp } from "@/lib/telefone";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { BotaoCopiar } from "@/componentes/ui/botao";
 import { Aviso, Etiqueta } from "@/componentes/ui/etiqueta";
@@ -64,6 +65,8 @@ export default async function PaginaAgendamentoOnline() {
   const prefixo = `${ENDERECO_DO_SITE.replace(/^https?:\/\//, "")}/agendar/`;
   const endereco = `${ENDERECO_DO_SITE}/agendar/${link}`;
   const qr = config ? await qrCodeSvg(endereco) : null;
+  // O mesmo teste da página pública: só vira botão o telefone que o WhatsApp aceita.
+  const whatsappPublico = telefoneParaWhatsApp(usuario.telefone).certo;
 
   const faixasDoFormulario: FaixaDoFormulario[] = config
     ? faixas.map((faixa) => ({
@@ -142,6 +145,20 @@ export default async function PaginaAgendamentoOnline() {
         explicacao="O cliente escolhe o serviço, o dia e um horário livre, e deixa nome e WhatsApp. Se o telefone já estiver na sua lista, o Bossa usa a mesma ficha."
       >
         <Cartao>
+          {/*
+            A página é pública: a dona precisa saber o que dela vai para lá antes
+            de divulgar. O endereço e o telefone saem do cadastro da conta.
+          */}
+          <p className="mb-5 text-sm leading-relaxed text-carvao-suave">
+            Quem abre o link vê o nome do negócio
+            {usuario.endereco ? (
+              <>
+                , o endereço do seu cadastro (<strong className="text-carvao">{usuario.endereco}</strong>)
+              </>
+            ) : null}
+            {whatsappPublico ? " e um botão para falar com você no WhatsApp do cadastro" : null}. Os
+            horários já marcados aparecem só como ocupados, sem nome de cliente.
+          </p>
           <FormularioDaAgenda
             link={link}
             prefixo={prefixo}

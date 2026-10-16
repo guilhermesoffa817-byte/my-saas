@@ -10,7 +10,9 @@ import {
   ECONOMIA_ANUAL_CENTAVOS,
   ECONOMIA_VIP_ANUAL_CENTAVOS,
   pixCopiaECola,
+  type CodigoPlano,
 } from "@/lib/assinatura";
+import { textosDoPlano } from "@/lib/itens-dos-planos";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -56,26 +58,26 @@ export default async function PaginaAssinatura({
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
   const pixConfigurado = PIX_CHAVE.trim().length > 0;
 
-  const vantagens: Record<string, string[]> = {
-    mensal: [],
-    anual: [
-      `${MESES_DE_BRINDE} meses de brinde`,
-      `Economia de ${emReais(ECONOMIA_ANUAL_CENTAVOS)} no ano`,
-      "Preço travado por 12 meses, mesmo se a mensalidade subir",
-      "Um Pix só no ano inteiro, sem precisar lembrar todo mês",
-    ],
-    vip_mensal: [
-      "Aba Finanças liberada",
-      "Controle de entradas, despesas e imposto estimado",
-      "Gráfico dos seus dias mais fortes",
-      "Tudo do plano Essencial",
-    ],
-    vip_anual: [
-      `${MESES_DE_BRINDE} meses de brinde`,
-      `Economia de ${emReais(ECONOMIA_VIP_ANUAL_CENTAVOS)} no ano`,
-      "Aba Finanças liberada",
-      "Preço travado por 12 meses",
-    ],
+  // As listas de cada plano saem de itens-dos-planos.ts, a mesma fonte da
+  // página de vendas: o que se promete lá é o que aparece aqui.
+  const doAnual = (economia: number) => [
+    `Economia de ${emReais(economia)} no ano`,
+    "Preço travado por 12 meses, mesmo se a mensalidade subir",
+    "Um Pix só no ano inteiro, sem precisar lembrar todo mês",
+  ];
+  const brinde = `${MESES_DE_BRINDE} meses de brinde`;
+
+  const sobreOPlano: Record<CodigoPlano, { selo: string | null; vantagens: string[] }> = {
+    mensal: { selo: null, vantagens: textosDoPlano("essencial") },
+    anual: {
+      selo: brinde,
+      vantagens: [...doAnual(ECONOMIA_ANUAL_CENTAVOS), ...textosDoPlano("essencial")],
+    },
+    vip_mensal: { selo: "Mais completo", vantagens: textosDoPlano("vip") },
+    vip_anual: {
+      selo: brinde,
+      vantagens: [...doAnual(ECONOMIA_VIP_ANUAL_CENTAVOS), ...textosDoPlano("vip")],
+    },
   };
 
   const opcoes: OpcaoDePlano[] = pixConfigurado
@@ -94,7 +96,8 @@ export default async function PaginaAssinatura({
             periodo: plano.periodo,
             valor: emReais(plano.valorCentavos),
             dias: plano.dias,
-            vantagens: vantagens[plano.codigo] ?? [],
+            selo: sobreOPlano[plano.codigo].selo,
+            vantagens: sobreOPlano[plano.codigo].vantagens,
             copiaECola,
             qrCode: await qrCodeSvg(copiaECola),
           };
@@ -106,11 +109,11 @@ export default async function PaginaAssinatura({
     <div className="space-y-8">
       {vip ? (
         <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
-          <p className="font-semibold text-carvao">A aba Finanças faz parte do plano VIP</p>
+          <p className="font-semibold text-carvao">Essa parte é do plano VIP</p>
           <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
-            Com ela você acompanha o que entra, o que sai, o imposto estimado e descobre
-            quais dias da semana rendem mais. Para liberar, escolha um dos planos VIP
-            abaixo.
+            O VIP libera finanças, custos, relatório para o contador, contas a pagar,
+            leitura de documentos, equipe e o assistente. Para liberar, escolha um dos
+            planos VIP abaixo.
           </p>
         </div>
       ) : null}
@@ -119,8 +122,8 @@ export default async function PaginaAssinatura({
         <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">Sua assinatura</h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
           A partir de {emReais(PLANOS.mensal.valorCentavos)} ao mês. O plano VIP acrescenta
-          a aba Finanças, e os planos anuais dão {MESES_DE_BRINDE} meses de brinde. Pagamento
-          por Pix, sem fidelidade e sem multa.
+          finanças, contas, documentos, equipe e o assistente, e os planos anuais dão{" "}
+          {MESES_DE_BRINDE} meses de brinde. Pagamento por Pix, sem fidelidade e sem multa.
         </p>
       </section>
 

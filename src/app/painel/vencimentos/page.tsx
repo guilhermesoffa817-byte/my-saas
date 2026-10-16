@@ -20,7 +20,8 @@ import {
 import { avisoDoVencimento, situacaoDoVencimento } from "@/lib/vencimento";
 import { FormularioDeVencimento } from "./formulario";
 import { BotaoPagar } from "./pagar";
-import { completarRepeticao, encerrarRepeticao, excluirVencimento } from "./acoes";
+import { completarRepeticao } from "@/lib/vencimento-operacoes";
+import { encerrarRepeticao, excluirVencimento } from "./acoes";
 
 export const metadata = { title: "Vencimentos" };
 export const dynamic = "force-dynamic";
@@ -44,11 +45,10 @@ export default async function PaginaVencimentos({
     where: { usuarioId: usuario.id, ativa: true },
     select: { id: true },
   });
-  for (const repeticao of repeticoes) {
-    await completarRepeticao(repeticao.id, usuario.id);
-  }
-
   const hoje = hojeNoEstudio();
+  for (const repeticao of repeticoes) {
+    await completarRepeticao(prisma, usuario.id, repeticao.id, hoje);
+  }
 
   /*
     Quem guarda um aluguel que repete passa a ter doze datas futuras. Mostrar as
