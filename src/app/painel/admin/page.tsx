@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
 import { Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
-import { avaliarAssinatura, DIAS_DE_TESTE, PLANOS, planoPorCodigo } from "@/lib/assinatura";
+import { avaliarAssinatura, DIAS_DE_CORTESIA, PLANOS, planoPorCodigo } from "@/lib/assinatura";
+import { PAPEL_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -19,6 +20,7 @@ export const dynamic = "force-dynamic";
 
 const rotuloStatus = {
   teste: "Em teste",
+  demonstracao: "Conhecendo",
   ativa: "Em dia",
   aguardando: "Conferindo",
   expirada: "Vencida",
@@ -34,7 +36,8 @@ export default async function PaginaAdmin() {
       orderBy: { criadoEm: "asc" },
     }),
     prisma.usuario.findMany({
-      where: { papel: { not: "admin" } },
+      // O estúdio de exemplo da demonstração não é cliente: fica fora da lista.
+      where: { papel: { notIn: ["admin", PAPEL_DA_DEMONSTRACAO] } },
       include: { assinatura: true },
       orderBy: { criadoEm: "desc" },
     }),
@@ -266,7 +269,7 @@ export default async function PaginaAdmin() {
                   {assinante.assinatura ? (
                     <form action={darCortesia} className="mt-4">
                       <input type="hidden" name="usuarioId" value={assinante.id} />
-                      <BotaoEnviar variante="suave">Dar {DIAS_DE_TESTE} dias de cortesia</BotaoEnviar>
+                      <BotaoEnviar variante="suave">Dar {DIAS_DE_CORTESIA} dias de cortesia</BotaoEnviar>
                     </form>
                   ) : null}
                 </li>

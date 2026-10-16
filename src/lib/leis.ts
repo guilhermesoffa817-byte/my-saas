@@ -19,3 +19,12 @@ export const MEI_MAX_EMPREGADOS = 1;
  * outubro de 2026.
  */
 export const ESTAGIO_DURACAO_MAX_MESES = 24;
+
+/**
+ * Direito de arrependimento: quem contrata fora do estabelecimento comercial
+ * (pela internet, por exemplo) pode desistir em até sete dias, contados da
+ * assinatura ou do recebimento, e recebe de volta o que pagou, corrigido.
+ * Fonte: Código de Defesa do Consumidor, Lei 8.078/1990, art. 49
+ * (planalto.gov.br), conferido em outubro de 2026.
+ */
+export const DIAS_PARA_DESISTIR = 7;

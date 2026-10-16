@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import { limiteDeIa } from "@/lib/recursos";
 import { ehNatureza } from "@/lib/custos/calculo";
 import {
@@ -41,7 +41,7 @@ function atualizarTelas() {
 
 /** A dona escolhe a natureza de uma despesa, ou volta para "sem classificação". */
 export async function corrigirNatureza(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("custos");
+  const { usuario } = await exigirEscritaDoRecurso("custos");
   const id = texto(dados, "id");
   const escolha = texto(dados, "natureza");
 
@@ -64,7 +64,7 @@ export async function corrigirNatureza(_anterior: Resposta, dados: FormData): Pr
  * Nunca troca o que já tem natureza, em especial o que a dona marcou.
  */
 export async function sugerirClassificacao(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("custos");
+  const { usuario } = await exigirEscritaDoRecurso("custos");
   const mes = mesDaTela(texto(dados, "mes"));
 
   let movimento;

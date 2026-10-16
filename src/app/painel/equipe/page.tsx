@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { agoraDoPedido } from "@/lib/agora";
 import { MES_FECHADO } from "@/lib/fechamento/trava";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
@@ -85,7 +85,7 @@ export default async function PaginaEquipe({
 }: {
   searchParams: Promise<{ aba?: string; mes?: string; editar?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirLeituraDoRecurso("equipe");
   const parametros = await searchParams;
 
   const hoje = paraDataPura(hojeNoEstudio(agoraDoPedido()));

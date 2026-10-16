@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
 import { emReais } from "@/lib/formato";
@@ -10,7 +10,7 @@ export const metadata = { title: "Serviços" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaServicos() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
 
   const servicos = await prisma.servico.findMany({
     where: { usuarioId: usuario.id },

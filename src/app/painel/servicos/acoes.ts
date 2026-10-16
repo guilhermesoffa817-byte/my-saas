@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirEscrita } from "@/lib/guardas";
 import { paraCentavos } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -13,7 +13,7 @@ function texto(dados: FormData, campo: string) {
 }
 
 export async function salvarServico(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const nome = texto(dados, "nome");
   const preco = paraCentavos(texto(dados, "preco"));
@@ -51,7 +51,7 @@ export async function salvarServico(_anterior: Resposta, dados: FormData): Promi
 }
 
 export async function alternarServico(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = typeof dados.get("id") === "string" ? String(dados.get("id")) : "";
 
   const servico = await prisma.servico.findFirst({ where: { id, usuarioId: usuario.id } });
@@ -64,7 +64,7 @@ export async function alternarServico(dados: FormData) {
 
 /** Apaga o serviço; se ele já tiver histórico, apenas o guarda como inativo. */
 export async function removerServico(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = typeof dados.get("id") === "string" ? String(dados.get("id")) : "";
 
   const servico = await prisma.servico.findFirst({

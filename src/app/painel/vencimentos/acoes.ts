@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import {
   deDataPura,
   hojeNoEstudio,
@@ -37,7 +37,7 @@ export async function salvarVencimento(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
 
   const tipo = TIPOS.includes(texto(dados, "tipo") as (typeof TIPOS)[number])
     ? texto(dados, "tipo")
@@ -109,7 +109,7 @@ export async function marcarComoPago(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
 
   const id = texto(dados, "id");
   const pagoEm = deDataPura(texto(dados, "pagoEm") || paraDataPura(hojeNoEstudio()));
@@ -129,7 +129,7 @@ export async function marcarComoPago(
 }
 
 export async function excluirVencimento(dados: FormData) {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
   const id = texto(dados, "id");
 
   // Conta de mês fechado fica; o lançamento do pagamento sai junto, se o mês dele estiver aberto.
@@ -140,7 +140,7 @@ export async function excluirVencimento(dados: FormData) {
 }
 
 export async function encerrarRepeticao(dados: FormData) {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
   const id = texto(dados, "id");
 
   // As datas futuras que ninguém pagou somem, menos as de um mês já fechado.

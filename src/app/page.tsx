@@ -2,11 +2,8 @@ import Link from "next/link";
 import { CenaDoDia } from "@/componentes/cenas";
 import { CabecalhoDoSite, RodapeDoSite } from "@/componentes/site";
 import { Icone } from "@/componentes/ui/icones";
-import {
-  PLANOS,
-  DIAS_DE_TESTE,
-  MESES_DE_BRINDE,
-} from "@/lib/assinatura";
+import { NOME_DA_FAMILIA, PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { emReais } from "@/lib/formato";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
 import {
@@ -57,58 +54,61 @@ const PROBLEMAS = [
   },
 ];
 
-/** As funções, agrupadas do jeito que a dona pensa no trabalho, não como o menu. */
+/**
+ * As funções, agrupadas do jeito que a dona pensa no trabalho, não como o menu.
+ * `completo` marca o que só o plano Completo libera (ver lib/recursos.ts).
+ */
 const FUNCOES = [
   {
     icone: "calendario",
     titulo: "Agenda e link de agendamento",
     texto: "A semana numa tela e um link para o cliente marcar nos horários que você abrir.",
-    vip: false,
+    completo: false,
   },
   {
     icone: "dinheiro",
-    titulo: "Cobranças",
-    texto: "Quem cobrar hoje, com a mensagem e o Pix prontos para o WhatsApp.",
-    vip: false,
+    titulo: "Cobranças e finanças",
+    texto: "Quem cobrar hoje, com mensagem e Pix prontos para o WhatsApp, e o que entrou e saiu no mês.",
+    completo: false,
   },
   {
     icone: "papel",
     titulo: "Contas e documentos lidos por IA",
     texto: "Contas a pagar no lugar certo, e a foto do contrato vira datas e valores para conferir.",
-    vip: true,
+    completo: true,
   },
   {
     icone: "grafico",
-    titulo: "Finanças, custos e relatório para o contador",
-    texto: "O que entrou e saiu, quanto faturar para empatar e o mês em planilha para o contador.",
-    vip: true,
+    titulo: "Custos e relatório para o contador",
+    texto: "Custos fixos e variáveis, quanto faturar para empatar e o mês fechado para o contador.",
+    completo: true,
   },
   {
     icone: "cracha",
     titulo: "Equipe",
-    texto: "Quem trabalha com você, ausências na agenda e pagamentos que já entram como despesa.",
-    vip: true,
+    texto: "Quem trabalha com você, quem atende cada horário e pagamentos que já entram como despesa.",
+    completo: true,
   },
   {
     icone: "conversa",
     titulo: "Assistente que entende o seu negócio",
     texto: "Pergunte “em que dia a agenda fica mais vazia?” e receba a resposta com os seus números.",
-    vip: true,
+    completo: true,
   },
 ];
 
 const PASSOS = [
   {
-    titulo: "Crie a sua conta",
-    texto: "Nome, e-mail e senha. Leva um minuto e não pede cartão.",
+    titulo: "Crie a conta e conheça",
+    texto: "Leva um minuto. Você entra num estúdio de exemplo, com todas as funções funcionando.",
   },
   {
-    titulo: "Cadastre os seus serviços",
-    texto: "Preço e duração de cada um. Os clientes entram aos poucos, no dia a dia.",
+    titulo: "Escolha o plano e pague por Pix",
+    texto: "Simples ou Completo, mensal ou anual. O painel passa a ser seu assim que o Pix é confirmado.",
   },
   {
-    titulo: "Mande o seu link e use a agenda",
-    texto: "Divulgue o link no WhatsApp e no Instagram e acompanhe tudo pelo Início.",
+    titulo: "Cadastre os serviços e mande o link",
+    texto: "Preço e duração de cada serviço, e o seu link no WhatsApp e no Instagram.",
   },
 ];
 
@@ -134,13 +134,19 @@ const PERGUNTAS: Pergunta[] = [
       "Não. Ele abre o WhatsApp com a mensagem e o código Pix prontos. Você confere e aperta enviar. O dinheiro vai direto para a sua chave Pix.",
   },
   {
-    pergunta: "Como funciona o teste grátis?",
-    resposta: `São ${DIAS_DE_TESTE} dias com as funções do Essencial, sem cartão. Para continuar, você paga por Pix o plano que escolher. As funções do VIP abrem quando você assina o VIP.`,
+    pergunta: "Posso ver o sistema antes de pagar?",
+    resposta:
+      "Pode. Ao criar a conta você entra num estúdio de exemplo, com agenda, cobranças, finanças, equipe e assistente preenchidos, e navega por tudo. Para usar com os seus clientes, é só escolher um plano e pagar por Pix.",
+  },
+  {
+    pergunta: "E se eu me arrepender depois de pagar?",
+    resposta: `Você tem ${DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o seu dinheiro de volta. É o direito de arrependimento do Código de Defesa do Consumidor (art. 49). É só nos chamar.`,
+    link: { href: "/termos", rotulo: "Ver os Termos de uso" },
   },
   {
     pergunta: "A inteligência artificial vê os meus clientes?",
     resposta:
-      "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no VIP e só quando você usa.",
+      "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no plano Completo e só quando você usa.",
     link: { href: "/privacidade", rotulo: "Ver a Política de privacidade" },
   },
   {
@@ -196,21 +202,24 @@ const perguntasParaOGoogle = {
   })),
 };
 
+/** Os preços e a economia do anual saem de lib/assinatura.ts; os itens, de itens-dos-planos.ts. */
 const PLANOS_DA_VITRINE = [
   {
-    nome: "Essencial",
-    resumo: "Para organizar a agenda e receber em dia.",
+    nome: NOME_DA_FAMILIA.simples,
+    resumo: "Para organizar a agenda, cobrar e ver o dinheiro do mês.",
     mensal: PLANOS.mensal.valorCentavos,
     anual: PLANOS.anual.valorCentavos,
-    itens: textosDoPlano("essencial"),
+    economia: economiaDoAnual("simples"),
+    itens: textosDoPlano("simples"),
     destaque: false,
   },
   {
-    nome: "VIP",
-    resumo: "Para cuidar também das contas, da equipe e do dinheiro.",
+    nome: NOME_DA_FAMILIA.completo,
+    resumo: "Para cuidar também das contas, da equipe, dos custos e do contador.",
     mensal: PLANOS.vip_mensal.valorCentavos,
     anual: PLANOS.vip_anual.valorCentavos,
-    itens: textosDoPlano("vip"),
+    economia: economiaDoAnual("completo"),
+    itens: textosDoPlano("completo"),
     destaque: true,
   },
 ];
@@ -256,13 +265,16 @@ export default function PaginaInicial() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link href="/criar-conta" className="botao px-8 py-3.5 text-base">
-                Testar {DIAS_DE_TESTE} dias grátis
+                Conhecer o sistema
               </Link>
               <Link href="#planos" className="botao-suave px-6 py-3 text-base">
                 Ver planos
               </Link>
             </div>
-            <p className="mt-3 text-sm text-carvao-suave">Sem cartão. Cancele quando quiser.</p>
+            <p className="mt-3 text-sm text-carvao-suave">
+              Veja tudo funcionando antes de assinar. {DIAS_PARA_DESISTIR} dias para desistir, com o
+              seu dinheiro de volta.
+            </p>
           </div>
 
           <div className="animar-entrada" style={{ animationDelay: "120ms" }}>
@@ -312,9 +324,9 @@ export default function PaginaInicial() {
                 <div>
                   <h3 className="font-display font-semibold text-carvao">
                     {funcao.titulo}
-                    {funcao.vip ? (
+                    {funcao.completo ? (
                       <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave">
-                        VIP
+                        Completo
                       </span>
                     ) : null}
                   </h3>
@@ -356,7 +368,7 @@ export default function PaginaInicial() {
         >
           <TituloDaSecao id="titulo-planos">Dois planos, sem fidelidade</TituloDaSecao>
           <p className="mt-3 max-w-xl text-carvao-suave">
-            Pagamento por Pix. No plano anual, {MESES_DE_BRINDE} meses saem de brinde.
+            Pagamento por Pix. No anual você paga uma vez e economiza no ano.
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
@@ -370,7 +382,7 @@ export default function PaginaInicial() {
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-display text-xl font-semibold text-carvao">{plano.nome}</h3>
                   {plano.destaque ? (
-                    <span className="etiqueta bg-terracota text-acento-texto">Mais completo</span>
+                    <span className="etiqueta bg-terracota text-acento-texto">Tudo liberado</span>
                   ) : null}
                 </div>
                 <p className="mt-1 text-sm text-carvao-suave">{plano.resumo}</p>
@@ -382,7 +394,16 @@ export default function PaginaInicial() {
                   <span className="pb-1.5 text-sm text-carvao-suave">por mês</span>
                 </p>
                 <p className="mt-1 text-sm text-carvao-suave">
-                  Ou {emReais(plano.anual)} por ano.
+                  Ou {emReais(plano.anual)} por ano
+                  {plano.economia > 0 ? (
+                    <>
+                      {" "}
+                      <strong className="font-semibold text-terracota">
+                        (economize {emReais(plano.economia)})
+                      </strong>
+                    </>
+                  ) : null}
+                  .
                 </p>
 
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm text-carvao">
@@ -407,15 +428,16 @@ export default function PaginaInicial() {
                   href="/criar-conta"
                   className={`mt-7 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
                 >
-                  Testar {DIAS_DE_TESTE} dias grátis
+                  Conhecer o sistema
                 </Link>
               </div>
             ))}
           </div>
 
-          <p className="mt-6 text-sm text-carvao-suave">
-            O teste grátis libera as funções do Essencial. Sem cartão para testar, sem multa para
-            sair.
+          <p className="mt-6 text-sm leading-relaxed text-carvao-suave">
+            Veja tudo funcionando antes de assinar. Depois de pagar, você tem {DIAS_PARA_DESISTIR}{" "}
+            dias para desistir e receber o seu dinheiro de volta (direito de arrependimento do
+            Código de Defesa do Consumidor). Sem fidelidade e sem multa para sair.
           </p>
         </section>
 
@@ -465,14 +487,14 @@ export default function PaginaInicial() {
               Comece hoje. Leva um minuto.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-inverso-texto/80">
-              {DIAS_DE_TESTE} dias para usar de verdade, sem cartão. Se não ajudar, é só não
-              assinar.
+              Veja tudo funcionando num estúdio de exemplo e assine quando fizer sentido. Se mudar
+              de ideia em {DIAS_PARA_DESISTIR} dias, devolvemos o seu dinheiro.
             </p>
             <Link
               href="/criar-conta"
               className="mt-7 inline-flex min-h-11 items-center rounded-xl bg-superficie px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
             >
-              Criar minha conta
+              Conhecer o sistema
             </Link>
           </div>
         </section>

@@ -59,7 +59,7 @@ export default function PaginaPrivacidade() {
             </li>
             <li>Não vendemos dados e não usamos cookies de propaganda.</li>
             <li>
-              A inteligência artificial só funciona no plano VIP e só quando você usa. O assistente
+              A inteligência artificial só funciona no plano Completo e só quando você usa. O assistente
               e a classificação de custos nunca recebem nome, telefone ou CPF dos seus clientes. A
               leitura de documentos lê o arquivo que você enviar.
             </li>
@@ -158,7 +158,7 @@ export default function PaginaPrivacidade() {
 
       <Secao id="ia" titulo="4. Inteligência artificial">
         <p>
-          Três funções do plano VIP usam o Claude, da Anthropic. Elas só rodam quando o estúdio usa.
+          Três funções do plano Completo usam o Claude, da Anthropic. Elas só rodam quando o estúdio usa.
           O resultado é sempre uma sugestão: nada entra no financeiro sem alguém conferir.
         </p>
         <ul>
@@ -331,7 +331,7 @@ export default function PaginaPrivacidade() {
           </li>
           <li>
             <strong>Se você é o estúdio:</strong> corrija ou apague os dados nas próprias telas
-            (Clientes, Equipe, Documentos, Assistente). No VIP, o relatório do mês sai em planilha.
+            (Clientes, Equipe, Documentos, Assistente). No plano Completo, o relatório do mês sai em planilha.
             Para receber uma cópia completa dos dados ou encerrar a conta, peça pelo contato abaixo.
           </li>
         </ul>

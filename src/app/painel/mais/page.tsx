@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { exigirUsuario } from "@/lib/guardas";
-import { temFinanceiro } from "@/lib/assinatura";
+import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
+import { RECURSOS, recursosLiberados } from "@/lib/recursos";
 import { sair } from "@/app/acoes/autenticacao";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { BotaoEnviar } from "@/componentes/ui/botao";
@@ -16,8 +16,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function PaginaMais() {
   const usuario = await exigirUsuario();
+  const situacao = await situacaoDoUsuario(usuario);
+  // Na demonstração o estúdio de exemplo tem tudo: todas as abas aparecem.
   const destinos = destinosVisiveis(SECUNDARIOS, {
-    financeiro: temFinanceiro(usuario.assinatura),
+    liberados: situacao.demonstracao ? RECURSOS : recursosLiberados(usuario),
     admin: usuario.papel === "admin",
   });
 

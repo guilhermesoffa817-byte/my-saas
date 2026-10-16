@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { dataEHora } from "@/lib/formato";
 import { acessoAtual, ultimoRevogado } from "@/lib/contador/operacoes";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
@@ -11,7 +11,7 @@ export const metadata = { title: "Acesso do contador" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaContador() {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirLeituraDoRecurso("relatorio");
   const [ativo, revogado] = await Promise.all([
     acessoAtual(prisma, usuario.id),
     ultimoRevogado(prisma, usuario.id),

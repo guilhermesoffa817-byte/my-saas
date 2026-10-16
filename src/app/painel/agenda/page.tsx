@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { equipeQueAtende } from "@/lib/equipe-operacoes";
 import { Aviso, Etiqueta, Vazio } from "@/componentes/avisos";
@@ -31,7 +31,7 @@ export default async function PaginaAgenda({
 }: {
   searchParams: Promise<{ dia?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
   const { dia, aviso } = await searchParams;
 
   const agora = new Date();
@@ -41,7 +41,7 @@ export default async function PaginaAgenda({
   const segunda = inicioDaSemana(diaEscolhido);
   const fimDaSemana = somarDias(segunda, 7);
 
-  // "Quem atende" só aparece no VIP e quando há alguém na equipe nesse dia.
+  // "Quem atende" só aparece no Completo e quando há alguém na equipe nesse dia.
   const comEquipe = podeUsar(usuario, "equipe");
 
   const [clientes, servicos, daSemana, equipe] = await Promise.all([

@@ -140,13 +140,13 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
       {estado?.erro ? <Aviso tom="erro">{estado.erro}</Aviso> : null}
 
       <BotaoEnviar className="w-full" enviando="Preparando tudo...">
-        Criar minha conta
+        Criar conta e conhecer o sistema
       </BotaoEnviar>
 
       <p className="text-center text-xs leading-relaxed text-carvao-suave">
-        O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Ao criar a
-        conta você começa no período de teste. O pagamento só é pedido quando ele terminar, e
-        nunca sem avisar.
+        O CPF ou CNPJ é o que identifica a sua assinatura na hora do pagamento. Criar a
+        conta não cobra nada: você conhece o Bossa por um estúdio de exemplo e só paga se
+        escolher um plano.
       </p>
 
       <p className="text-center text-xs leading-relaxed text-carvao-suave">

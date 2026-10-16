@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { BotaoCopiar, BotaoEnviar } from "@/componentes/ui/botao";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { registrarLembrete } from "../acoes";
 import { TONS, type Tom } from "@/lib/cobranca";
+import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 
 /**
  * A mensagem que vai para o WhatsApp.
@@ -20,6 +22,7 @@ export function Mensagem({
   cobrancaId,
   podeLembrar,
   avisoDoLembrete,
+  demonstracao = false,
 }: {
   textos: Record<Tom, string>;
   tomSugerido: Tom;
@@ -27,6 +30,8 @@ export function Mensagem({
   cobrancaId: string;
   podeLembrar: boolean;
   avisoDoLembrete: string | null;
+  /** No estúdio de exemplo o botão leva aos planos, e não ao WhatsApp de ninguém. */
+  demonstracao?: boolean;
 }) {
   const [tom, setTom] = useState<Tom>(tomSugerido);
   const [texto, setTexto] = useState(textos[tomSugerido]);
@@ -82,7 +87,11 @@ export function Mensagem({
         </p>
       </div>
 
-      {link ? (
+      {demonstracao ? (
+        <Link href={DESTINO_DA_DEMONSTRACAO} className="botao w-full">
+          Enviar pelo WhatsApp
+        </Link>
+      ) : link ? (
         <a
           href={link}
           target="_blank"

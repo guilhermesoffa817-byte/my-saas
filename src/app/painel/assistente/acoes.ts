@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso, exigirUsuario } from "@/lib/guardas";
+import { exigirContaPropria, exigirEscritaDoRecurso } from "@/lib/guardas";
 import { idValido } from "@/lib/assistente/protocolo";
 import { aceitarAvisoDaIa, apagarConversa as apagarDoBanco } from "@/lib/ia/conversas";
 
@@ -15,7 +15,7 @@ function texto(dados: FormData, campo: string) {
 
 /** Primeiro uso: a dona leu como o assistente usa os dados (Anthropic, totais, fora do Brasil) e aceitou. */
 export async function aceitarAviso(): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("assistente");
+  const { usuario } = await exigirEscritaDoRecurso("assistente");
   await aceitarAvisoDaIa(prisma, usuario.id);
   revalidatePath("/painel/assistente");
   return { recado: "Pronto. O assistente está liberado." };
@@ -26,7 +26,7 @@ export async function aceitarAviso(): Promise<Resposta> {
  * (LGPD, art. 18). Por isso aqui basta estar logada.
  */
 export async function apagarConversa(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const usuario = await exigirUsuario();
+  const { usuario } = await exigirContaPropria();
   const id = texto(dados, "id");
   if (!idValido(id)) return { erro: "Não encontramos essa conversa." };
 
@@ -45,7 +45,7 @@ const TAMANHO_DO_RAMO = 60;
  * as conversas novas: as antigas guardam o que usaram quando começaram.
  */
 export async function salvarRamo(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("assistente");
+  const { usuario } = await exigirEscritaDoRecurso("assistente");
   const ramo = texto(dados, "ramo").replace(/\s+/g, " ");
   if (ramo.length > TAMANHO_DO_RAMO) {
     return { erro: `Escreva o ramo em até ${TAMANHO_DO_RAMO} letras, como "salão de beleza".` };

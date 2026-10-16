@@ -1,10 +1,9 @@
 import { codificarEvento, lerPedido, type EventoAssistente } from "@/lib/assistente/protocolo";
-import { avaliarAssinatura } from "@/lib/assinatura";
 import { iaConfigurada } from "@/lib/ia/cliente";
 import { atenderPedido } from "@/lib/ia/turno";
 import { prisma } from "@/lib/prisma";
-import { limiteDeIa, podeUsar } from "@/lib/recursos";
-import { usuarioAtual } from "@/lib/sessao";
+import { limiteDeIa } from "@/lib/recursos";
+import { exigirEscritaNaApi } from "@/lib/guardas";
 
 export const dynamic = "force-dynamic";
 /**
@@ -39,11 +38,12 @@ export async function POST(request: Request) {
     return recusar(403, "Origem não permitida.", "origem");
   }
 
-  const usuario = await usuarioAtual();
-  if (!usuario) return recusar(401, "Entre na sua conta para usar o assistente.", "sessao");
-  if (!avaliarAssinatura(usuario.assinatura).liberada || !podeUsar(usuario, "assistente")) {
-    return recusar(403, "O assistente faz parte do plano VIP.", "plano");
-  }
+  // Porta de escrita: sempre a conta da sessão. Sem sessão, na demonstração,
+  // com a assinatura vencida ou sem o Completo, responde com o `destino` que a
+  // tela usa para levar a pessoa à assinatura, sem gastar nada da IA.
+  const porta = await exigirEscritaNaApi("assistente");
+  if (porta.resposta) return porta.resposta;
+  const { usuario } = porta;
   if (!iaConfigurada()) {
     return recusar(503, "O assistente ainda não foi ativado neste servidor.", "config");
   }

@@ -12,7 +12,8 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import type { PrismaClient } from "@/generated/prisma";
-import { temFinanceiro } from "@/lib/assinatura";
+import { podeUsar } from "@/lib/recursos";
+import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 
 type Banco = PrismaClient;
 
@@ -113,6 +114,7 @@ export async function abrirPeloCodigo(
           usuario: {
             select: {
               id: true,
+              papel: true,
               nomeNegocio: true,
               assinatura: { select: { status: true, plano: true, validaAte: true } },
             },
@@ -133,7 +135,10 @@ export async function abrirPeloCodigo(
     return { situacao: "nao_encontrado" };
   }
 
-  if (!temFinanceiro(acesso.usuario.assinatura, agora)) return { situacao: "indisponivel" };
+  // O estúdio de exemplo nunca abre por link público, nem grava "último acesso".
+  if (ehContaDeExemplo(acesso.usuario)) return { situacao: "nao_encontrado" };
+  // O link do contador é do plano Completo (recurso "relatorio") em dia.
+  if (!podeUsar(acesso.usuario, "relatorio", agora)) return { situacao: "indisponivel" };
 
   await db.acessoDoContador.update({
     where: { id: acesso.id },

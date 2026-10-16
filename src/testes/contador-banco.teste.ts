@@ -95,7 +95,7 @@ describe.skipIf(!TEM_BANCO)("acesso do contador no banco", () => {
     expect(await abrirPeloCodigo(db, codigo, IP, depois)).toMatchObject({ situacao: "aberto" });
   });
 
-  it("estúdio sem o plano VIP em dia: o link não mostra nada", async () => {
+  it("estúdio sem o plano Completo em dia: o link não mostra nada", async () => {
     const db = await banco();
     const codigo = await gerarAcesso(db, estudio.usuario.id, AGORA);
     await db.assinatura.update({

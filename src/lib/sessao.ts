@@ -5,6 +5,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
+import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 
 const NOME_COOKIE = "sessao_estudio";
 const DURACAO_DIAS = 30;
@@ -84,6 +85,9 @@ export async function usuarioAtual() {
 
   // Senha trocada depois deste cookie: a sessão não vale mais.
   if (usuario.sessaoVersao !== sessao.versao) return null;
+
+  // A conta do estúdio de exemplo nunca é dona de sessão, nem com cookie válido.
+  if (ehContaDeExemplo(usuario)) return null;
 
   return usuario;
 }

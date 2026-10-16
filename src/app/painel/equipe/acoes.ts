@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import { hojeNoEstudio, paraDataPura } from "@/lib/formato";
 import {
   desligarColaborador,
@@ -65,7 +65,7 @@ export async function salvarColaboradorAcao(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
 
   const entrada = lerColaborador(leitor(dados));
   if ("erro" in entrada) return { erro: entrada.erro, campos: devolverCampos(dados) };
@@ -83,7 +83,7 @@ export async function desligarColaboradorAcao(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
   const ler = leitor(dados);
 
   const resultado = await desligarColaborador(prisma, usuario.id, ler("id"), ler("fim"));
@@ -94,7 +94,7 @@ export async function desligarColaboradorAcao(
 }
 
 export async function removerColaboradorAcao(dados: FormData) {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
   const resultado = await removerColaborador(prisma, usuario.id, leitor(dados)("id"), hoje());
   if ("erro" in resultado) redirect("/painel/equipe?aviso=nao-encontrado");
 
@@ -110,7 +110,7 @@ export async function registrarAusenciaAcao(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
 
   const entrada = lerAusencia(leitor(dados));
   if ("erro" in entrada) return { erro: entrada.erro, campos: devolverCampos(dados) };
@@ -123,7 +123,7 @@ export async function registrarAusenciaAcao(
 }
 
 export async function excluirAusenciaAcao(dados: FormData) {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
   await excluirAusencia(prisma, usuario.id, leitor(dados)("id"));
   atualizarTelas({ agenda: true });
 }
@@ -136,7 +136,7 @@ export async function registrarPagamentoAcao(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
 
   const entrada = lerPagamento(leitor(dados));
   if ("erro" in entrada) return { erro: entrada.erro, campos: devolverCampos(dados) };
@@ -149,7 +149,7 @@ export async function registrarPagamentoAcao(
 }
 
 export async function excluirPagamentoAcao(dados: FormData) {
-  const { usuario } = await exigirRecurso("equipe");
+  const { usuario } = await exigirEscritaDoRecurso("equipe");
   const apagado = await excluirPagamento(prisma, usuario.id, leitor(dados)("id"));
   // Mês fechado: o pagamento fica, e o recado vai no endereço da própria aba.
   if (typeof apagado === "object") {

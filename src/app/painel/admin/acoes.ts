@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
-import { novaValidade, planoPorCodigo, DIAS_DE_TESTE } from "@/lib/assinatura";
+import { novaValidade, planoPorCodigo, DIAS_DE_CORTESIA } from "@/lib/assinatura";
+import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 import { somarDias } from "@/lib/formato";
 
 function idDo(dados: FormData) {
@@ -20,6 +21,8 @@ export async function confirmarPagamento(dados: FormData) {
     include: { usuario: { include: { assinatura: true } } },
   });
   if (!pagamento || pagamento.status !== "aguardando") return;
+  // O estúdio de exemplo não paga nem recebe plano: é só da demonstração.
+  if (ehContaDeExemplo(pagamento.usuario)) return;
 
   const agora = new Date();
   // Quem pagou o anual ganha 365 dias, não os 30 do mensal.
@@ -43,7 +46,12 @@ export async function confirmarPagamento(dados: FormData) {
         plano: plano.codigo,
         validaAte,
       },
-      // O plano vigente passa a ser o último pago: é ele que libera a aba Finanças.
+      /*
+        O plano vigente passa a ser o último pago: é ele que libera as funções
+        do Completo. Quem estava na demonstração passa a "ativa" aqui e, na
+        próxima tela, vê os PRÓPRIOS dados (vazios no começo): o estúdio de
+        exemplo nunca foi dele, então não há nada para misturar nem para limpar.
+      */
       update: { status: "ativa", plano: plano.codigo, validaAte },
     }),
   ]);
@@ -74,15 +82,22 @@ export async function darCortesia(dados: FormData) {
   await exigirAdmin();
   const usuarioId = typeof dados.get("usuarioId") === "string" ? String(dados.get("usuarioId")) : "";
 
-  const assinatura = await prisma.assinatura.findUnique({ where: { usuarioId } });
-  if (!assinatura) return;
+  const assinatura = await prisma.assinatura.findUnique({
+    where: { usuarioId },
+    include: { usuario: { select: { id: true, papel: true } } },
+  });
+  if (!assinatura || ehContaDeExemplo(assinatura.usuario)) return;
 
   const base =
     assinatura.validaAte.getTime() > Date.now() ? assinatura.validaAte : new Date();
 
   await prisma.assinatura.update({
     where: { usuarioId },
-    data: { validaAte: somarDias(base, DIAS_DE_TESTE) },
+    // Quem estava na demonstração vira teste de cortesia: usa com os próprios dados.
+    data: {
+      validaAte: somarDias(base, DIAS_DE_CORTESIA),
+      ...(assinatura.status === "demonstracao" ? { status: "teste" } : {}),
+    },
   });
 
   revalidatePath("/painel/admin");

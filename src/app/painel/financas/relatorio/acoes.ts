@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import { fecharMes, reabrirMes } from "@/lib/fechamento/operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -18,7 +18,7 @@ function atualizarTelas() {
 }
 
 export async function fecharMesAcao(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirEscritaDoRecurso("relatorio");
   const fechado = await fecharMes(prisma, usuario.id, texto(dados, "mes"), new Date());
   if ("erro" in fechado) return { erro: fechado.erro };
 
@@ -32,7 +32,7 @@ export async function fecharMesAcao(_anterior: Resposta, dados: FormData): Promi
 }
 
 export async function reabrirMesAcao(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirEscritaDoRecurso("relatorio");
   const reaberto = await reabrirMes(prisma, usuario.id, texto(dados, "mes"), new Date());
   if ("erro" in reaberto) return { erro: reaberto.erro };
 

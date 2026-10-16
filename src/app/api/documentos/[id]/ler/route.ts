@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaNaApi } from "@/lib/guardas";
 import { baixar } from "@/lib/arquivos";
 import { lerDocumento, MODELO_PADRAO, type ClienteDaLeitura } from "@/lib/leitura";
 
@@ -27,7 +27,11 @@ export async function POST(
   _pedido: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { usuario } = await exigirRecurso("documentos");
+  // Porta de escrita: sempre a conta da sessão. Na demonstração, recusa com o
+  // destino da assinatura, antes de procurar documento ou chamar a IA.
+  const porta = await exigirEscritaNaApi("documentos");
+  if (porta.resposta) return porta.resposta;
+  const { usuario } = porta;
   const { id } = await params;
 
   const documento = await prisma.documento.findFirst({

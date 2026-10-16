@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { Marca } from "@/componentes/marca";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
-import { temFinanceiro } from "@/lib/assinatura";
+import { RECADO_DA_DEMONSTRACAO } from "@/lib/assinatura";
+import { RECURSOS, recursosLiberados } from "@/lib/recursos";
+import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 import { primeiroNome } from "@/lib/formato";
 import { sair } from "@/app/acoes/autenticacao";
 import { BarraDeBaixo, NavegacaoLarga } from "./navegacao";
@@ -14,6 +16,8 @@ export default async function LayoutPainel({
 }) {
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
+  // Na demonstração o estúdio de exemplo é Completo: todas as abas aparecem.
+  const liberados = situacao.demonstracao ? RECURSOS : recursosLiberados(usuario);
 
   return (
     <div className="min-h-screen">
@@ -37,12 +41,31 @@ export default async function LayoutPainel({
         <div className="mx-auto hidden max-w-6xl px-5 pb-3 md:block">
           <NavegacaoLarga
             admin={usuario.papel === "admin"}
-            financeiro={temFinanceiro(usuario.assinatura)}
+            liberados={liberados}
           />
         </div>
+        {situacao.demonstracao ? (
+          /* Dentro do cabeçalho fixo: a faixa fica no topo durante toda a demonstração. */
+          <div role="status" className="border-t border-terracota/30 bg-terracota text-acento-texto">
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-2.5 text-sm">
+              <span className="min-w-0 flex-1 leading-snug">
+                {RECADO_DA_DEMONSTRACAO}
+                {situacao.status === "aguardando"
+                  ? " Já recebemos o aviso do seu Pix: assim que conferirmos, o painel passa a ser seu."
+                  : ""}
+              </span>
+              <Link
+                href={DESTINO_DA_DEMONSTRACAO}
+                className="shrink-0 rounded-full bg-superficie px-4 py-1.5 text-xs font-semibold text-terracota transition hover:opacity-90"
+              >
+                Escolher um plano
+              </Link>
+            </div>
+          </div>
+        ) : null}
       </header>
 
-      {!situacao.liberada ? (
+      {!situacao.demonstracao && !situacao.liberada ? (
         <div className="nao-imprimir bg-terracota/10 text-carvao">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm">
             <span>{situacao.recado}</span>
@@ -76,10 +99,7 @@ export default async function LayoutPainel({
       </footer>
 
       {/* A barra de baixo fica fora do <main> para não rolar com o conteúdo. */}
-      <BarraDeBaixo
-        admin={usuario.papel === "admin"}
-        financeiro={temFinanceiro(usuario.assinatura)}
-      />
+      <BarraDeBaixo admin={usuario.papel === "admin"} liberados={liberados} />
     </div>
   );
 }

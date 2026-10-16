@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Aviso, Etiqueta, ROTULO_DA_COBRANCA, TOM_DA_COBRANCA } from "@/componentes/ui/etiqueta";
@@ -30,6 +30,7 @@ import { qrCodeSvg } from "@/lib/qrcode";
 import { Mensagem } from "./mensagem";
 import { FormularioDePagamento } from "./pagamento";
 import { cancelarCobranca } from "../acoes";
+import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 
 export const metadata = { title: "Cobrança" };
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function PaginaDaCobranca({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { usuario } = await exigirRecurso("cobrar");
+  const { usuario, demonstracao } = await exigirLeituraDoRecurso("cobrar");
   const { id } = await params;
 
   // O estúdio da sessão entra na busca. Cobrança de outro estúdio não é
@@ -167,12 +168,13 @@ export default async function PaginaDaCobranca({
               tomSugerido={tomSugerido}
               linkBase={linkBase}
               cobrancaId={cobranca.id}
+              demonstracao={demonstracao}
               podeLembrar={temLembretes && !cobranca.cliente.semLembretes && escolha !== null}
               avisoDoLembrete={
                 cobranca.cliente.semLembretes
                   ? "Esse cliente pediu para não receber lembrete, então o Bossa não vai sugerir outro aviso."
                   : !temLembretes
-                    ? "Guardar o histórico de lembretes faz parte do plano VIP. A mensagem você manda do mesmo jeito."
+                    ? "Guardar o histórico de lembretes faz parte do plano Completo. A mensagem você manda do mesmo jeito."
                     : "Nenhum lembrete pendente para hoje. O envio não precisa ser registrado."
               }
             />
@@ -199,7 +201,14 @@ export default async function PaginaDaCobranca({
                 <p className="font-mono text-xs leading-relaxed break-all text-carvao-suave select-all">
                   {codigoPix}
                 </p>
-                <BotaoCopiar texto={codigoPix} rotulo="Copiar código Pix" />
+                {/* Na demonstração, copiar o Pix de exemplo leva aos planos. */}
+                {demonstracao ? (
+                  <Link href={DESTINO_DA_DEMONSTRACAO} className="botao-suave">
+                    Copiar código Pix
+                  </Link>
+                ) : (
+                  <BotaoCopiar texto={codigoPix} rotulo="Copiar código Pix" />
+                )}
               </div>
             </div>
           </Cartao>

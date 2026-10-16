@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { travarAgendaDoEstudio } from "@/lib/agenda-trava";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirEscrita } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { ausenciaNoDia } from "@/lib/equipe-operacoes";
 import {
@@ -39,7 +39,7 @@ function atualizarTelas() {
 }
 
 export async function marcarHorario(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const clienteId = texto(dados, "clienteId");
   const servicoId = texto(dados, "servicoId");
@@ -103,7 +103,7 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
 }
 
 /**
- * "Quem atende" é da Equipe, que é do VIP. O id vem do formulário, então antes
+ * "Quem atende" é da Equipe, que é do Completo. O id vem do formulário, então antes
  * de gravar confere-se que a pessoa é deste estúdio, trabalha nesse dia e não
  * tem ausência registrada nele.
  */
@@ -113,7 +113,7 @@ async function conferirQuemAtende(
   inicio: Date,
 ) {
   if (!podeUsar(usuario, "equipe")) {
-    return "Escolher quem atende faz parte do plano VIP.";
+    return "Escolher quem atende faz parte do plano Completo.";
   }
   const dia = paraDataLocal(inicio);
   const data = deDataPura(dia)!;
@@ -136,7 +136,7 @@ async function conferirQuemAtende(
 }
 
 export async function mudarStatus(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const id = texto(dados, "id");
   const status = texto(dados, "status") as StatusDoHorario;
@@ -157,7 +157,7 @@ export async function mudarStatus(dados: FormData) {
 }
 
 export async function excluirAgendamento(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = texto(dados, "id");
 
   const apagado = await apagarHorario(prisma, usuario.id, id);

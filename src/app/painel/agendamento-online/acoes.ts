@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirEscrita } from "@/lib/guardas";
 import {
   ligarAgendaOnline,
   lerConfiguracao,
@@ -19,7 +19,7 @@ function atualizarTelas() {
 
 /** O agendamento online é dos dois planos: basta a assinatura estar em dia. */
 export async function salvarAgendaOnline(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const entrada = lerConfiguracao(dados);
   if ("erro" in entrada) return { erro: entrada.erro };
@@ -32,7 +32,7 @@ export async function salvarAgendaOnline(_anterior: Resposta, dados: FormData): 
 }
 
 export async function ligarOuDesligar(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const ligar = dados.get("ligar") === "sim";
 
   const resultado = await ligarAgendaOnline(prisma, usuario.id, ligar);
@@ -48,7 +48,7 @@ export async function ligarOuDesligar(_anterior: Resposta, dados: FormData): Pro
 
 /** "Já vi" do Início: tira o destaque dos horários que chegaram pelo link. */
 export async function marcarNovosVistos() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   await marcarNovosComoVistos(prisma, usuario.id);
   revalidatePath("/painel");
 }

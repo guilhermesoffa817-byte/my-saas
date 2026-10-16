@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Aviso } from "@/componentes/ui/etiqueta";
@@ -9,7 +9,7 @@ export const metadata = { title: "Ajustes das cobranças" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAjustesDeCobranca() {
-  const { usuario } = await exigirRecurso("cobrar");
+  const { usuario } = await exigirLeituraDoRecurso("cobrar");
   const temLembretes = podeUsar(usuario, "lembretes");
 
   return (
@@ -20,10 +20,10 @@ export default async function PaginaAjustesDeCobranca() {
 
       {!temLembretes ? (
         <Aviso tom="calma">
-          Escolher os momentos do lembrete faz parte do plano VIP. A chave Pix
+          Escolher os momentos do lembrete faz parte do plano Completo. A chave Pix
           você cadastra do mesmo jeito.{" "}
-          <Link href="/painel/assinatura?vip=1" className="font-semibold underline">
-            Conhecer o VIP
+          <Link href="/painel/assinatura?completo=1" className="font-semibold underline">
+            Conhecer o Completo
           </Link>
         </Aviso>
       ) : null}

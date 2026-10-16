@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { agoraDoPedido } from "@/lib/agora";
 import { competenciaAtual, competenciaPorExtenso, dataEHora, emReais, somarMeses } from "@/lib/formato";
 import { mesDoPedido, relatorioDoMes } from "@/lib/relatorio/operacoes";
@@ -21,7 +21,7 @@ export default async function PaginaRelatorio({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirLeituraDoRecurso("relatorio");
   const agora = agoraDoPedido();
   const { mes: pedido } = await searchParams;
   const mes = mesDoPedido(pedido, agora);

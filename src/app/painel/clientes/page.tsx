@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { Vazio } from "@/componentes/avisos";
 import Link from "next/link";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/ui/botao";
@@ -17,7 +17,7 @@ export default async function PaginaClientes({
 }: {
   searchParams: Promise<{ busca?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
   const { busca = "", aviso } = await searchParams;
   const termo = busca.trim();
 

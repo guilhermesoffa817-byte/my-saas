@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirFinanceiro } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
+import { podeUsar } from "@/lib/recursos";
 import { BotaoConfirmar } from "@/componentes/botoes";
 import { Vazio } from "@/componentes/avisos";
 import {
@@ -37,7 +38,15 @@ export default async function PaginaFinancas({
 }: {
   searchParams: Promise<{ aviso?: string }>;
 }) {
-  const { usuario } = await exigirFinanceiro();
+  const { usuario } = await exigirLeituraDoRecurso("financas");
+  /*
+    Finanças é do Simples; relatório, contador e custos são do Completo. Para
+    quem tem o Simples, os três cartões continuam aparecendo, mas levam direto
+    aos planos, com a etiqueta dizendo de onde é.
+  */
+  const temRelatorio = podeUsar(usuario, "relatorio");
+  const temCustos = podeUsar(usuario, "custos");
+  const NOS_PLANOS = "/painel/assinatura?completo=1";
   const { aviso } = await searchParams;
 
   const agora = new Date();
@@ -170,11 +179,13 @@ export default async function PaginaFinancas({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Link
-          href={`/painel/financas/relatorio?mes=${mesAtual}`}
+          href={temRelatorio ? `/painel/financas/relatorio?mes=${mesAtual}` : NOS_PLANOS}
           className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
         >
           <div className="min-w-0">
-            <p className="font-display text-lg font-semibold text-carvao">Relatório do mês</p>
+            <p className="font-display text-lg font-semibold text-carvao">
+              Relatório do mês{temRelatorio ? null : <SoNoCompleto />}
+            </p>
             <p className="mt-0.5 text-sm text-carvao-suave">
               Tudo do mês para o contador, em planilha ou PDF, e o fechamento.
             </p>
@@ -182,11 +193,13 @@ export default async function PaginaFinancas({
           <span className="botao-suave">Ver relatório</span>
         </Link>
         <Link
-          href="/painel/financas/contador"
+          href={temRelatorio ? "/painel/financas/contador" : NOS_PLANOS}
           className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
         >
           <div className="min-w-0">
-            <p className="font-display text-lg font-semibold text-carvao">Acesso do contador</p>
+            <p className="font-display text-lg font-semibold text-carvao">
+              Acesso do contador{temRelatorio ? null : <SoNoCompleto />}
+            </p>
             <p className="mt-0.5 text-sm text-carvao-suave">
               Um link só de leitura para o contador ver os relatórios sem senha.
             </p>
@@ -196,11 +209,13 @@ export default async function PaginaFinancas({
       </div>
 
       <Link
-        href="/painel/financas/custos"
+        href={temCustos ? "/painel/financas/custos" : NOS_PLANOS}
         className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
       >
         <div className="min-w-0">
-          <p className="font-display text-lg font-semibold text-carvao">Custos do mês</p>
+          <p className="font-display text-lg font-semibold text-carvao">
+            Custos do mês{temCustos ? null : <SoNoCompleto />}
+          </p>
           <p className="mt-0.5 text-sm text-carvao-suave">
             Fixos, variáveis e quanto faturar para empatar. A IA ajuda a classificar.
           </p>
@@ -404,5 +419,14 @@ function LinhaDoResumo({
         />
       </div>
     </div>
+  );
+}
+
+/** A etiqueta dos cartões que só o plano Completo abre. */
+function SoNoCompleto() {
+  return (
+    <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle font-sans text-[11px] font-semibold text-carvao-suave">
+      Completo
+    </span>
   );
 }

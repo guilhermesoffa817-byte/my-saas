@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
@@ -22,7 +22,7 @@ export default async function PaginaCobrancas({
 }: {
   searchParams: Promise<{ ver?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("cobrar");
+  const { usuario } = await exigirLeituraDoRecurso("cobrar");
   const { ver } = await searchParams;
   const mostrarPagas = ver === "pagas";
 
@@ -129,10 +129,10 @@ export default async function PaginaCobrancas({
 
       {!temLembretes ? (
         <Aviso tom="calma">
-          Os lembretes programados fazem parte do plano VIP. Cobrar pelo WhatsApp
+          Os lembretes programados fazem parte do plano Completo. Cobrar pelo WhatsApp
           você já faz no seu plano.{" "}
-          <Link href="/painel/assinatura?vip=1" className="font-semibold underline">
-            Conhecer o VIP
+          <Link href="/painel/assinatura?completo=1" className="font-semibold underline">
+            Conhecer o Completo
           </Link>
         </Aviso>
       ) : null}

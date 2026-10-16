@@ -1,3 +1,5 @@
+import type { Recurso } from "@/lib/recursos";
+
 /**
  * Os destinos do painel, num lugar só.
  *
@@ -12,8 +14,8 @@ export type Destino = {
   /** Uma linha explicando, mostrada só na tela "Mais". */
   explicacao: string;
   icone: string;
-  /** Quando true, só aparece para quem tem plano com financeiro. */
-  vip?: boolean;
+  /** O recurso de plano de que a aba depende (ver lib/recursos.ts). Sem ele, aparece sempre. */
+  recurso?: Recurso;
   /** Quando true, só aparece para a administração do Bossa. */
   admin?: boolean;
 };
@@ -65,49 +67,49 @@ export const SECUNDARIOS: Destino[] = [
     rotulo: "Vencimentos",
     explicacao: "Contas a pagar e prazos de contrato.",
     icone: "sino",
-    vip: true,
+    recurso: "vencimentos",
   },
   {
     href: "/painel/documentos",
     rotulo: "Documentos",
     explicacao: "Envie um contrato ou uma conta e o Bossa lê para você.",
     icone: "papel",
-    vip: true,
+    recurso: "documentos",
   },
   {
     href: "/painel/equipe",
     rotulo: "Equipe",
     explicacao: "Quem trabalha com você e o que você paga a cada um.",
     icone: "cracha",
-    vip: true,
+    recurso: "equipe",
   },
   {
     href: "/painel/financas",
     rotulo: "Finanças",
     explicacao: "O que entra, o que sai e o imposto estimado.",
     icone: "grafico",
-    vip: true,
+    recurso: "financas",
   },
   {
     href: "/painel/financas/relatorio",
     rotulo: "Relatório",
     explicacao: "O mês para o contador: planilha, PDF, fechamento e link de acesso.",
     icone: "prancheta",
-    vip: true,
+    recurso: "relatorio",
   },
   {
     href: "/painel/financas/custos",
     rotulo: "Custos",
     explicacao: "Custos fixos e variáveis e quanto faturar para empatar.",
     icone: "balanca",
-    vip: true,
+    recurso: "custos",
   },
   {
     href: "/painel/assistente",
     rotulo: "Assistente",
     explicacao: "Pergunte sobre o seu negócio e receba sugestões com os seus números.",
     icone: "conversa",
-    vip: true,
+    recurso: "assistente",
   },
   {
     href: "/painel/assinatura",
@@ -126,10 +128,10 @@ export const SECUNDARIOS: Destino[] = [
 
 export function destinosVisiveis(
   lista: Destino[],
-  { financeiro, admin }: { financeiro: boolean; admin: boolean },
+  { liberados, admin }: { liberados: readonly Recurso[]; admin: boolean },
 ) {
   return lista.filter((item) => {
-    if (item.vip && !financeiro) return false;
+    if (item.recurso && !liberados.includes(item.recurso)) return false;
     if (item.admin && !admin) return false;
     return true;
   });

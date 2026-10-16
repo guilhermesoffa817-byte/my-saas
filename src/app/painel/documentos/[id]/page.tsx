@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { BotaoEnviar } from "@/componentes/ui/botao";
@@ -21,7 +21,7 @@ export default async function PaginaDoDocumento({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ aviso?: string; mes?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirLeituraDoRecurso("documentos");
   const { id } = await params;
   const { aviso, mes } = await searchParams;
 

@@ -13,6 +13,7 @@ import {
   resumoDoCodigo,
   validadeAPartirDe,
 } from "@/lib/senha";
+import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -50,9 +51,10 @@ export async function pedirNovaSenha(
 
   const usuario = await prisma.usuario.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, papel: true },
   });
-  if (!usuario) return mesmaRespostaSempre;
+  // A conta do estúdio de exemplo nunca ganha senha: responde igual a "não existe".
+  if (!usuario || ehContaDeExemplo(usuario)) return mesmaRespostaSempre;
 
   // Já existe um pedido aberto e no prazo: aproveita, em vez de encher a
   // administração com uma linha por toque no botão.
@@ -87,9 +89,9 @@ export async function gerarLinkDeSenha(
 
   const usuario = await prisma.usuario.findUnique({
     where: { id: usuarioId },
-    select: { id: true },
+    select: { id: true, papel: true },
   });
-  if (!usuario) return { certo: false, motivo: "Não encontramos essa conta." };
+  if (!usuario || ehContaDeExemplo(usuario)) return { certo: false, motivo: "Não encontramos essa conta." };
 
   const codigo = gerarCodigo();
 

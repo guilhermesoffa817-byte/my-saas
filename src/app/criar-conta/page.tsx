@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Marca } from "@/componentes/marca";
 import { usuarioAtual } from "@/lib/sessao";
-import { DIAS_DE_TESTE, PLANO } from "@/lib/assinatura";
+import { PLANOS } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
 import { FormularioCriarConta } from "./formulario";
 
@@ -31,8 +31,9 @@ export default async function PaginaCriarConta({
             Vamos organizar o seu estúdio
           </h1>
           <p className="mt-2 text-carvao-suave">
-            São {DIAS_DE_TESTE} dias por nossa conta. Depois, {emReais(PLANO.valorCentavos)} por
-            mês no Pix, sem fidelidade.
+            Assim que criar a conta, você entra num estúdio de exemplo com todas as funções
+            funcionando. Para usar com os seus clientes, os planos começam em{" "}
+            {emReais(PLANOS.mensal.valorCentavos)} por mês no Pix, sem fidelidade.
           </p>
 
           <div className="cartao mt-7">

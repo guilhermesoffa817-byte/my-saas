@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { apagarCliente } from "@/lib/cliente-operacoes";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirEscrita } from "@/lib/guardas";
 import { apenasDigitos, cpfValido, deDataLocal } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -53,7 +53,7 @@ function validar(dados: FormData) {
 }
 
 export async function salvarCliente(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const conferido = validar(dados);
   if ("erro" in conferido) return { erro: conferido.erro };
 
@@ -80,7 +80,7 @@ export async function salvarCliente(_anterior: Resposta, dados: FormData): Promi
 }
 
 export async function excluirCliente(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = texto(dados, "id");
 
   // Cliente com atendimento concluído ou pagamento num mês fechado não sai.

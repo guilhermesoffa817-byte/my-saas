@@ -119,7 +119,7 @@ describe.skipIf(!TEM_BANCO)("nada em dobro", () => {
  * O defeito que apareceu quando a tela foi aberta num plano sem lembretes:
  * caixa de seleção desabilitada não é enviada pelo navegador, e a ação lia a
  * ausência como "desmarcada". Resultado: salvar a chave Pix apagava em silêncio
- * a preferência de lembrete de quem um dia assinou o VIP.
+ * a preferência de lembrete de quem um dia assinou o Completo.
  */
 describe.skipIf(!TEM_BANCO)("ajustes de cobrança", () => {
   afterAll(async () => {

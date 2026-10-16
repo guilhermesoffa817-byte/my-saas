@@ -3,16 +3,18 @@ import { qrCodeSvg } from "@/lib/qrcode";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
 import { Aviso, Etiqueta } from "@/componentes/avisos";
 import {
-  MESES_DE_BRINDE,
+  NOME_DA_FAMILIA,
   PIX_CHAVE,
   PIX_NOME,
   PLANOS,
-  ECONOMIA_ANUAL_CENTAVOS,
-  ECONOMIA_VIP_ANUAL_CENTAVOS,
+  economiaDoAnual,
+  mensalDoAnual,
   pixCopiaECola,
   type CodigoPlano,
+  type FamiliaDoPlano,
 } from "@/lib/assinatura";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
+import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -26,6 +28,7 @@ export const dynamic = "force-dynamic";
 
 const rotuloStatus = {
   teste: "Período de teste",
+  demonstracao: "Conhecendo o Bossa",
   ativa: "Assinatura em dia",
   aguardando: "Conferindo seu Pix",
   expirada: "Assinatura vencida",
@@ -37,12 +40,17 @@ const rotuloPagamento = {
   recusado: "Não localizado",
 } as const;
 
+const FAMILIAS: FamiliaDoPlano[] = ["simples", "completo"];
+
 export default async function PaginaAssinatura({
   searchParams,
 }: {
-  searchParams: Promise<{ vip?: string }>;
+  searchParams: Promise<{ vip?: string; completo?: string; demonstracao?: string }>;
 }) {
-  const { vip } = await searchParams;
+  const busca = await searchParams;
+  // "vip=1" é o endereço antigo do mesmo recado: links velhos continuam funcionando.
+  const pediuCompleto = Boolean(busca.completo || busca.vip);
+  const veioDaDemonstracao = Boolean(busca.demonstracao);
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
 
@@ -58,31 +66,42 @@ export default async function PaginaAssinatura({
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
   const pixConfigurado = PIX_CHAVE.trim().length > 0;
 
-  // As listas de cada plano saem de itens-dos-planos.ts, a mesma fonte da
-  // página de vendas: o que se promete lá é o que aparece aqui.
-  const doAnual = (economia: number) => [
-    `Economia de ${emReais(economia)} no ano`,
+  /*
+    As listas de cada plano saem de itens-dos-planos.ts, a mesma fonte da
+    página de vendas: o que se promete lá é o que aparece aqui. A economia do
+    anual é calculada dos preços, nunca escrita à mão.
+  */
+  const economia = (familia: FamiliaDoPlano) => economiaDoAnual(familia);
+  const doAnual = (familia: FamiliaDoPlano) => [
+    ...(economia(familia) > 0 ? [`Economize ${emReais(economia(familia))} no ano`] : []),
+    `Sai por ${emReais(mensalDoAnual(familia))} ao mês, num Pix só`,
     "Preço travado por 12 meses, mesmo se a mensalidade subir",
-    "Um Pix só no ano inteiro, sem precisar lembrar todo mês",
   ];
-  const brinde = `${MESES_DE_BRINDE} meses de brinde`;
+  const seloDoAnual = (familia: FamiliaDoPlano) =>
+    economia(familia) > 0 ? `Economize ${emReais(economia(familia))}` : null;
 
   const sobreOPlano: Record<CodigoPlano, { selo: string | null; vantagens: string[] }> = {
-    mensal: { selo: null, vantagens: textosDoPlano("essencial") },
+    mensal: { selo: null, vantagens: textosDoPlano("simples") },
     anual: {
-      selo: brinde,
-      vantagens: [...doAnual(ECONOMIA_ANUAL_CENTAVOS), ...textosDoPlano("essencial")],
+      selo: seloDoAnual("simples"),
+      vantagens: [...doAnual("simples"), ...textosDoPlano("simples")],
     },
-    vip_mensal: { selo: "Mais completo", vantagens: textosDoPlano("vip") },
+    vip_mensal: { selo: "Tudo liberado", vantagens: textosDoPlano("completo") },
     vip_anual: {
-      selo: brinde,
-      vantagens: [...doAnual(ECONOMIA_VIP_ANUAL_CENTAVOS), ...textosDoPlano("vip")],
+      selo: seloDoAnual("completo"),
+      vantagens: [...doAnual("completo"), ...textosDoPlano("completo")],
     },
   };
 
+  // Quem veio de uma função do Completo já encontra o Completo escolhido.
+  const ordem: CodigoPlano[] = pediuCompleto
+    ? ["vip_mensal", "vip_anual", "mensal", "anual"]
+    : ["mensal", "anual", "vip_mensal", "vip_anual"];
+
   const opcoes: OpcaoDePlano[] = pixConfigurado
     ? await Promise.all(
-        Object.values(PLANOS).map(async (plano) => {
+        ordem.map(async (codigo) => {
+          const plano = PLANOS[codigo];
           const copiaECola = pixCopiaECola({
             chave: PIX_CHAVE,
             nome: PIX_NOME,
@@ -107,24 +126,86 @@ export default async function PaginaAssinatura({
 
   return (
     <div className="space-y-8">
-      {vip ? (
-        <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
-          <p className="font-semibold text-carvao">Essa parte é do plano VIP</p>
+      {veioDaDemonstracao && situacao.demonstracao ? (
+        <div
+          role="status"
+          className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4"
+        >
+          <p className="font-semibold text-carvao">
+            Para fazer isso com os seus clientes, escolha um plano.
+          </p>
           <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
-            O VIP libera finanças, custos, relatório para o contador, contas a pagar,
-            leitura de documentos, equipe e o assistente. Para liberar, escolha um dos
-            planos VIP abaixo.
+            Até aqui você viu um estúdio de exemplo. Depois do Pix confirmado, o painel passa a ser
+            seu, começando vazio, só com os seus dados.
+          </p>
+        </div>
+      ) : pediuCompleto ? (
+        <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
+          <p className="font-semibold text-carvao">Essa parte é do plano Completo</p>
+          <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
+            O Completo libera lembretes de cobrança, contas a pagar, leitura de documentos,
+            custos, relatório para o contador, equipe e o assistente.
           </p>
         </div>
       ) : null}
 
       <section>
-        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">Sua assinatura</h1>
+        <h1 className="font-display text-2xl font-semibold text-carvao sm:text-3xl">
+          {situacao.demonstracao ? "Escolha seu plano" : "Sua assinatura"}
+        </h1>
         <p className="mt-2 max-w-2xl text-carvao-suave">
-          A partir de {emReais(PLANOS.mensal.valorCentavos)} ao mês. O plano VIP acrescenta
-          finanças, contas, documentos, equipe e o assistente, e os planos anuais dão{" "}
-          {MESES_DE_BRINDE} meses de brinde. Pagamento por Pix, sem fidelidade e sem multa.
+          Pagamento por Pix, sem fidelidade e sem multa. Você tem {DIAS_PARA_DESISTIR} dias para
+          desistir e receber o dinheiro de volta.
         </p>
+      </section>
+
+      {/* Os dois planos lado a lado, com o mensal e o anual de cada um. */}
+      <section aria-label="Planos" className="grid gap-4 md:grid-cols-2">
+        {FAMILIAS.map((familia) => {
+          const [mensal, anual] =
+            familia === "simples" ? [PLANOS.mensal, PLANOS.anual] : [PLANOS.vip_mensal, PLANOS.vip_anual];
+          const itens = textosDoPlano(familia);
+          const destaque = familia === "completo";
+          return (
+            <div
+              key={familia}
+              className={`cartao flex flex-col ${destaque ? "border-terracota ring-2 ring-terracota/20" : ""}`}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-xl font-semibold text-carvao">
+                  {NOME_DA_FAMILIA[familia]}
+                </h2>
+                {destaque ? <Etiqueta tom="espera">Tudo liberado</Etiqueta> : null}
+              </div>
+              <p className="mt-3">
+                <span className="font-display text-3xl font-semibold tabular-nums text-carvao">
+                  {emReais(mensal.valorCentavos)}
+                </span>{" "}
+                <span className="text-sm text-carvao-suave">{mensal.periodo}</span>
+              </p>
+              <p className="mt-1 text-sm text-carvao-suave">
+                ou {emReais(anual.valorCentavos)} {anual.periodo}
+                {economia(familia) > 0 ? (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <strong className="font-semibold text-terracota">
+                      economize {emReais(economia(familia))}
+                    </strong>
+                  </>
+                ) : null}
+              </p>
+              <ul className="mt-5 space-y-2 text-sm text-carvao-suave">
+                {itens.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota" aria-hidden />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
@@ -144,27 +225,22 @@ export default async function PaginaAssinatura({
             </Etiqueta>
           </div>
 
-          <p className="mt-4 leading-relaxed text-carvao-suave">{situacao.recado}</p>
+          <p className="mt-4 leading-relaxed text-carvao-suave">
+            {situacao.demonstracao && situacao.status === "aguardando"
+              ? "Recebemos o aviso do seu Pix. Assim que confirmarmos, o painel passa a mostrar os seus dados."
+              : situacao.recado}
+          </p>
 
-          <dl className="mt-6 space-y-3 text-sm">
-            {Object.values(PLANOS).map((plano) => (
-              <div
-                key={plano.codigo}
-                className="flex justify-between gap-4 border-b border-areia-escura/60 pb-3"
-              >
-                <dt className="text-carvao-suave">{plano.nome}</dt>
-                <dd className="font-semibold tabular-nums text-carvao">
-                  {emReais(plano.valorCentavos)}
-                </dd>
+          {situacao.demonstracao ? null : (
+            <dl className="mt-6 space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-carvao-suave">
+                  {situacao.liberada ? "Vale até" : "Venceu em"}
+                </dt>
+                <dd className="font-semibold text-carvao">{dataCurta(situacao.validaAte)}</dd>
               </div>
-            ))}
-            <div className="flex justify-between gap-4">
-              <dt className="text-carvao-suave">
-                {situacao.liberada ? "Vale até" : "Venceu em"}
-              </dt>
-              <dd className="font-semibold text-carvao">{dataCurta(situacao.validaAte)}</dd>
-            </div>
-          </dl>
+            </dl>
+          )}
 
           {situacao.status === "expirada" ? (
             <div className="mt-5">
@@ -174,6 +250,11 @@ export default async function PaginaAssinatura({
               </Aviso>
             </div>
           ) : null}
+
+          <p className="mt-6 border-t border-areia-escura/60 pt-4 text-xs leading-relaxed text-carvao-suave">
+            Garantia de {DIAS_PARA_DESISTIR} dias: se desistir nesse prazo, devolvemos o seu dinheiro
+            (direito de arrependimento do Código de Defesa do Consumidor). É só nos chamar.
+          </p>
         </div>
 
         <div className="cartao">
@@ -181,8 +262,8 @@ export default async function PaginaAssinatura({
             Pagar com Pix
           </h2>
           <p className="mt-1 text-sm text-carvao-suave">
-            Aponte a câmera do banco para o QR Code, ou copie o código e cole no
-            Pix Copia e Cola do seu aplicativo.
+            Escolha o plano, aponte a câmera do banco para o QR Code ou copie o código e
+            cole no Pix Copia e Cola do seu aplicativo.
           </p>
 
           {pixConfigurado ? (

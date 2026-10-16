@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
-import { LEITURAS_POR_MES_NO_VIP } from "@/lib/recursos";
-import { deDataPura, hojeNoEstudio, inicioDoMes, paraCentavos } from "@/lib/formato";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
+import { LEITURAS_POR_MES_NO_COMPLETO } from "@/lib/recursos";
+import { deDataPura, hojeNoEstudio, paraCentavos } from "@/lib/formato";
 import {
   TAMANHO_MAXIMO_BYTES,
   apagar,
@@ -14,6 +14,7 @@ import {
   envioConfigurado,
   tipoAceito,
 } from "@/lib/arquivos";
+import { leiturasDoMes } from "@/lib/leituras-do-mes";
 import { completarRepeticao } from "@/lib/vencimento-operacoes";
 import { MesFechadoErro, exigirMesesAbertos, mesDoDiaPuro } from "@/lib/fechamento/trava";
 
@@ -28,18 +29,6 @@ function atualizarTelas() {
   revalidatePath("/painel");
   revalidatePath("/painel/documentos");
   revalidatePath("/painel/vencimentos");
-}
-
-/** Quantas leituras este estúdio já gastou no mês corrente. */
-export async function leiturasDoMes(usuarioId: string) {
-  return prisma.documento.count({
-    where: {
-      usuarioId,
-      criadoEm: { gte: inicioDoMes(new Date()) },
-      // Documento que nem chegou a ser lido não gasta a cota.
-      situacao: { not: "falhou" },
-    },
-  });
 }
 
 /**
@@ -57,7 +46,7 @@ export async function pedirEnvio(entrada: {
   | { certo: true; documentoId: string; endereco: string; caminho: string }
   | { certo: false; motivo: string }
 > {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   if (!envioConfigurado()) {
     return {
@@ -78,11 +67,11 @@ export async function pedirEnvio(entrada: {
     };
   }
 
-  const usadas = await leiturasDoMes(usuario.id);
-  if (usadas >= LEITURAS_POR_MES_NO_VIP) {
+  const usadas = await leiturasDoMes(prisma, usuario.id);
+  if (usadas >= LEITURAS_POR_MES_NO_COMPLETO) {
     return {
       certo: false,
-      motivo: `Você já usou as ${LEITURAS_POR_MES_NO_VIP} leituras deste mês. No mês que vem elas voltam.`,
+      motivo: `Você já usou as ${LEITURAS_POR_MES_NO_COMPLETO} leituras deste mês. No mês que vem elas voltam.`,
     };
   }
 
@@ -116,7 +105,7 @@ export async function pedirEnvio(entrada: {
 
 /** Marca que o arquivo subiu e a leitura pode começar. */
 export async function confirmarEnvio(documentoId: string) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   await prisma.documento.updateMany({
     where: { id: documentoId, usuarioId: usuario.id },
@@ -131,7 +120,7 @@ export async function confirmarEnvio(documentoId: string) {
 /* ------------------------------------------------------------------ */
 
 export async function salvarItem(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   const id = texto(dados, "id");
   const descricao = texto(dados, "descricao");
@@ -161,7 +150,7 @@ export async function salvarItem(_anterior: Resposta, dados: FormData): Promise<
 }
 
 export async function descartarItem(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   await prisma.itemDoDocumento.updateMany({
@@ -180,7 +169,7 @@ export async function descartarItem(dados: FormData) {
  * condição `decisao: null` no próprio UPDATE garante isso.
  */
 export async function aceitarItem(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   const item = await prisma.itemDoDocumento.findFirst({
@@ -272,7 +261,7 @@ export async function aceitarItem(dados: FormData) {
 
 /** Fecha a conferência: o que sobrou sem decisão é dado por descartado. */
 export async function encerrarConferencia(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   await prisma.$transaction(async (tx) => {
@@ -296,7 +285,7 @@ export async function encerrarConferencia(dados: FormData) {
 }
 
 export async function excluirDocumento(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   const documento = await prisma.documento.findFirst({

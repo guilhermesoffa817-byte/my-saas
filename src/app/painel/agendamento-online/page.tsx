@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { qrCodeSvg } from "@/lib/qrcode";
 import { ENDERECO_DO_SITE } from "@/lib/site";
@@ -42,7 +42,7 @@ async function linkLivre(nomeDoNegocio: string) {
 }
 
 export default async function PaginaAgendamentoOnline() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
   const comEquipe = podeUsar(usuario, "equipe");
 
   const [config, faixas, servicos, pessoas] = await Promise.all([

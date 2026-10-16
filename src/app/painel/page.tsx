@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { agoraDoPedido } from "@/lib/agora";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
@@ -64,7 +64,7 @@ function saudacao(data: Date) {
  * cobrar, o que vence nos próximos dias e o documento esperando conferência.
  */
 export default async function PaginaPainel() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
 
   const agora = agoraDoPedido();
   const hoje = hojeNoEstudio(agora);

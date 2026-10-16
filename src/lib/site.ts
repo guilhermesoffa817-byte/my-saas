@@ -60,4 +60,4 @@ export const PALAVRAS_CHAVE = [
 ];
 
 export const DESCRICAO_CURTA =
-  "Bossa é a agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Teste grátis, sem cartão.";
+  "Bossa é a agenda online que cuida do seu dia e do seu dinheiro: agenda da semana, ficha de clientes, serviços e faturamento num lugar só. Conheça o sistema funcionando antes de assinar.";

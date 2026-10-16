@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import { gerarAcesso, revogarAcesso } from "@/lib/contador/operacoes";
 import { ENDERECO_DO_SITE } from "@/lib/site";
 
@@ -13,7 +13,7 @@ export type RespostaDoLink = { erro?: string; recado?: string; link?: string } |
  * depois desta resposta nem o Bossa consegue mostrar o link de novo.
  */
 export async function gerarLinkDoContador(): Promise<RespostaDoLink> {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirEscritaDoRecurso("relatorio");
   const codigo = await gerarAcesso(prisma, usuario.id, new Date());
   revalidatePath("/painel/financas/contador");
   return {
@@ -23,7 +23,7 @@ export async function gerarLinkDoContador(): Promise<RespostaDoLink> {
 }
 
 export async function revogarLinkDoContador(): Promise<RespostaDoLink> {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirEscritaDoRecurso("relatorio");
   const revogado = await revogarAcesso(prisma, usuario.id, new Date());
   revalidatePath("/painel/financas/contador");
   return {

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirEscrita } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { deDataPura, hojeNoEstudio, paraCentavos, paraDataPura } from "@/lib/formato";
 import { FORMAS_DE_PAGAMENTO, receberCobranca } from "@/lib/cobranca-operacoes";
@@ -45,7 +45,7 @@ export async function criarCobranca(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const clienteId = texto(dados, "clienteId");
   const agendamentoId = texto(dados, "agendamentoId");
@@ -116,7 +116,7 @@ export async function criarCobranca(
  * que o que acabou de ser mandado.
  */
 export async function registrarLembrete(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   if (!podeUsar(usuario, "lembretes")) return;
 
   const id = texto(dados, "id");
@@ -167,7 +167,7 @@ export async function marcarComoPaga(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const id = texto(dados, "id");
   const forma = texto(dados, "forma");
@@ -194,7 +194,7 @@ export async function marcarComoPaga(
 /* ------------------------------------------------------------------ */
 
 export async function cancelarCobranca(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = texto(dados, "id");
 
   await prisma.cobranca.updateMany({
@@ -213,7 +213,7 @@ export async function salvarAjustesDeCobranca(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
 
   const pixChave = texto(dados, "pixChave");
   const pixCidade = texto(dados, "pixCidade");
@@ -226,7 +226,7 @@ export async function salvarAjustesDeCobranca(
     Caixa de seleção desabilitada não é enviada pelo navegador, e ausência aqui
     significaria "desmarcada". Quem está num plano sem lembretes vê as caixas
     travadas; se as preferências fossem gravadas mesmo assim, salvar a chave Pix
-    apagaria em silêncio a configuração de lembrete de quem um dia assinou o VIP.
+    apagaria em silêncio a configuração de lembrete de quem um dia assinou o Completo.
     Por isso as preferências só são tocadas por quem pode mexer nelas.
   */
   const preferencias = podeUsar(usuario, "lembretes")
@@ -252,7 +252,7 @@ export async function salvarAjustesDeCobranca(
 }
 
 export async function mudarLembretesDoCliente(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = texto(dados, "id");
   const semLembretes = texto(dados, "semLembretes") === "1";
 

@@ -15,6 +15,7 @@ import {
 import { deHorarioLocal, diaDaSemanaCurto, emReais, hora } from "@/lib/formato";
 import { linkDoWhatsApp, telefoneParaWhatsApp } from "@/lib/telefone";
 import { ConfirmarHorario } from "./confirmar";
+import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,24 @@ export default async function PaginaDeAgendamento({
   const pagina = await carregar(link);
 
   if (pagina.situacao === "nao_encontrada") notFound();
+
+  if (pagina.situacao === "demonstracao") {
+    // O link do estúdio de exemplo: explica, sem formulário e sem gravar nada.
+    return (
+      <Moldura>
+        <h1 className="font-display text-2xl font-semibold text-carvao">
+          Esta é a página de exemplo do {NOME_DO_PRODUTO}
+        </h1>
+        <p className="mt-2 leading-relaxed text-carvao-suave">
+          Na sua conta, é aqui que o seu cliente escolhe o serviço, o dia e o horário, e o
+          horário cai direto na sua agenda. Nesta página de exemplo nenhum horário é marcado.
+        </p>
+        <Link href={DESTINO_DA_DEMONSTRACAO} className="botao mt-5 inline-flex">
+          Ver os planos
+        </Link>
+      </Moldura>
+    );
+  }
 
   if (pagina.situacao === "indisponivel") {
     return (

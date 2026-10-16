@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icone } from "@/componentes/ui/icones";
 import { PRINCIPAIS, SECUNDARIOS, destinosVisiveis, type Destino } from "./itens";
+import type { Recurso } from "@/lib/recursos";
 
 const MAIS: Destino = {
   href: "/painel/mais",
@@ -31,16 +32,16 @@ function estaAtivo(caminho: string, href: string) {
   );
 }
 
-type Quem = { admin: boolean; financeiro: boolean };
+type Quem = { admin: boolean; liberados: Recurso[] };
 
 /**
  * A barra fixa embaixo, do celular, ao alcance do polegar. Cabem cinco itens:
  * os quatro principais e "Mais", que guarda o resto.
  */
-export function BarraDeBaixo({ admin, financeiro }: Quem) {
+export function BarraDeBaixo({ admin, liberados }: Quem) {
   const caminho = usePathname();
-  const principais = destinosVisiveis(PRINCIPAIS, { financeiro, admin });
-  const secundarios = destinosVisiveis(SECUNDARIOS, { financeiro, admin });
+  const principais = destinosVisiveis(PRINCIPAIS, { liberados, admin });
+  const secundarios = destinosVisiveis(SECUNDARIOS, { liberados, admin });
   const noCelular = [...principais, ...(secundarios.length > 0 ? [MAIS] : [])];
 
   return (
@@ -76,11 +77,11 @@ export function BarraDeBaixo({ admin, financeiro }: Quem) {
  * A mesma lista, em linha, no computador. Sem "Mais": ali o espaço sobra, e
  * esconder destino em menu só faria a pessoa procurar.
  */
-export function NavegacaoLarga({ admin, financeiro }: Quem) {
+export function NavegacaoLarga({ admin, liberados }: Quem) {
   const caminho = usePathname();
   const noComputador = [
-    ...destinosVisiveis(PRINCIPAIS, { financeiro, admin }),
-    ...destinosVisiveis(SECUNDARIOS, { financeiro, admin }),
+    ...destinosVisiveis(PRINCIPAIS, { liberados, admin }),
+    ...destinosVisiveis(SECUNDARIOS, { liberados, admin }),
   ];
 
   return (

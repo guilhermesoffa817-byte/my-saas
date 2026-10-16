@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { limiteDeIa } from "@/lib/recursos";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
@@ -53,7 +53,7 @@ export default async function PaginaCustos({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("custos");
+  const { usuario } = await exigirLeituraDoRecurso("custos");
   const { mes: pedido } = await searchParams;
   const mes = mesDaTela(pedido);
   const mesAtual = competenciaAtual();

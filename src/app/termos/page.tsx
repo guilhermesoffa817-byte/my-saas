@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PaginaLegal, Revisar, Secao } from "@/componentes/pagina-legal";
-import { DIAS_DE_TESTE, PLANOS } from "@/lib/assinatura";
+import { PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { RESPONSAVEL, emailDeContatoValido } from "@/lib/contato";
 import { emReais } from "@/lib/formato";
 import {
-  CLASSIFICACOES_POR_MES_NO_VIP,
-  LEITURAS_POR_MES_NO_VIP,
-  PERGUNTAS_POR_MES_NO_VIP,
+  CLASSIFICACOES_POR_MES_NO_COMPLETO,
+  LEITURAS_POR_MES_NO_COMPLETO,
+  PERGUNTAS_POR_MES_NO_COMPLETO,
 } from "@/lib/recursos";
 import { NOME_DO_PRODUTO } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Termos de uso",
   description:
-    "As condições de uso do Bossa: o que o sistema faz, o que ele não faz, como funcionam o teste, a assinatura e as responsabilidades de cada lado.",
+    "As condições de uso do Bossa: o que o sistema faz, o que ele não faz, como funcionam a demonstração, a assinatura, a garantia de 7 dias e as responsabilidades de cada lado.",
   alternates: { canonical: "/termos" },
 };
 
@@ -33,7 +34,7 @@ const SUMARIO = [
   { id: "o-que-faz", titulo: "O que o Bossa faz" },
   { id: "nao-faz", titulo: "O que o Bossa não faz" },
   { id: "conta", titulo: "Sua conta" },
-  { id: "assinatura", titulo: "Teste, assinatura e pagamento" },
+  { id: "assinatura", titulo: "Demonstração, assinatura e garantia" },
   { id: "ia", titulo: "Inteligência artificial" },
   { id: "responsabilidades", titulo: "Suas responsabilidades" },
   { id: "links", titulo: "Link de agendamento e link do contador" },
@@ -56,8 +57,12 @@ export default function PaginaTermos() {
               não substitui o seu contador.
             </li>
             <li>
-              O teste dura {DIAS_DE_TESTE} dias e não pede cartão. Depois, você paga por Pix, sem
-              fidelidade e sem multa.
+              Antes de pagar, você conhece o sistema num estúdio de exemplo. Para usar com os seus
+              clientes, paga por Pix, sem fidelidade e sem multa.
+            </li>
+            <li>
+              Você tem {DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o
+              dinheiro de volta.
             </li>
             <li>
               O que a IA sugere é informativo e pode ter erro. Confira antes de usar.
@@ -73,13 +78,14 @@ export default function PaginaTermos() {
         </p>
         <ul>
           <li>
-            <strong>Essencial:</strong> agenda, link de agendamento, ficha de clientes, serviços e
-            cobranças pelo WhatsApp com código Pix.
+            <strong>Simples:</strong> agenda, link de agendamento, ficha de clientes, serviços,
+            cobranças pelo WhatsApp com código Pix e finanças (entradas, saídas, resumo do mês e
+            imposto estimado).
           </li>
           <li>
-            <strong>VIP:</strong> tudo do Essencial, mais lembretes de cobrança, contas a pagar,
-            leitura de documentos por IA, finanças, custos, relatório e fechamento do mês, link do
-            contador, equipe e assistente.
+            <strong>Completo:</strong> tudo do Simples, mais lembretes de cobrança, contas a pagar,
+            leitura de documentos por IA, custos, relatório e fechamento do mês, link do contador,
+            equipe e assistente.
           </li>
         </ul>
       </Secao>
@@ -133,14 +139,18 @@ export default function PaginaTermos() {
       <Secao id="assinatura" titulo="4. Teste, assinatura e pagamento">
         <ul>
           <li>
-            O teste grátis dura {DIAS_DE_TESTE} dias, libera as funções do Essencial e não pede
-            cartão.
+            Não há teste grátis com os seus dados. Ao criar a conta, você entra numa demonstração:
+            um estúdio de exemplo, com dados inventados, em que dá para ver todas as funções dos
+            dois planos. Na demonstração nada é gravado; para cadastrar os seus clientes e usar de
+            verdade, é preciso escolher um plano.
           </li>
           <li>
-            Preços de hoje: Essencial {emReais(PLANOS.mensal.valorCentavos)} por mês ou{" "}
-            {emReais(PLANOS.anual.valorCentavos)} por ano; VIP{" "}
+            Preços de hoje: Simples {emReais(PLANOS.mensal.valorCentavos)} por mês ou{" "}
+            {emReais(PLANOS.anual.valorCentavos)} por ano; Completo{" "}
             {emReais(PLANOS.vip_mensal.valorCentavos)} por mês ou{" "}
-            {emReais(PLANOS.vip_anual.valorCentavos)} por ano.
+            {emReais(PLANOS.vip_anual.valorCentavos)} por ano. No anual, a economia em relação a
+            doze mensalidades é de {emReais(economiaDoAnual("simples"))} no Simples e{" "}
+            {emReais(economiaDoAnual("completo"))} no Completo.
           </li>
           <li>
             O pagamento é por Pix. Depois que você avisa o pagamento no painel, conferimos o Pix e
@@ -155,8 +165,16 @@ export default function PaginaTermos() {
             .
           </li>
           <li>
-            Devolução: <strong>[EXEMPLO: o valor do período já começado não é devolvido]</strong>.{" "}
-            <Revisar>REVISAR COM ADVOGADO: direito de arrependimento (CDC, art. 49)</Revisar>
+            <strong>Garantia de {DIAS_PARA_DESISTIR} dias:</strong> você pode desistir em até{" "}
+            {DIAS_PARA_DESISTIR} dias contados do pagamento e recebe de volta o valor pago, sem
+            precisar explicar o motivo. É o direito de arrependimento do Código de Defesa do
+            Consumidor (Lei 8.078/1990, art. 49). Para pedir, fale com a gente pelo contato no fim
+            desta página; a devolução é feita por Pix para quem pagou.
+          </li>
+          <li>
+            Depois desses {DIAS_PARA_DESISTIR} dias, o valor do período já começado não é
+            devolvido: você usa até o fim do período pago e não renova.{" "}
+            <Revisar>REVISAR COM ADVOGADO: prazo e forma da devolução</Revisar>
           </li>
           <li>
             Mudança de preço vale a partir da renovação seguinte e é avisada com antecedência de{" "}
@@ -168,16 +186,16 @@ export default function PaginaTermos() {
 
       <Secao id="ia" titulo="5. Inteligência artificial">
         <p>
-          No VIP, três funções usam IA, cada uma com uma franquia por mês, que renova no primeiro dia
+          No plano Completo, três funções usam IA, cada uma com uma franquia por mês, que renova no primeiro dia
           de cada mês e não acumula:
         </p>
         <ul>
-          <li>Leitura de documentos: até {LEITURAS_POR_MES_NO_VIP} documentos por mês.</li>
+          <li>Leitura de documentos: até {LEITURAS_POR_MES_NO_COMPLETO} documentos por mês.</li>
           <li>
-            Classificação de custos: até {CLASSIFICACOES_POR_MES_NO_VIP} despesas por mês. As
+            Classificação de custos: até {CLASSIFICACOES_POR_MES_NO_COMPLETO} despesas por mês. As
             regras automáticas não contam.
           </li>
-          <li>Assistente: até {PERGUNTAS_POR_MES_NO_VIP} perguntas por mês.</li>
+          <li>Assistente: até {PERGUNTAS_POR_MES_NO_COMPLETO} perguntas por mês.</li>
         </ul>
         <p>
           Quando a franquia acaba, só aquela função para até o mês seguinte; o resto do sistema

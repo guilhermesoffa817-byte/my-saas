@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { limiteDeIa } from "@/lib/recursos";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { idValido, perguntaDoLink, type MensagemDaTela } from "@/lib/assistente/protocolo";
@@ -33,9 +33,11 @@ export default async function PaginaAssistente({
   /** `c`: a conversa aberta. `pergunta`: só preenche o campo, nunca envia sozinha. */
   searchParams: Promise<{ c?: string | string[]; pergunta?: string | string[] }>;
 }) {
-  const { usuario } = await exigirRecurso("assistente");
+  const { usuario, demonstracao } = await exigirLeituraDoRecurso("assistente");
 
-  if (!iaConfigurada()) {
+  // Na demonstração a conversa de exemplo aparece mesmo sem a IA configurada:
+  // perguntar leva para a assinatura antes de chegar à IA.
+  if (!demonstracao && !iaConfigurada()) {
     return (
       <div className="space-y-6">
         <Cabecalho />
@@ -50,8 +52,9 @@ export default async function PaginaAssistente({
     );
   }
 
-  // Retenção: conversa parada há 90 dias sai quando a tela abre, sem tarefa agendada.
-  await apagarConversasParadas(prisma, usuario.id).catch(() => 0);
+  // Retenção: conversa parada há 90 dias sai quando a tela abre, sem tarefa
+  // agendada. Nunca no estúdio de exemplo, que é só de leitura.
+  if (!demonstracao) await apagarConversasParadas(prisma, usuario.id).catch(() => 0);
 
   if (!usuario.iaAceitaEm) {
     return (
@@ -63,10 +66,11 @@ export default async function PaginaAssistente({
   }
 
   const { c, pergunta } = await searchParams;
-  const pedida = idValido(c) ? c : null;
+  const conversas = await listarConversas(prisma, usuario.id);
+  // Na demonstração a tela já abre numa conversa de exemplo, com a resposta pronta.
+  const pedida = idValido(c) ? c : demonstracao && !pergunta ? (conversas[0]?.id ?? null) : null;
 
-  const [conversas, cota, conversa] = await Promise.all([
-    listarConversas(prisma, usuario.id),
+  const [cota, conversa] = await Promise.all([
     cotaDeIa(prisma, usuario.id, "assistente", limiteDeIa(usuario, "assistente"))
       .then((v) => ({ usados: v.usados, limite: v.limite }))
       .catch(() => null),

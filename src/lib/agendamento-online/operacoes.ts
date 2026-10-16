@@ -13,6 +13,7 @@
 import { Prisma, type PrismaClient } from "@/generated/prisma";
 import { avaliarAssinatura } from "@/lib/assinatura";
 import { podeUsar } from "@/lib/recursos";
+import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 import { travarAgendaDoEstudio } from "@/lib/agenda-trava";
 import {
   dataPorExtenso,
@@ -100,6 +101,8 @@ export type AgendaPublica = {
 export type SituacaoDaPagina =
   | { situacao: "nao_encontrada" }
   | { situacao: "indisponivel" }
+  /** O link do estúdio de exemplo: mostra um aviso e nunca aceita horário. */
+  | { situacao: "demonstracao" }
   | { situacao: "aberta"; agenda: AgendaPublica };
 
 export async function carregarAgendaPublica(
@@ -127,6 +130,7 @@ export async function carregarAgendaPublica(
       usuario: {
         select: {
           id: true,
+          papel: true,
           nome: true,
           nomeNegocio: true,
           endereco: true,
@@ -142,6 +146,10 @@ export async function carregarAgendaPublica(
   if (!config || !config.ativa) return { situacao: "nao_encontrada" };
 
   const usuario = config.usuario;
+  // O estúdio de exemplo é compartilhado pela demonstração: a página dele
+  // existe só para aparecer no painel, e nunca recebe horário de ninguém.
+  if (ehContaDeExemplo(usuario)) return { situacao: "demonstracao" };
+
   // Conta com assinatura parada não recebe horário novo. O motivo não aparece
   // para o cliente: é assunto entre o estúdio e o Bossa.
   if (!avaliarAssinatura(usuario.assinatura, agora).liberada) {
@@ -425,6 +433,10 @@ export async function agendarPeloLink(
   }
   if (pagina.situacao === "indisponivel") {
     return { erro: "O agendamento online está indisponível no momento." };
+  }
+  // Antes de registrar tentativa: no estúdio de exemplo nada é gravado.
+  if (pagina.situacao === "demonstracao") {
+    return { erro: "Esta é uma página de exemplo do Bossa: nenhum horário é marcado por aqui." };
   }
   const agenda = pagina.agenda;
 

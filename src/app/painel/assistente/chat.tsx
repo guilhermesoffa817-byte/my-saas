@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import { destinoDaRecusa } from "@/lib/demonstracao/resposta";
 import { Janela } from "@/componentes/ui/janela";
 import { Icone } from "@/componentes/ui/icones";
 import { Aviso } from "@/componentes/ui/etiqueta";
@@ -141,6 +142,12 @@ export function ChatDoAssistente({
         signal: sinal,
       });
       if (!resposta.ok || !resposta.body) {
+        // Na demonstração (ou sem plano em dia) a rota diz para onde ir: vai direto.
+        const destino = await destinoDaRecusa(resposta);
+        if (destino) {
+          router.push(destino);
+          return { tipo: "falhou" };
+        }
         const corpo = (await resposta.json().catch(() => ({}))) as { erro?: string; codigo?: string };
         mudar(idResposta, (m) => ({
           ...m,

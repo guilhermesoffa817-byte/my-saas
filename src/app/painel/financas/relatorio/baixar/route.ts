@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { mesDoPedido, relatorioDoMes } from "@/lib/relatorio/operacoes";
 import { ehFormato, respostaComArquivo } from "@/lib/relatorio/arquivo";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
  * contador. Mês fechado sai do resumo congelado, igual à tela.
  */
 export async function GET(pedido: Request) {
-  const { usuario } = await exigirRecurso("financas");
+  const { usuario } = await exigirLeituraDoRecurso("relatorio");
   const agora = new Date();
   const busca = new URL(pedido.url).searchParams;
   const formato = busca.get("formato");

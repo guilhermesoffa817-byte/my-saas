@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma";
+import { refazerEstudioDeExemplo } from "../src/lib/demonstracao/estudio";
 
 const prisma = new PrismaClient();
 
@@ -147,9 +148,13 @@ async function main() {
     });
   }
 
+  // O estúdio de exemplo da demonstração (quem cria conta e ainda não assinou
+  // vê este). As telas também o criam sozinhas na primeira visita.
+  await refazerEstudioDeExemplo(prisma, new Date(), true);
+
   console.log("Pronto!");
   console.log(`Administração: ${admin.email} / ${senhaAdmin}`);
-  console.log(`Estúdio de demonstração: ${demo.email} / demo12345`);
+  console.log(`Estúdio assinante para testes: ${demo.email} / demo12345`);
 }
 
 main()

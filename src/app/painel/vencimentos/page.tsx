@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import {
@@ -31,7 +31,7 @@ export default async function PaginaVencimentos({
 }: {
   searchParams: Promise<{ ver?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario, demonstracao } = await exigirLeituraDoRecurso("vencimentos");
   const { ver, aviso } = await searchParams;
   const mostrarPagos = ver === "pagos";
   const mostrarTudo = ver === "tudo";
@@ -39,12 +39,15 @@ export default async function PaginaVencimentos({
   /*
     Antes de listar, o Bossa completa as repetições. É aqui que as próximas
     datas nascem: sem tarefa agendada, sem servidor acordando de madrugada.
-    Abrir a tela é o gatilho.
+    Abrir a tela é o gatilho. Na demonstração não: o estúdio de exemplo já
+    nasce com as datas completas, e tela de visitante nunca grava nele.
   */
-  const repeticoes = await prisma.repeticaoDeVencimento.findMany({
-    where: { usuarioId: usuario.id, ativa: true },
-    select: { id: true },
-  });
+  const repeticoes = demonstracao
+    ? []
+    : await prisma.repeticaoDeVencimento.findMany({
+        where: { usuarioId: usuario.id, ativa: true },
+        select: { id: true },
+      });
   const hoje = hojeNoEstudio();
   for (const repeticao of repeticoes) {
     await completarRepeticao(prisma, usuario.id, repeticao.id, hoje);
