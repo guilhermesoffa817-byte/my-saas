@@ -41,17 +41,21 @@ model Usuario {
   sessaoVersao      Int      @default(0)
   criadoEm          DateTime @default(now())
 
-  assinatura     Assinatura?
-  clientes       Cliente[]
-  servicos       Servico[]
-  agendamentos   Agendamento[]
-  pagamentos     Pagamento[]
-  lancamentos    Lancamento[]
-  cobrancas      Cobranca[]
-  vencimentos    Vencimento[]
-  repeticoes     RepeticaoDeVencimento[]
-  documentos     Documento[]
-  pedidosDeSenha PedidoDeSenha[]
+  assinatura         Assinatura?
+  clientes           Cliente[]
+  servicos           Servico[]
+  agendamentos       Agendamento[]
+  pagamentos         Pagamento[]
+  lancamentos        Lancamento[]
+  cobrancas          Cobranca[]
+  vencimentos        Vencimento[]
+  repeticoes         RepeticaoDeVencimento[]
+  documentos         Documento[]
+  pedidosDeSenha     PedidoDeSenha[]
+  colaboradores      Colaborador[]
+  ausencias          AusenciaDoColaborador[]
+  pagamentosDaEquipe PagamentoDeColaborador[]
+  usosDeIa           UsoDeIa[]
 
   @@index([indicadoPor])
 }
@@ -124,36 +128,52 @@ model Servico {
 }
 
 model Agendamento {
-  id          String   @id @default(cuid())
-  usuarioId   String
-  clienteId   String
-  servicoId   String
-  inicio      DateTime
-  status      String   @default("agendado")
-  observacoes String?
-  criadoEm    DateTime @default(now())
+  id            String   @id @default(cuid())
+  usuarioId     String
+  clienteId     String
+  servicoId     String
+  inicio        DateTime
+  status        String   @default("agendado")
+  observacoes   String?
+  /// Quem da equipe atende. Vazio é a própria dona, ou conta sem equipe.
+  /// Remover o colaborador só solta o horário: o atendimento continua na agenda.
+  colaboradorId String?
+  criadoEm      DateTime @default(now())
 
-  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  cliente   Cliente    @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  servico   Servico    @relation(fields: [servicoId], references: [id], onDelete: Restrict)
-  cobrancas Cobranca[]
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  cliente     Cliente      @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  servico     Servico      @relation(fields: [servicoId], references: [id], onDelete: Restrict)
+  colaborador Colaborador? @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
+  cobrancas   Cobranca[]
 
   @@index([usuarioId, inicio])
   @@index([clienteId])
+  @@index([colaboradorId, inicio])
 }
 
 /// Dinheiro que entrou ou saiu fora dos atendimentos: aluguel, material, um extra.
 model Lancamento {
-  id            String   @id @default(cuid())
-  usuarioId     String
-  tipo          String
-  descricao     String
-  categoria     String?
-  valorCentavos Int
-  data          DateTime
-  criadoEm      DateTime @default(now())
+  id             String   @id @default(cuid())
+  usuarioId      String
+  tipo           String
+  descricao      String
+  categoria      String?
+  valorCentavos  Int
+  data           DateTime
+  /// Só nas saídas, para a tela de Custos: fixo, variavel ou nao_operacional.
+  /// Vazio quando ninguém classificou ainda. É visão gerencial, não contábil.
+  natureza       String?
+  /// Quem classificou: regra (palavra-chave), ia (sugestão) ou voce (a dona).
+  /// O que a dona marca nunca é trocado por regra nem por IA.
+  naturezaOrigem String?
+  /// Uma frase explicando a classificação, até 200 caracteres.
+  naturezaMotivo String?  @db.VarChar(200)
+  criadoEm       DateTime @default(now())
 
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario                Usuario                 @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  /// Preenchido quando a saída nasceu de um pagamento da Equipe. Esse
+  /// lançamento só muda ou sai pela Equipe, nunca pela tela de Finanças.
+  pagamentoDeColaborador PagamentoDeColaborador?
 
   @@index([usuarioId, data])
 }
@@ -345,4 +365,125 @@ model PedidoDeSenha {
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, usadoEm])
+}
+
+/// Quem trabalha com o estúdio: empregada, parceira de salão, MEI, estagiária.
+///
+/// O Bossa não faz folha de pagamento. Aqui fica o vínculo que a dona informou
+/// e o que foi combinado com cada pessoa, para ela acompanhar o que paga. O
+/// salário líquido, os encargos e a rescisão continuam com o contador.
+///
+/// O vínculo define as palavras: registrar "férias" ou "salário" de quem é
+/// parceira ou MEI vira prova de emprego contra a própria dona. Por isso a lista
+/// do que cada vínculo aceita mora em lib/equipe.ts e é conferida a cada gravação.
+model Colaborador {
+  id                     String    @id @default(cuid())
+  usuarioId              String
+  nome                   String
+  cargo                  String?
+  /// clt, parceria, mei, pj, autonomo ou estagio.
+  vinculo                String
+  /// Dias de calendário, sem hora.
+  inicio                 DateTime  @db.Date
+  /// Último dia de trabalho. Vazio enquanto a pessoa continua.
+  fim                    DateTime? @db.Date
+  /// Salário (CLT) ou bolsa-auxílio (estágio). Zero nos outros vínculos.
+  salarioCentavos        Int       @default(0)
+  /// Comissão, cota-parte ou percentual combinado, em pontos-base: 10000 = 100%.
+  /// Inteiro, para que 0,29% não vire 0,28999 no meio da conta.
+  comissaoPontosBase     Int       @default(0)
+  /// Valor combinado por atendimento concluído (MEI, PJ, autônomo).
+  porAtendimentoCentavos Int       @default(0)
+  /// Dados pessoais, todos opcionais. Só o necessário para pagar e falar com a
+  /// pessoa: RG, PIS, endereço, dependentes e saúde ficam com o contador.
+  documento              String?
+  pixChave               String?
+  telefone               String?
+  email                  String?
+  /// Nunca diagnóstico, CID ou detalhe de saúde: a tela avisa.
+  observacoes            String?
+  /// Removido com pagamentos no histórico: o nome vira "Ex-colaborador", os
+  /// dados pessoais e as ausências somem, e os valores ficam para o contador.
+  anonimizadoEm          DateTime?
+  criadoEm               DateTime  @default(now())
+  atualizadoEm           DateTime  @updatedAt
+
+  usuario      Usuario                  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  ausencias    AusenciaDoColaborador[]
+  pagamentos   PagamentoDeColaborador[]
+  agendamentos Agendamento[]
+
+  @@index([usuarioId])
+}
+
+/// Um período em que a pessoa não trabalhou. Atestado entra só como período e
+/// tipo: dado de saúde não se guarda aqui.
+model AusenciaDoColaborador {
+  id            String   @id @default(cuid())
+  usuarioId     String
+  colaboradorId String
+  /// ferias, recesso, folga, atestado, licenca, falta ou indisponivel.
+  tipo          String
+  inicio        DateTime @db.Date
+  fim           DateTime @db.Date
+  criadoEm      DateTime @default(now())
+
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  colaborador Colaborador @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, inicio])
+  @@index([colaboradorId])
+}
+
+/// O que a dona pagou a alguém da equipe. Cada pagamento nasce junto com uma
+/// saída em Lancamento, na mesma transação, e sai junto com ela.
+model PagamentoDeColaborador {
+  id            String   @id @default(cuid())
+  usuarioId     String
+  colaboradorId String
+  /// salario, comissao, cota_parte, repasse, bolsa, adiantamento, bonus,
+  /// beneficio, encargo, rescisao ou outro. Depende do vínculo.
+  tipo          String
+  /// Mês de referência, "AAAA-MM": o mês do trabalho, não o do pagamento.
+  competencia   String
+  valorCentavos Int
+  pagoEm        DateTime @db.Date
+  /// A saída nas Finanças. Única: um pagamento, um lançamento.
+  lancamentoId  String   @unique
+  criadoEm      DateTime @default(now())
+
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  /// NoAction, e não Restrict: o banco recusa apagar o colaborador ou o
+  /// lançamento por fora, mas deixa apagar a conta inteira, que leva os três
+  /// juntos no mesmo comando.
+  colaborador Colaborador @relation(fields: [colaboradorId], references: [id], onDelete: NoAction)
+  lancamento  Lancamento  @relation(fields: [lancamentoId], references: [id], onDelete: NoAction)
+
+  @@index([usuarioId, competencia])
+  @@index([colaboradorId])
+}
+
+/// Cada uso da inteligência artificial que gasta a franquia do mês.
+///
+/// A linha nasce ANTES da chamada à API, como reserva, dentro de uma transação
+/// que trava a conta: dois cliques ao mesmo tempo não passam juntos do limite.
+/// Depois da resposta, a linha recebe os tokens gastos, que é o que a Anthropic
+/// cobra. Uma reserva que nem chegou a chamar a API é devolvida.
+model UsoDeIa {
+  id                 String   @id @default(cuid())
+  usuarioId          String
+  /// classificacao (Custos), assistente ou leitura (Documentos).
+  recurso            String
+  /// Quanto da franquia esta linha gasta: 1 por pergunta, 1 por despesa enviada.
+  unidades           Int      @default(1)
+  tokensEntrada      Int      @default(0)
+  tokensSaida        Int      @default(0)
+  tokensCacheLeitura Int      @default(0)
+  tokensCacheEscrita Int      @default(0)
+  buscasNaWeb        Int      @default(0)
+  criadoEm           DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, recurso, criadoEm])
 }

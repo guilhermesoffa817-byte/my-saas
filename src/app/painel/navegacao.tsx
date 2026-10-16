@@ -21,7 +21,14 @@ function estaAtivo(caminho: string, href: string) {
       SECUNDARIOS.some((item) => caminho.startsWith(item.href))
     );
   }
-  return caminho.startsWith(href);
+  if (!caminho.startsWith(href)) return false;
+  /*
+    Custos mora dentro de Finanças (/painel/financas/custos). Sem esta
+    conferência as duas abas acenderiam juntas: vale o destino mais específico.
+  */
+  return ![...PRINCIPAIS, ...SECUNDARIOS].some(
+    (outro) => outro.href.length > href.length && outro.href.startsWith(href) && caminho.startsWith(outro.href),
+  );
 }
 
 type Quem = { admin: boolean; financeiro: boolean };

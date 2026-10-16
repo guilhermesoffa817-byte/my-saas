@@ -69,10 +69,24 @@ export const SECUNDARIOS: Destino[] = [
     vip: true,
   },
   {
+    href: "/painel/equipe",
+    rotulo: "Equipe",
+    explicacao: "Quem trabalha com você e o que você paga a cada um.",
+    icone: "cracha",
+    vip: true,
+  },
+  {
     href: "/painel/financas",
     rotulo: "Finanças",
     explicacao: "O que entra, o que sai e o imposto estimado.",
     icone: "grafico",
+    vip: true,
+  },
+  {
+    href: "/painel/financas/custos",
+    rotulo: "Custos",
+    explicacao: "Custos fixos e variáveis e quanto faturar para empatar.",
+    icone: "balanca",
     vip: true,
   },
   {

@@ -15,7 +15,9 @@ export type Recurso =
   | "lembretes"
   | "vencimentos"
   | "documentos"
-  | "financas";
+  | "financas"
+  | "equipe"
+  | "custos";
 
 const SO_NO_VIP: Record<Recurso, boolean> = {
   /** Cobrar pelo WhatsApp é dos dois planos: é o que traz dinheiro para o estúdio. */
@@ -24,10 +26,38 @@ const SO_NO_VIP: Record<Recurso, boolean> = {
   vencimentos: true,
   documentos: true,
   financas: true,
+  /** Equipe é de quem já tem gente trabalhando junto: cabe no VIP. */
+  equipe: true,
+  /** Custos operacionais mora dentro de Finanças, que já é do VIP. */
+  custos: true,
 };
 
 /** Quantas leituras de documento o plano dá por mês. */
 export const LEITURAS_POR_MES_NO_VIP = 30;
+
+/**
+ * Franquia mensal de inteligência artificial, por recurso.
+ *
+ * [EXEMPLO] Os números abaixo são um ponto de partida para o plano VIP, não um
+ * cálculo de custo: ajuste depois de ver o uso real na tabela UsoDeIa, que
+ * guarda os tokens de cada chamada. Classificação conta 1 por despesa enviada à
+ * IA (as regras automáticas não contam); o assistente conta 1 por pergunta.
+ */
+export const CLASSIFICACOES_POR_MES_NO_VIP = 300; // [EXEMPLO]
+export const PERGUNTAS_POR_MES_NO_VIP = 60; // [EXEMPLO]
+
+export type RecursoDeIa = "classificacao" | "assistente" | "leitura";
+
+export function limiteDeIa(
+  usuario: { assinatura?: { status: string; plano: string; validaAte: Date } | null },
+  recurso: RecursoDeIa,
+  agora = new Date(),
+) {
+  if (!temFinanceiro(usuario.assinatura, agora)) return 0;
+  if (recurso === "classificacao") return CLASSIFICACOES_POR_MES_NO_VIP;
+  if (recurso === "assistente") return PERGUNTAS_POR_MES_NO_VIP;
+  return LEITURAS_POR_MES_NO_VIP;
+}
 
 export function podeUsar(
   usuario: { assinatura?: { status: string; plano: string; validaAte: Date } | null },

@@ -31,10 +31,15 @@ export async function banco(): Promise<PrismaClient> {
 /** Esvazia as tabelas, na ordem que respeita as chaves estrangeiras. */
 export async function limpar() {
   const db = await banco();
+  // O pagamento da equipe vem antes: ele segura o lançamento e o colaborador.
+  await db.usoDeIa.deleteMany();
+  await db.pagamentoDeColaborador.deleteMany();
+  await db.ausenciaDoColaborador.deleteMany();
   await db.lembreteDeCobranca.deleteMany();
   await db.cobranca.deleteMany();
   await db.agendamento.deleteMany();
   await db.lancamento.deleteMany();
+  await db.colaborador.deleteMany();
   await db.servico.deleteMany();
   await db.cliente.deleteMany();
   await db.pagamento.deleteMany();

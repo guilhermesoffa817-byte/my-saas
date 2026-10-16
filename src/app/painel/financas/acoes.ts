@@ -73,8 +73,11 @@ export async function excluirLancamento(dados: FormData) {
 
   const lancamento = await prisma.lancamento.findFirst({
     where: { id, usuarioId: usuario.id },
+    select: { id: true, pagamentoDeColaborador: { select: { id: true } } },
   });
   if (!lancamento) return;
+  // Pagamento da Equipe sai pela Equipe, que apaga o pagamento e a saída juntos.
+  if (lancamento.pagamentoDeColaborador) return;
 
   await prisma.lancamento.delete({ where: { id } });
   revalidatePath("/painel/financas");

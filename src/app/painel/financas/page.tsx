@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirFinanceiro } from "@/lib/guardas";
 import { BotaoConfirmar } from "@/componentes/botoes";
@@ -6,6 +7,7 @@ import {
   dataCurta,
   diaDaSemanaCurto,
   emReais,
+  inicioDoMes as inicioDoMesNoFuso,
   paraDataLocal,
   somarDias,
 } from "@/lib/formato";
@@ -30,9 +32,9 @@ export default async function PaginaFinancas() {
   const { usuario } = await exigirFinanceiro();
 
   const agora = new Date();
-  const inicioDoMes = new Date(
-    Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), 1),
-  );
+  // O mês começa à meia-noite de São Paulo, igual à tela de Custos. Contado em
+  // UTC, o que entrou entre 21h e meia-noite do último dia caía no mês seguinte.
+  const inicioDoMes = inicioDoMesNoFuso(agora);
   const inicioDoGrafico = somarDias(agora, -90);
 
   const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo] =
@@ -48,6 +50,8 @@ export default async function PaginaFinancas() {
       prisma.lancamento.findMany({
         where: { usuarioId: usuario.id, data: { gte: inicioDoMes } },
         orderBy: { data: "desc" },
+        // Saída que nasceu de um pagamento da Equipe só muda pela Equipe.
+        include: { pagamentoDeColaborador: { select: { competencia: true } } },
       }),
       prisma.agendamento.findMany({
         where: {
@@ -132,6 +136,19 @@ export default async function PaginaFinancas() {
           depois das despesas e do imposto
         </Indicador>
       </section>
+
+      <Link
+        href="/painel/financas/custos"
+        className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+      >
+        <div className="min-w-0">
+          <p className="font-display text-lg font-semibold text-carvao">Custos do mês</p>
+          <p className="mt-0.5 text-sm text-carvao-suave">
+            Fixos, variáveis e quanto faturar para empatar. A IA ajuda a classificar.
+          </p>
+        </div>
+        <span className="botao-suave">Ver custos</span>
+      </Link>
 
       <section className="cartao animar-entrada">
         <h2 className="font-display text-xl font-semibold text-carvao">
@@ -232,14 +249,27 @@ export default async function PaginaFinancas() {
                     >
                       {entrada ? "+" : "−"} {emReais(lancamento.valorCentavos)}
                     </span>
-                    <form action={excluirLancamento}>
-                      <input type="hidden" name="id" value={lancamento.id} />
-                      <BotaoConfirmar
-                        pergunta={`Apagar o lançamento "${lancamento.descricao}"?`}
+                    {lancamento.pagamentoDeColaborador ? (
+                      /*
+                        Apagar aqui deixaria o pagamento da Equipe sem a saída
+                        dele. O caminho é a Equipe, que apaga os dois juntos.
+                      */
+                      <Link
+                        href={`/painel/equipe?aba=pagamentos&mes=${lancamento.pagamentoDeColaborador.competencia}`}
+                        className="botao-texto"
                       >
-                        Apagar
-                      </BotaoConfirmar>
-                    </form>
+                        Veio da Equipe
+                      </Link>
+                    ) : (
+                      <form action={excluirLancamento}>
+                        <input type="hidden" name="id" value={lancamento.id} />
+                        <BotaoConfirmar
+                          pergunta={`Apagar o lançamento "${lancamento.descricao}"?`}
+                        >
+                          Apagar
+                        </BotaoConfirmar>
+                      </form>
+                    )}
                   </div>
                 </li>
               );

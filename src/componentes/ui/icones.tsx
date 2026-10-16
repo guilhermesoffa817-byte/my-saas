@@ -22,6 +22,10 @@ const TRACOS: Record<string, string> = {
   chave:
     "M14.5 9.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm0 0H21m-2.5 0v3m-2.5-3v2",
   mais: "M4.5 7h15m-15 5h15m-15 5h15",
+  balanca:
+    "M12 4v16m-5 0h10M5 7.5h14M7 7.5l-3 6a3 3 0 0 0 6 0l-3-6Zm10 0-3 6a3 3 0 0 0 6 0l-3-6Z",
+  cracha:
+    "M10 3.5h4M7.5 5h9A1.5 1.5 0 0 1 18 6.5v12a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 18.5v-12A1.5 1.5 0 0 1 7.5 5Zm4.5 7.25a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-3 4.25c.4-1.5 1.6-2.4 3-2.4s2.6.9 3 2.4",
 };
 
 export function Icone({ nome, className = "" }: { nome: string; className?: string }) {

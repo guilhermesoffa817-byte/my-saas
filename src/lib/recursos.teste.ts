@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { podeUsar } from "@/lib/recursos";
+import {
+  CLASSIFICACOES_POR_MES_NO_VIP,
+  PERGUNTAS_POR_MES_NO_VIP,
+  limiteDeIa,
+  podeUsar,
+} from "@/lib/recursos";
 
 const AGORA = new Date("2026-10-05T12:00:00.000Z");
 const futuro = new Date("2026-11-05T12:00:00.000Z");
@@ -16,8 +21,15 @@ describe("liberação por plano", () => {
     expect(podeUsar({ assinatura: null }, "cobrar", AGORA)).toBe(true);
   });
 
-  it("guarda lembretes, vencimentos e documentos para o VIP", () => {
-    for (const recurso of ["lembretes", "vencimentos", "documentos", "financas"] as const) {
+  it("guarda lembretes, vencimentos, documentos, finanças, equipe e custos para o VIP", () => {
+    for (const recurso of [
+      "lembretes",
+      "vencimentos",
+      "documentos",
+      "financas",
+      "equipe",
+      "custos",
+    ] as const) {
       expect(podeUsar(comPlano("mensal"), recurso, AGORA)).toBe(false);
       expect(podeUsar(comPlano("anual"), recurso, AGORA)).toBe(false);
       expect(podeUsar(comPlano("vip_mensal"), recurso, AGORA)).toBe(true);
@@ -33,5 +45,16 @@ describe("liberação por plano", () => {
 
   it("quem está em teste ainda consegue cobrar", () => {
     expect(podeUsar(comPlano("mensal", "teste"), "cobrar", AGORA)).toBe(true);
+  });
+});
+
+describe("franquia de IA", () => {
+  it("dá a franquia do VIP e zero para quem não tem o plano em dia", () => {
+    expect(limiteDeIa(comPlano("vip_mensal"), "classificacao", AGORA)).toBe(
+      CLASSIFICACOES_POR_MES_NO_VIP,
+    );
+    expect(limiteDeIa(comPlano("vip_anual"), "assistente", AGORA)).toBe(PERGUNTAS_POR_MES_NO_VIP);
+    expect(limiteDeIa(comPlano("mensal"), "classificacao", AGORA)).toBe(0);
+    expect(limiteDeIa(comPlano("vip_mensal", "ativa", passado), "assistente", AGORA)).toBe(0);
   });
 });
