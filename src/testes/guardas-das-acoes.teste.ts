@@ -40,7 +40,16 @@ const todos = arquivos(RAIZ).map((caminho) => ({
 }));
 
 const acoes = todos.filter((arquivo) => ehUseServer(arquivo.bruto));
-const rotasDeApi = todos.filter((arquivo) => /^app\/api\/.+\/route\.ts$/.test(arquivo.caminho));
+/**
+ * Rotas públicas que não leem sessão nem conta de ninguém. A de saúde só faz
+ * "select 1" para o banco do Supabase grátis não pausar (ver
+ * .github/workflows/manter-acordado.yml). Toda outra rota passa pela porta.
+ */
+const ROTAS_PUBLICAS = ["app/api/saude/route.ts"];
+
+const todasAsRotasDeApi = todos.filter((arquivo) => /^app\/api\/.+\/route\.ts$/.test(arquivo.caminho));
+const rotasDeApi = todasAsRotasDeApi.filter((arquivo) => !ROTAS_PUBLICAS.includes(arquivo.caminho));
+const rotasPublicas = todasAsRotasDeApi.filter((arquivo) => ROTAS_PUBLICAS.includes(arquivo.caminho));
 
 /** O que só pode aparecer nas telas, nunca numa ação ou rota de API. */
 const SO_NAS_TELAS: { nome: string; padrao: RegExp }[] = [
@@ -66,6 +75,13 @@ describe("as portas das ações e das rotas de API", () => {
       for (const proibido of SO_NAS_TELAS) {
         expect(proibido.padrao.test(acao.texto), `${acao.caminho} usa ${proibido.nome}`).toBe(false);
       }
+    }
+  });
+
+  it("as rotas públicas não leem sessão, conta nem dado de estúdio", () => {
+    expect(rotasPublicas.map((a) => a.caminho)).toEqual(ROTAS_PUBLICAS);
+    for (const rota of rotasPublicas) {
+      expect(/sessao|guardas|usuario|cookies|headers\(/i.test(rota.texto), `${rota.caminho} mexe com conta`).toBe(false);
     }
   });
 
