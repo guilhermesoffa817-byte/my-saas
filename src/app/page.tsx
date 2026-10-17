@@ -6,6 +6,7 @@ import { NOME_DA_FAMILIA, PLANOS, economiaDoAnual } from "@/lib/assinatura";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { emReais } from "@/lib/formato";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
+import { recursoLigado } from "@/lib/recursos";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -43,6 +44,7 @@ const PROBLEMAS = [
   {
     problema: "Papelada acumulada",
     solucao: "Mande a foto da conta ou do contrato: o Bossa lê valores e datas, e você confere.",
+    precisa: "documentos" as const,
   },
   {
     problema: "Não sabe quanto sobrou no mês",
@@ -73,8 +75,10 @@ const FUNCOES = [
   },
   {
     icone: "papel",
-    titulo: "Contas e documentos lidos por IA",
-    texto: "Contas a pagar no lugar certo, e a foto do contrato vira datas e valores para conferir.",
+    titulo: recursoLigado("documentos") ? "Contas e documentos lidos por IA" : "Contas a pagar",
+    texto: recursoLigado("documentos")
+      ? "Contas a pagar no lugar certo, e a foto do contrato vira datas e valores para conferir."
+      : "Contas e prazos de contrato no lugar certo, avisados no Início antes de vencer.",
     completo: true,
   },
   {
@@ -92,6 +96,7 @@ const FUNCOES = [
   {
     icone: "conversa",
     titulo: "Assistente que entende o seu negócio",
+    precisa: "assistente" as const,
     texto: "Pergunte “em que dia a agenda fica mais vazia?” e receba a resposta com os seus números.",
     completo: true,
   },
@@ -114,6 +119,8 @@ const PASSOS = [
 
 type Pergunta = {
   pergunta: string;
+  /** Só aparece quando este recurso está ligado no servidor. */
+  precisa?: "assistente" | "documentos";
   resposta: string;
   link?: { href: string; rotulo: string };
 };
@@ -136,7 +143,7 @@ const PERGUNTAS: Pergunta[] = [
   {
     pergunta: "Posso ver o sistema antes de pagar?",
     resposta:
-      "Pode. Ao criar a conta você entra num estúdio de exemplo, com agenda, cobranças, finanças, equipe e assistente preenchidos, e navega por tudo. Para usar com os seus clientes, é só escolher um plano e pagar por Pix.",
+      "Pode. Ao criar a conta você entra num estúdio de exemplo, com agenda, cobranças, finanças e equipe preenchidos, e navega por tudo. Para usar com os seus clientes, é só escolher um plano e pagar por Pix.",
   },
   {
     pergunta: "E se eu me arrepender depois de pagar?",
@@ -145,6 +152,7 @@ const PERGUNTAS: Pergunta[] = [
   },
   {
     pergunta: "A inteligência artificial vê os meus clientes?",
+    precisa: "assistente",
     resposta:
       "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no plano Completo e só quando você usa.",
     link: { href: "/privacidade", rotulo: "Ver a Política de privacidade" },
@@ -195,7 +203,7 @@ const dadosParaOGoogle = {
 const perguntasParaOGoogle = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: PERGUNTAS.map((item) => ({
+  mainEntity: perguntasLigadas().map((item) => ({
     "@type": "Question",
     name: item.pergunta,
     acceptedAnswer: { "@type": "Answer", text: item.resposta },
@@ -233,6 +241,11 @@ function TituloDaSecao({ id, children }: { id: string; children: React.ReactNode
       {children}
     </h2>
   );
+}
+
+/** As perguntas frequentes, sem as que falam de recurso desligado neste servidor. */
+function perguntasLigadas() {
+  return PERGUNTAS.filter((item) => !item.precisa || recursoLigado(item.precisa));
 }
 
 export default function PaginaInicial() {
@@ -290,7 +303,7 @@ export default function PaginaInicial() {
           <div className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
             <TituloDaSecao id="o-que-muda">O que muda no seu dia</TituloDaSecao>
             <ul className="mt-10 divide-y divide-areia-escura/70 border-y border-areia-escura/70">
-              {PROBLEMAS.map((item) => (
+              {PROBLEMAS.filter((item) => !item.precisa || recursoLigado(item.precisa)).map((item) => (
                 <li
                   key={item.problema}
                   className="grid gap-1 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-8"
@@ -312,11 +325,11 @@ export default function PaginaInicial() {
         <section aria-labelledby="funcoes" className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
           <TituloDaSecao id="funcoes">Tudo num lugar só</TituloDaSecao>
           <p className="mt-3 max-w-xl text-carvao-suave">
-            Seis partes que conversam entre si: o horário concluído entra nas finanças, o
-            pagamento da equipe vira despesa, o documento lido vira conta a pagar.
+            Tudo conversa entre si: o horário concluído entra nas finanças, o pagamento da
+            equipe vira despesa, a conta paga sai do caixa.
           </p>
           <ul className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-            {FUNCOES.map((funcao) => (
+            {FUNCOES.filter((funcao) => !funcao.precisa || recursoLigado(funcao.precisa)).map((funcao) => (
               <li key={funcao.titulo} className="flex gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-areia text-terracota">
                   <Icone nome={funcao.icone} className="h-5 w-5" />
@@ -449,7 +462,7 @@ export default function PaginaInicial() {
           <div className="mx-auto max-w-3xl px-4 py-16 sm:px-5 md:py-24">
             <TituloDaSecao id="duvidas">Perguntas frequentes</TituloDaSecao>
             <div className="mt-8 divide-y divide-areia-escura/70 border-y border-areia-escura/70">
-              {PERGUNTAS.map((item) => (
+              {perguntasLigadas().map((item) => (
                 <details key={item.pergunta} className="group py-1">
                   <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-carvao marker:hidden [&::-webkit-details-marker]:hidden">
                     {item.pergunta}

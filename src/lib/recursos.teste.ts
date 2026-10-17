@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CLASSIFICACOES_POR_MES_NO_COMPLETO,
   PERGUNTAS_POR_MES_NO_COMPLETO,
@@ -6,7 +6,19 @@ import {
   limiteDeIa,
   podeUsar,
   recursosLiberados,
+  recursosLigados,
 } from "@/lib/recursos";
+
+// Os testes de plano partem de um servidor com a IA e o espaço de arquivos
+// ligados. O bloco "só vende o que está ligado" desliga de propósito.
+beforeEach(() => {
+  vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
+  vi.stubEnv("SUPABASE_URL", "https://exemplo.supabase.co");
+  vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "chave-de-servico");
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 const AGORA = new Date("2026-10-05T12:00:00.000Z");
 const futuro = new Date("2026-11-05T12:00:00.000Z");
@@ -78,5 +90,28 @@ describe("franquia de IA", () => {
     );
     expect(limiteDeIa(comPlano("mensal"), "classificacao", AGORA)).toBe(0);
     expect(limiteDeIa(comPlano("vip_mensal", "ativa", passado), "assistente", AGORA)).toBe(0);
+  });
+});
+
+describe("recurso desligado no servidor não é liberado para ninguém", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  const completoEmDia = {
+    assinatura: { status: "ativa", plano: "vip_mensal", validaAte: new Date(Date.now() + 86_400_000) },
+  };
+
+  it("sem a chave da IA, nem quem assina o Completo vê o assistente ou os documentos", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    expect(podeUsar(completoEmDia, "assistente")).toBe(false);
+    expect(podeUsar(completoEmDia, "documentos")).toBe(false);
+    expect(podeUsar(completoEmDia, "custos")).toBe(true);
+    expect(recursosLigados()).not.toContain("assistente");
+  });
+
+  it("com a chave da IA, o Completo volta a ver o assistente", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
+    expect(podeUsar(completoEmDia, "assistente")).toBe(true);
   });
 });
