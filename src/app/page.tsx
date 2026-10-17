@@ -1,15 +1,11 @@
 import Link from "next/link";
-import { Marca } from "@/componentes/marca";
-import { BotaoTema } from "@/componentes/tema";
-import { CenaAntes, CenaDepois } from "@/componentes/cenas";
-import {
-  PLANOS,
-  DIAS_DE_TESTE,
-  MESES_DE_BRINDE,
-  ECONOMIA_ANUAL_CENTAVOS,
-  ECONOMIA_VIP_ANUAL_CENTAVOS,
-} from "@/lib/assinatura";
+import { CenaDoDia } from "@/componentes/cenas";
+import { CabecalhoDoSite, RodapeDoSite } from "@/componentes/site";
+import { Icone } from "@/componentes/ui/icones";
+import { NOME_DA_FAMILIA, PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { emReais } from "@/lib/formato";
+import { textosDoPlano } from "@/lib/itens-dos-planos";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -18,22 +14,149 @@ import {
   SEGMENTOS,
 } from "@/lib/site";
 
-const problemas = [
+/**
+ * A página de vendas.
+ *
+ * Quem chega tem poucos segundos para entender o que é isto. Por isso ela é
+ * curta: uma promessa concreta, os problemas do dia a dia que o Bossa resolve,
+ * as funções em seis blocos, como começar, o preço e as dúvidas de sempre.
+ *
+ * Nenhuma frase aqui promete o que o produto não faz. As listas dos planos vêm
+ * de itens-dos-planos.ts, a mesma fonte da tela de assinatura, e um teste
+ * confere que elas batem com a liberação de verdade em recursos.ts.
+ */
+
+/** Pares de problema e solução. Curtos, com a palavra que a dona usaria. */
+const PROBLEMAS = [
   {
-    dor: "Marcou duas no mesmo horário",
-    solucao: "O sistema avisa na hora em que os horários batem.",
+    problema: "Dois clientes no mesmo horário",
+    solucao: "A agenda avisa na hora e não deixa o horário bater.",
   },
   {
-    dor: "Esqueceu o que o cliente prefere",
-    solucao: "Cada cliente tem ficha com alergia, preferência e aniversário.",
+    problema: "Cliente que esquece de pagar",
+    solucao: "A cobrança sai pronta no WhatsApp, com o código Pix. Você confere e envia.",
   },
   {
-    dor: "Tem gente devendo e você não lembra quem",
-    solucao: "O Bossa mostra quem cobrar hoje e abre o WhatsApp com a mensagem pronta.",
+    problema: "Conta que vence e você só lembra depois",
+    solucao: "As contas a pagar aparecem no Início antes de vencer.",
   },
   {
-    dor: "Não sabe quanto ganhou no mês",
-    solucao: "O faturamento aparece somado, sem planilha nenhuma.",
+    problema: "Papelada acumulada",
+    solucao: "Mande a foto da conta ou do contrato: o Bossa lê valores e datas, e você confere.",
+  },
+  {
+    problema: "Não sabe quanto sobrou no mês",
+    solucao: "Entrou, saiu e sobrou numa tela, com custos fixos e variáveis separados.",
+  },
+  {
+    problema: "Cliente querendo marcar às 23h",
+    solucao: "Mande o seu link: ele escolhe o serviço e um horário livre sozinho.",
+  },
+];
+
+/**
+ * As funções, agrupadas do jeito que a dona pensa no trabalho, não como o menu.
+ * `completo` marca o que só o plano Completo libera (ver lib/recursos.ts).
+ */
+const FUNCOES = [
+  {
+    icone: "calendario",
+    titulo: "Agenda e link de agendamento",
+    texto: "A semana numa tela e um link para o cliente marcar nos horários que você abrir.",
+    completo: false,
+  },
+  {
+    icone: "dinheiro",
+    titulo: "Cobranças e finanças",
+    texto: "Quem cobrar hoje, com mensagem e Pix prontos para o WhatsApp, e o que entrou e saiu no mês.",
+    completo: false,
+  },
+  {
+    icone: "papel",
+    titulo: "Contas e documentos lidos por IA",
+    texto: "Contas a pagar no lugar certo, e a foto do contrato vira datas e valores para conferir.",
+    completo: true,
+  },
+  {
+    icone: "grafico",
+    titulo: "Custos e relatório para o contador",
+    texto: "Custos fixos e variáveis, quanto faturar para empatar e o mês fechado para o contador.",
+    completo: true,
+  },
+  {
+    icone: "cracha",
+    titulo: "Equipe",
+    texto: "Quem trabalha com você, quem atende cada horário e pagamentos que já entram como despesa.",
+    completo: true,
+  },
+  {
+    icone: "conversa",
+    titulo: "Assistente que entende o seu negócio",
+    texto: "Pergunte “em que dia a agenda fica mais vazia?” e receba a resposta com os seus números.",
+    completo: true,
+  },
+];
+
+const PASSOS = [
+  {
+    titulo: "Crie a conta e conheça",
+    texto: "Leva um minuto. Você entra num estúdio de exemplo, com todas as funções funcionando.",
+  },
+  {
+    titulo: "Escolha o plano e pague por Pix",
+    texto: "Simples ou Completo, mensal ou anual. O painel passa a ser seu assim que o Pix é confirmado.",
+  },
+  {
+    titulo: "Cadastre os serviços e mande o link",
+    texto: "Preço e duração de cada serviço, e o seu link no WhatsApp e no Instagram.",
+  },
+];
+
+type Pergunta = {
+  pergunta: string;
+  resposta: string;
+  link?: { href: string; rotulo: string };
+};
+
+const PERGUNTAS: Pergunta[] = [
+  {
+    pergunta: "O Bossa substitui o meu contador?",
+    resposta:
+      "Não. O Bossa organiza os números e prepara o relatório do mês para o contador. O imposto que aparece é só uma estimativa, feita com o percentual que você informa. O imposto devido, as guias e a folha de pagamento continuam com o seu contador.",
+  },
+  {
+    pergunta: "Preciso instalar alguma coisa?",
+    resposta: "Não. O Bossa abre no navegador do celular ou do computador, com o seu e-mail e a sua senha.",
+  },
+  {
+    pergunta: "Ele manda mensagem sozinho para os meus clientes?",
+    resposta:
+      "Não. Ele abre o WhatsApp com a mensagem e o código Pix prontos. Você confere e aperta enviar. O dinheiro vai direto para a sua chave Pix.",
+  },
+  {
+    pergunta: "Posso ver o sistema antes de pagar?",
+    resposta:
+      "Pode. Ao criar a conta você entra num estúdio de exemplo, com agenda, cobranças, finanças, equipe e assistente preenchidos, e navega por tudo. Para usar com os seus clientes, é só escolher um plano e pagar por Pix.",
+  },
+  {
+    pergunta: "E se eu me arrepender depois de pagar?",
+    resposta: `Você tem ${DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o seu dinheiro de volta. É o direito de arrependimento do Código de Defesa do Consumidor (art. 49). É só nos chamar.`,
+    link: { href: "/termos", rotulo: "Ver os Termos de uso" },
+  },
+  {
+    pergunta: "A inteligência artificial vê os meus clientes?",
+    resposta:
+      "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no plano Completo e só quando você usa.",
+    link: { href: "/privacidade", rotulo: "Ver a Política de privacidade" },
+  },
+  {
+    pergunta: "Posso cancelar quando quiser?",
+    resposta:
+      "Pode. Não tem fidelidade nem multa. Se você não renovar, o acesso pausa e os seus dados ficam guardados para quando voltar.",
+  },
+  {
+    pergunta: "Serve para o meu negócio?",
+    resposta: `Serve para quem atende com hora marcada: ${SEGMENTOS.join(", ")} e outros serviços parecidos.`,
   },
 ];
 
@@ -68,6 +191,50 @@ const dadosParaOGoogle = {
   })),
 };
 
+/** As mesmas perguntas da tela, no formato que o Google entende. */
+const perguntasParaOGoogle = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: PERGUNTAS.map((item) => ({
+    "@type": "Question",
+    name: item.pergunta,
+    acceptedAnswer: { "@type": "Answer", text: item.resposta },
+  })),
+};
+
+/** Os preços e a economia do anual saem de lib/assinatura.ts; os itens, de itens-dos-planos.ts. */
+const PLANOS_DA_VITRINE = [
+  {
+    nome: NOME_DA_FAMILIA.simples,
+    resumo: "Para organizar a agenda, cobrar e ver o dinheiro do mês.",
+    mensal: PLANOS.mensal.valorCentavos,
+    anual: PLANOS.anual.valorCentavos,
+    economia: economiaDoAnual("simples"),
+    itens: textosDoPlano("simples"),
+    destaque: false,
+  },
+  {
+    nome: NOME_DA_FAMILIA.completo,
+    resumo: "Para cuidar também das contas, da equipe, dos custos e do contador.",
+    mensal: PLANOS.vip_mensal.valorCentavos,
+    anual: PLANOS.vip_anual.valorCentavos,
+    economia: economiaDoAnual("completo"),
+    itens: textosDoPlano("completo"),
+    destaque: true,
+  },
+];
+
+function TituloDaSecao({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <h2
+      id={id}
+      className="font-display text-2xl leading-tight font-semibold text-balance text-carvao sm:text-3xl"
+    >
+      {children}
+    </h2>
+  );
+}
+
 export default function PaginaInicial() {
   return (
     <div className="min-h-screen">
@@ -75,227 +242,265 @@ export default function PaginaInicial() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosParaOGoogle) }}
       />
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <Marca />
-        <nav className="flex items-center gap-2 sm:gap-3">
-          <BotaoTema />
-          <Link
-            href="/entrar"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-carvao-suave transition hover:text-terracota"
-          >
-            Entrar
-          </Link>
-          <Link href="/criar-conta" className="botao">
-            Começar
-          </Link>
-        </nav>
-      </header>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(perguntasParaOGoogle) }}
+      />
+
+      <CabecalhoDoSite />
 
       <main>
-        <section className="mx-auto max-w-6xl px-5 pt-8 pb-14 text-center md:pt-14">
-          <span className="etiqueta border border-areia-escura bg-areia/60 text-carvao-suave">
-            Para qualquer estúdio que marca hora
-          </span>
-
-          <h1 className="animar-entrada mx-auto mt-5 max-w-3xl font-display text-4xl leading-[1.08] font-semibold text-balance text-carvao md:text-6xl">
-            Pare de perder horário,
-            <br />
-            <span className="text-terracota">cliente e dinheiro.</span>
-          </h1>
-
-          <p className="mx-auto mt-5 max-w-xl text-lg text-carvao-suave">
-            Sua agenda, seus clientes e seu faturamento num lugar só. Abre no
-            celular, não instala nada.
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/criar-conta" className="botao px-8 py-3.5 text-base">
-              Testar {DIAS_DE_TESTE} dias grátis
-            </Link>
-            <Link href="#planos" className="botao-suave px-6 py-3 text-base">
-              Ver preço
-            </Link>
-          </div>
-
-          <p className="mt-3 text-sm text-carvao-suave">
-            Sem cartão. Cancele quando quiser.
-          </p>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-5 pb-16">
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="animar-entrada">
-              <p className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-carvao-suave">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-areia text-xs font-bold">
-                  1
-                </span>
-                Hoje
-              </p>
-              <CenaAntes />
-              <p className="mt-3 text-sm leading-relaxed text-carvao-suave">
-                Caderno, WhatsApp e memória. Um horário escapa e o cliente não volta.
-              </p>
+        {/* 1. A promessa */}
+        <section className="mx-auto grid max-w-5xl items-center gap-12 px-4 pt-8 pb-20 sm:px-5 md:grid-cols-[1.15fr_1fr] md:pt-16 md:pb-28">
+          <div className="animar-entrada">
+            <p className="text-sm font-semibold text-terracota">
+              Sistema de agendamento e cobrança para estúdios
+            </p>
+            <h1 className="mt-3 font-display text-[2.15rem] leading-[1.1] font-semibold text-balance text-carvao sm:text-5xl">
+              Sua agenda, suas cobranças e seu dinheiro, resolvidos no celular.
+            </h1>
+            <p className="mt-5 max-w-lg text-lg leading-relaxed text-carvao-suave">
+              Marque horários, cobre pelo WhatsApp com Pix e veja quanto sobrou no mês. Abre no
+              navegador, sem instalar nada.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link href="/criar-conta" className="botao px-8 py-3.5 text-base">
+                Conhecer o sistema
+              </Link>
+              <Link href="#planos" className="botao-suave px-6 py-3 text-base">
+                Ver planos
+              </Link>
             </div>
-
-            <div className="animar-entrada" style={{ animationDelay: "120ms" }}>
-              <p className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-terracota">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-terracota text-xs font-bold text-acento-texto">
-                  2
-                </span>
-                Com o {NOME_DO_PRODUTO}
-              </p>
-              <CenaDepois />
-              <p className="mt-3 text-sm leading-relaxed text-carvao-suave">
-                A semana inteira numa tela, e o dinheiro do mês somado sozinho.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="border-y border-areia-escura/60 bg-superficie/70">
-          <div className="mx-auto max-w-6xl px-5 pt-14">
-            <h2 className="font-display text-2xl font-semibold text-carvao">
-              O que o sistema de agendamento resolve
-            </h2>
-          </div>
-          <div className="mx-auto grid max-w-6xl gap-6 px-5 pt-8 pb-10 sm:grid-cols-2 lg:grid-cols-4">
-            {problemas.map((item, posicao) => (
-              <div
-                key={item.dor}
-                className="animar-entrada"
-                style={{ animationDelay: `${posicao * 90}ms` }}
-              >
-                <p className="font-display text-lg font-semibold text-carvao">
-                  {item.dor}
-                </p>
-                <p className="mt-1.5 leading-relaxed text-carvao-suave">{item.solucao}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mx-auto max-w-6xl px-5 pb-14">
-            <p className="text-sm leading-relaxed text-carvao-suave">
-              Serve para estúdio de {SEGMENTOS.join(", ")} e qualquer outro
-              negócio que marque hora com cliente.
+            <p className="mt-3 text-sm text-carvao-suave">
+              Veja tudo funcionando antes de assinar. {DIAS_PARA_DESISTIR} dias para desistir, com o
+              seu dinheiro de volta.
             </p>
           </div>
+
+          <div className="animar-entrada" style={{ animationDelay: "120ms" }}>
+            <CenaDoDia />
+          </div>
         </section>
 
-        <section id="planos" className="mx-auto max-w-5xl scroll-mt-8 px-5 py-16">
-          <h2 className="text-center font-display text-3xl font-semibold text-carvao">
-            Dois planos, sem fidelidade
-          </h2>
+        {/* 2. O que muda no dia */}
+        <section
+          aria-labelledby="o-que-muda"
+          className="border-y border-areia-escura/60 bg-superficie/70"
+        >
+          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
+            <TituloDaSecao id="o-que-muda">O que muda no seu dia</TituloDaSecao>
+            <ul className="mt-10 divide-y divide-areia-escura/70 border-y border-areia-escura/70">
+              {PROBLEMAS.map((item) => (
+                <li
+                  key={item.problema}
+                  className="grid gap-1 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-8"
+                >
+                  <p className="font-semibold text-carvao">{item.problema}</p>
+                  <p className="flex gap-2.5 leading-relaxed text-carvao-suave">
+                    <span aria-hidden className="text-terracota">
+                      →
+                    </span>
+                    <span>{item.solucao}</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
 
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {[
-              {
-                nome: "Essencial",
-                mensal: PLANOS.mensal.valorCentavos,
-                anual: PLANOS.anual.valorCentavos,
-                economia: ECONOMIA_ANUAL_CENTAVOS,
-                destaque: false,
-                itens: [
-                  "Agenda e clientes sem limite",
-                  "Ficha com CPF, endereço e observações",
-                  "Cobrança pelo WhatsApp, com código Pix pronto",
-                  "Faturamento do mês somado sozinho",
-                ],
-              },
-              {
-                nome: "VIP",
-                mensal: PLANOS.vip_mensal.valorCentavos,
-                anual: PLANOS.vip_anual.valorCentavos,
-                economia: ECONOMIA_VIP_ANUAL_CENTAVOS,
-                destaque: true,
-                itens: [
-                  "Tudo do Essencial",
-                  "Lembretes de quem cobrar, pelas datas",
-                  "Contas a pagar e prazos de contrato, com repetição mensal",
-                  "Contrato e conta lidos para você conferir",
-                  "Imposto estimado e gráfico dos dias que mais rendem",
-                ],
-              },
-            ].map((plano) => (
+        {/* 3. As funções */}
+        <section aria-labelledby="funcoes" className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
+          <TituloDaSecao id="funcoes">Tudo num lugar só</TituloDaSecao>
+          <p className="mt-3 max-w-xl text-carvao-suave">
+            Seis partes que conversam entre si: o horário concluído entra nas finanças, o
+            pagamento da equipe vira despesa, o documento lido vira conta a pagar.
+          </p>
+          <ul className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+            {FUNCOES.map((funcao) => (
+              <li key={funcao.titulo} className="flex gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-areia text-terracota">
+                  <Icone nome={funcao.icone} className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="font-display font-semibold text-carvao">
+                    {funcao.titulo}
+                    {funcao.completo ? (
+                      <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave">
+                        Completo
+                      </span>
+                    ) : null}
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{funcao.texto}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* 4. Como começa */}
+        <section
+          aria-labelledby="como-comeca"
+          className="border-y border-areia-escura/60 bg-superficie/70"
+        >
+          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
+            <TituloDaSecao id="como-comeca">Como começa</TituloDaSecao>
+            <ol className="mt-10 grid gap-8 md:grid-cols-3">
+              {PASSOS.map((passo, posicao) => (
+                <li key={passo.titulo} className="flex gap-4 md:block">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-terracota font-display text-sm font-bold text-acento-texto">
+                    {posicao + 1}
+                  </span>
+                  <div className="md:mt-4">
+                    <h3 className="font-display font-semibold text-carvao">{passo.titulo}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{passo.texto}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* 5. Planos */}
+        <section
+          id="planos"
+          aria-labelledby="titulo-planos"
+          className="mx-auto max-w-5xl scroll-mt-8 px-4 py-16 sm:px-5 md:py-24"
+        >
+          <TituloDaSecao id="titulo-planos">Dois planos, sem fidelidade</TituloDaSecao>
+          <p className="mt-3 max-w-xl text-carvao-suave">
+            Pagamento por Pix. No anual você paga uma vez e economiza no ano.
+          </p>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            {PLANOS_DA_VITRINE.map((plano) => (
               <div
                 key={plano.nome}
-                className={`cartao animar-entrada ${
+                className={`cartao flex flex-col ${
                   plano.destaque ? "border-terracota ring-1 ring-terracota/25" : ""
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="font-display text-xl font-semibold text-carvao">
-                    {plano.nome}
-                  </h3>
+                  <h3 className="font-display text-xl font-semibold text-carvao">{plano.nome}</h3>
                   {plano.destaque ? (
-                    <span className="etiqueta bg-terracota text-acento-texto">
-                      Mais completo
-                    </span>
+                    <span className="etiqueta bg-terracota text-acento-texto">Tudo liberado</span>
                   ) : null}
                 </div>
+                <p className="mt-1 text-sm text-carvao-suave">{plano.resumo}</p>
 
-                <p className="mt-3 flex items-end gap-2">
-                  <span className="font-display text-4xl font-semibold text-terracota tabular-nums">
+                <p className="mt-5 flex items-end gap-2">
+                  <span className="font-display text-4xl font-semibold text-carvao tabular-nums">
                     {emReais(plano.mensal)}
                   </span>
                   <span className="pb-1.5 text-sm text-carvao-suave">por mês</span>
                 </p>
-
                 <p className="mt-1 text-sm text-carvao-suave">
-                  Ou {emReais(plano.anual)} no ano, com {MESES_DE_BRINDE} meses de
-                  brinde.
+                  Ou {emReais(plano.anual)} por ano
+                  {plano.economia > 0 ? (
+                    <>
+                      {" "}
+                      <strong className="font-semibold text-terracota">
+                        (economize {emReais(plano.economia)})
+                      </strong>
+                    </>
+                  ) : null}
+                  .
                 </p>
 
-                <ul className="mt-5 space-y-2 text-sm text-carvao-suave">
+                <ul className="mt-6 flex-1 space-y-2.5 text-sm text-carvao">
                   {plano.itens.map((item) => (
                     <li key={item} className="flex gap-2.5">
-                      <span
-                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-terracota"
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-terracota"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2.2}
                         aria-hidden
-                      />
-                      {item}
+                      >
+                        <path d="m5 12.5 4.5 4.5L19 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="leading-snug">{item}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Link
                   href="/criar-conta"
-                  className={`mt-6 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
+                  className={`mt-7 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
                 >
-                  Testar {DIAS_DE_TESTE} dias grátis
+                  Conhecer o sistema
                 </Link>
               </div>
             ))}
           </div>
 
-          <p className="mt-6 text-center text-sm text-carvao-suave">
-            Pagamento por Pix. Sem cartão para testar, sem multa para sair.
+          <p className="mt-6 text-sm leading-relaxed text-carvao-suave">
+            Veja tudo funcionando antes de assinar. Depois de pagar, você tem {DIAS_PARA_DESISTIR}{" "}
+            dias para desistir e receber o seu dinheiro de volta (direito de arrependimento do
+            Código de Defesa do Consumidor). Sem fidelidade e sem multa para sair.
           </p>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 pb-20">
-          <div className="rounded-xl2 bg-inverso px-8 py-14 text-center">
-            <h2 className="font-display text-3xl font-semibold text-inverso-texto md:text-4xl">
-              Comece agora, leva um minuto
+        {/* 6. Dúvidas */}
+        <section
+          aria-labelledby="duvidas"
+          className="border-t border-areia-escura/60 bg-superficie/70"
+        >
+          <div className="mx-auto max-w-3xl px-4 py-16 sm:px-5 md:py-24">
+            <TituloDaSecao id="duvidas">Perguntas frequentes</TituloDaSecao>
+            <div className="mt-8 divide-y divide-areia-escura/70 border-y border-areia-escura/70">
+              {PERGUNTAS.map((item) => (
+                <details key={item.pergunta} className="group py-1">
+                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-carvao marker:hidden [&::-webkit-details-marker]:hidden">
+                    {item.pergunta}
+                    <span
+                      aria-hidden
+                      className="text-xl leading-none font-normal text-terracota transition group-open:rotate-45 motion-reduce:transition-none"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="pb-4 leading-relaxed text-carvao-suave">
+                    {item.resposta}
+                    {item.link ? (
+                      <>
+                        {" "}
+                        <Link
+                          href={item.link.href}
+                          className="font-semibold text-terracota underline-offset-4 hover:underline"
+                        >
+                          {item.link.rotulo}
+                        </Link>
+                      </>
+                    ) : null}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 7. Chamada final */}
+        <section className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-20">
+          <div className="rounded-xl2 bg-inverso px-6 py-12 text-center sm:px-8 sm:py-14">
+            <h2 className="font-display text-3xl font-semibold text-balance text-inverso-texto">
+              Comece hoje. Leva um minuto.
             </h2>
-            <p className="mx-auto mt-3 max-w-md text-inverso-texto/75">
-              {DIAS_DE_TESTE} dias para usar de verdade. Se não ajudar, é só não
-              assinar.
+            <p className="mx-auto mt-3 max-w-md text-inverso-texto/80">
+              Veja tudo funcionando num estúdio de exemplo e assine quando fizer sentido. Se mudar
+              de ideia em {DIAS_PARA_DESISTIR} dias, devolvemos o seu dinheiro.
             </p>
             <Link
               href="/criar-conta"
-              className="mt-7 inline-flex rounded-xl bg-superficie px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
+              className="mt-7 inline-flex min-h-11 items-center rounded-xl bg-superficie px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
             >
-              Criar minha conta
+              Conhecer o sistema
             </Link>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-areia-escura/60">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-carvao-suave">
-          <Marca />
-          <p>{FRASE_DA_MARCA.charAt(0).toUpperCase() + FRASE_DA_MARCA.slice(1)}.</p>
-        </div>
-      </footer>
+      <RodapeDoSite />
     </div>
   );
 }

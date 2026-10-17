@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
+import { podeUsar } from "@/lib/recursos";
+import { equipeQueAtende } from "@/lib/equipe-operacoes";
 import { Aviso, Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
 import {
@@ -15,6 +17,8 @@ import {
   somarDias,
   telefoneBonito,
 } from "@/lib/formato";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
+import { HORARIO_JA_OCUPADO } from "@/lib/agenda-operacoes";
 import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
@@ -25,10 +29,10 @@ export const dynamic = "force-dynamic";
 export default async function PaginaAgenda({
   searchParams,
 }: {
-  searchParams: Promise<{ dia?: string }>;
+  searchParams: Promise<{ dia?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirAcesso();
-  const { dia } = await searchParams;
+  const { usuario } = await exigirLeitura();
+  const { dia, aviso } = await searchParams;
 
   const agora = new Date();
   const diaEscolhido = (dia ? deDataLocal(dia) : null) ?? deDataLocal(paraDataLocal(agora))!;
@@ -37,7 +41,10 @@ export default async function PaginaAgenda({
   const segunda = inicioDaSemana(diaEscolhido);
   const fimDaSemana = somarDias(segunda, 7);
 
-  const [clientes, servicos, daSemana] = await Promise.all([
+  // "Quem atende" só aparece no Completo e quando há alguém na equipe nesse dia.
+  const comEquipe = podeUsar(usuario, "equipe");
+
+  const [clientes, servicos, daSemana, equipe] = await Promise.all([
     prisma.cliente.findMany({
       where: { usuarioId: usuario.id },
       orderBy: { nome: "asc" },
@@ -62,9 +69,11 @@ export default async function PaginaAgenda({
         servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
         /* Para saber se o horário já foi cobrado e se a cobrança está de pé. */
         cobrancas: { select: { id: true, situacao: true } },
+        colaborador: { select: { nome: true } },
       },
       orderBy: { inicio: "asc" },
     }),
+    comEquipe ? equipeQueAtende(prisma, usuario.id, chaveDoDia) : Promise.resolve([]),
   ]);
 
   const agendamentosDoDia = daSemana.filter(
@@ -101,6 +110,9 @@ export default async function PaginaAgenda({
         </p>
       </section>
 
+      <AvisoDeMesFechado aviso={aviso} mes={chaveDoDia.slice(0, 7)} />
+      {aviso === "horario-ocupado" ? <Aviso tom="erro">{HORARIO_JA_OCUPADO}</Aviso> : null}
+
       <section className="cartao">
         <h2 className="font-display text-xl font-semibold text-carvao">Marcar um horário</h2>
 
@@ -109,6 +121,7 @@ export default async function PaginaAgenda({
             <FormularioAgendamento
               inicioSugerido={sugestao}
               clientes={clientes}
+              equipe={equipe}
               servicos={servicos.map((servico) => ({
                 id: servico.id,
                 nome: servico.nome,
@@ -211,6 +224,11 @@ export default async function PaginaAgenda({
                         {item.servico.nome} · {emReais(item.servico.precoCentavos)} ·{" "}
                         {telefoneBonito(item.cliente.telefone)}
                       </p>
+                      {item.colaborador ? (
+                        <p className="text-sm text-carvao-suave">
+                          Com {item.colaborador.nome}
+                        </p>
+                      ) : null}
                       {item.observacoes ? (
                         <p className="mt-2 rounded-2xl bg-areia/40 px-3 py-2 text-sm text-carvao-suave">
                           {item.observacoes}

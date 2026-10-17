@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { BotaoEnviar } from "@/componentes/ui/botao";
 import { dataPuraCurta, emReais, paraDataPura } from "@/lib/formato";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
+import { mesValido } from "@/lib/custos/calculo";
 import { Item, type ItemNaTela } from "../item";
 import { encerrarConferencia } from "../acoes";
 
@@ -14,11 +16,14 @@ export const dynamic = "force-dynamic";
 
 export default async function PaginaDoDocumento({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ aviso?: string; mes?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirLeituraDoRecurso("documentos");
   const { id } = await params;
+  const { aviso, mes } = await searchParams;
 
   // O estúdio da sessão entra na busca: documento de outro estúdio não existe
   // para quem perguntou.
@@ -82,6 +87,8 @@ export default async function PaginaDoDocumento({
       >
         {documento.nome}
       </TituloDaTela>
+
+      <AvisoDeMesFechado aviso={aviso} mes={mesValido(mes) ? mes : undefined} />
 
       <Aviso tom="atencao">
         Leitura feita por inteligência artificial. Confira antes de lançar. Não

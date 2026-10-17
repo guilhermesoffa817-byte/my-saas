@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirFinanceiro } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import { deDataLocal, paraDataLocal } from "@/lib/formato";
+import { apagarLancamento, registrarLancamento } from "@/lib/financas-operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -27,7 +29,7 @@ export async function salvarLancamento(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirFinanceiro();
+  const { usuario } = await exigirEscritaDoRecurso("financas");
 
   const tipo = texto(dados, "tipo") === "entrada" ? "entrada" : "saida";
   const descricao = texto(dados, "descricao");
@@ -45,16 +47,15 @@ export async function salvarLancamento(
     return { erro: "Não consegui entender a data. Pode conferir, por favor?" };
   }
 
-  await prisma.lancamento.create({
-    data: {
-      usuarioId: usuario.id,
-      tipo,
-      descricao,
-      categoria: categoria || null,
-      valorCentavos: valor,
-      data,
-    },
+  // A trava do mês fechado mora dentro de registrarLancamento.
+  const criado = await registrarLancamento(prisma, usuario.id, {
+    tipo,
+    descricao,
+    categoria: categoria || null,
+    valorCentavos: valor,
+    data,
   });
+  if ("erro" in criado) return { erro: criado.erro };
 
   revalidatePath("/painel/financas");
   revalidatePath("/painel");
@@ -68,23 +69,23 @@ export async function salvarLancamento(
 }
 
 export async function excluirLancamento(dados: FormData) {
-  const { usuario } = await exigirFinanceiro();
+  const { usuario } = await exigirEscritaDoRecurso("financas");
   const id = texto(dados, "id");
 
-  const lancamento = await prisma.lancamento.findFirst({
-    where: { id, usuarioId: usuario.id },
-  });
-  if (!lancamento) return;
+  // Pagamento da Equipe sai pela Equipe, que apaga o pagamento e a saída juntos.
+  const apagado = await apagarLancamento(prisma, usuario.id, id);
+  // Formulário sem resposta na tela: o recado do mês fechado vai no endereço.
+  if ("erro" in apagado) redirect("/painel/financas?aviso=mes-fechado");
 
-  await prisma.lancamento.delete({ where: { id } });
   revalidatePath("/painel/financas");
+  revalidatePath("/painel/financas/relatorio");
 }
 
 export async function salvarImposto(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirFinanceiro();
+  const { usuario } = await exigirEscritaDoRecurso("financas");
   const percentual = Number(texto(dados, "percentual").replace(",", "."));
 
   if (!Number.isFinite(percentual) || percentual < 0 || percentual > 100) {

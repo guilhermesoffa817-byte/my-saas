@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import {
@@ -9,6 +9,7 @@ import {
   TOM_DO_VENCIMENTO,
 } from "@/componentes/ui/etiqueta";
 import { BotaoConfirmar } from "@/componentes/ui/botao";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import {
   dataPuraCurta,
   emReais,
@@ -19,7 +20,8 @@ import {
 import { avisoDoVencimento, situacaoDoVencimento } from "@/lib/vencimento";
 import { FormularioDeVencimento } from "./formulario";
 import { BotaoPagar } from "./pagar";
-import { completarRepeticao, encerrarRepeticao, excluirVencimento } from "./acoes";
+import { completarRepeticao } from "@/lib/vencimento-operacoes";
+import { encerrarRepeticao, excluirVencimento } from "./acoes";
 
 export const metadata = { title: "Vencimentos" };
 export const dynamic = "force-dynamic";
@@ -27,27 +29,29 @@ export const dynamic = "force-dynamic";
 export default async function PaginaVencimentos({
   searchParams,
 }: {
-  searchParams: Promise<{ ver?: string }>;
+  searchParams: Promise<{ ver?: string; aviso?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("vencimentos");
-  const { ver } = await searchParams;
+  const { usuario, demonstracao } = await exigirLeituraDoRecurso("vencimentos");
+  const { ver, aviso } = await searchParams;
   const mostrarPagos = ver === "pagos";
   const mostrarTudo = ver === "tudo";
 
   /*
     Antes de listar, o Bossa completa as repetições. É aqui que as próximas
     datas nascem: sem tarefa agendada, sem servidor acordando de madrugada.
-    Abrir a tela é o gatilho.
+    Abrir a tela é o gatilho. Na demonstração não: o estúdio de exemplo já
+    nasce com as datas completas, e tela de visitante nunca grava nele.
   */
-  const repeticoes = await prisma.repeticaoDeVencimento.findMany({
-    where: { usuarioId: usuario.id, ativa: true },
-    select: { id: true },
-  });
-  for (const repeticao of repeticoes) {
-    await completarRepeticao(repeticao.id, usuario.id);
-  }
-
+  const repeticoes = demonstracao
+    ? []
+    : await prisma.repeticaoDeVencimento.findMany({
+        where: { usuarioId: usuario.id, ativa: true },
+        select: { id: true },
+      });
   const hoje = hojeNoEstudio();
+  for (const repeticao of repeticoes) {
+    await completarRepeticao(prisma, usuario.id, repeticao.id, hoje);
+  }
 
   /*
     Quem guarda um aluguel que repete passa a ter doze datas futuras. Mostrar as
@@ -106,6 +110,8 @@ export default async function PaginaVencimentos({
       <TituloDaTela explicacao="Tudo o que tem data: contas a pagar e prazos de contrato.">
         Vencimentos
       </TituloDaTela>
+
+      <AvisoDeMesFechado aviso={aviso} />
 
       {!mostrarPagos ? (
         <section className="grid grid-cols-2 gap-3 sm:gap-4">

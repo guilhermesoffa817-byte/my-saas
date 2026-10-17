@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
 import { emReais } from "@/lib/formato";
@@ -10,7 +10,7 @@ export const metadata = { title: "Serviços" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaServicos() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
 
   const servicos = await prisma.servico.findMany({
     where: { usuarioId: usuario.id },
@@ -58,6 +58,8 @@ export default async function PaginaServicos() {
                     </p>
                     <p className="text-sm text-carvao-suave">
                       {emReais(servico.precoCentavos)} · {servico.duracaoMin} min
+                      {/* Escolhido em Agendamento online: some só do link, não da agenda. */}
+                      {servico.ativo && !servico.agendavelOnline ? " · fora do link" : ""}
                     </p>
                   </div>
                   <span

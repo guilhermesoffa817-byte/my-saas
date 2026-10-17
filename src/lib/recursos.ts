@@ -1,45 +1,87 @@
-import { temFinanceiro } from "@/lib/assinatura";
+import { temPlanoCompleto, type AssinaturaParaPlano } from "@/lib/assinatura";
 
 /**
  * Quem pode usar o quê, num lugar só.
  *
- * A regra de plano estava espalhada: a aba Finanças tinha a dela em guardas.ts,
- * e cada tela nova traria a sua. Aqui fica a tabela inteira, de forma que mudar
- * um recurso de plano seja mudar uma linha, e não caçar pelo projeto.
+ * Cada recurso diz se é só do plano Completo. O que não é do Completo vale para
+ * qualquer conta com acesso ao painel (Simples, Completo ou o teste antigo que
+ * ainda está valendo): quem decide se a conta tem acesso é guardas.ts.
  *
- * A liberação continua a mesma que já existia: `temFinanceiro` olha se a
- * assinatura é VIP, está ativa e dentro do prazo.
+ * Mudar um recurso de plano é mudar uma linha aqui. A página de vendas e a tela
+ * de assinatura leem esta tabela pelo teste de itens-dos-planos.ts, que quebra
+ * se o texto prometer no Simples algo que só o Completo libera.
  */
 export type Recurso =
   | "cobrar"
   | "lembretes"
   | "vencimentos"
   | "documentos"
-  | "financas";
+  | "financas"
+  | "relatorio"
+  | "equipe"
+  | "custos"
+  | "assistente";
 
-const SO_NO_VIP: Record<Recurso, boolean> = {
+const SO_NO_COMPLETO: Record<Recurso, boolean> = {
   /** Cobrar pelo WhatsApp é dos dois planos: é o que traz dinheiro para o estúdio. */
   cobrar: false,
   lembretes: true,
   vencimentos: true,
   documentos: true,
-  financas: true,
+  /**
+   * Finanças (entradas, saídas, resumo do mês e imposto estimado) passou para
+   * o Simples: quem cobra pelo WhatsApp precisa ver o que entrou.
+   */
+  financas: false,
+  /** Relatório do mês, fechamento e link do contador: é o pacote de quem tem contador. */
+  relatorio: true,
+  /** Equipe é de quem já tem gente trabalhando junto, inclusive "quem atende" na agenda e no link. */
+  equipe: true,
+  /** Custos operacionais usa classificação por IA e o ponto de equilíbrio. */
+  custos: true,
+  /** O assistente lê o financeiro e tem custo por pergunta. */
+  assistente: true,
 };
 
-/** Quantas leituras de documento o plano dá por mês. */
-export const LEITURAS_POR_MES_NO_VIP = 30;
+/** Quantas leituras de documento o Completo dá por mês. */
+export const LEITURAS_POR_MES_NO_COMPLETO = 30;
 
-export function podeUsar(
-  usuario: { assinatura?: { status: string; plano: string; validaAte: Date } | null },
-  recurso: Recurso,
-  agora = new Date(),
-) {
-  if (!SO_NO_VIP[recurso]) return true;
-  return temFinanceiro(usuario.assinatura, agora);
+/**
+ * Franquia mensal de inteligência artificial, por recurso.
+ *
+ * [EXEMPLO] Os números abaixo são um ponto de partida para o Completo, não um
+ * cálculo de custo: ajuste depois de ver o uso real na tabela UsoDeIa, que
+ * guarda os tokens de cada chamada. Classificação conta 1 por despesa enviada à
+ * IA (as regras automáticas não contam); o assistente conta 1 por pergunta.
+ */
+export const CLASSIFICACOES_POR_MES_NO_COMPLETO = 300; // [EXEMPLO]
+export const PERGUNTAS_POR_MES_NO_COMPLETO = 60; // [EXEMPLO]
+
+export type RecursoDeIa = "classificacao" | "assistente" | "leitura";
+
+type ComAssinatura = { assinatura?: AssinaturaParaPlano | null };
+
+export function limiteDeIa(usuario: ComAssinatura, recurso: RecursoDeIa, agora = new Date()) {
+  if (!temPlanoCompleto(usuario.assinatura, agora)) return 0;
+  if (recurso === "classificacao") return CLASSIFICACOES_POR_MES_NO_COMPLETO;
+  if (recurso === "assistente") return PERGUNTAS_POR_MES_NO_COMPLETO;
+  return LEITURAS_POR_MES_NO_COMPLETO;
 }
 
-export function leiturasDoPlano(usuario: {
-  assinatura?: { status: string; plano: string; validaAte: Date } | null;
-}) {
-  return temFinanceiro(usuario.assinatura) ? LEITURAS_POR_MES_NO_VIP : 0;
+/** Todos os recursos, na ordem da tabela. Serve para conferir listas que dependem dela. */
+export const RECURSOS = Object.keys(SO_NO_COMPLETO) as Recurso[];
+
+/** Se o recurso é só do Completo. A tela de planos e o teste dela leem daqui. */
+export function soNoCompleto(recurso: Recurso) {
+  return SO_NO_COMPLETO[recurso];
+}
+
+export function podeUsar(usuario: ComAssinatura, recurso: Recurso, agora = new Date()) {
+  if (!SO_NO_COMPLETO[recurso]) return true;
+  return temPlanoCompleto(usuario.assinatura, agora);
+}
+
+/** Os recursos que a conta pode usar agora. A navegação mostra só as abas destes. */
+export function recursosLiberados(usuario: ComAssinatura, agora = new Date()): Recurso[] {
+  return RECURSOS.filter((recurso) => podeUsar(usuario, recurso, agora));
 }

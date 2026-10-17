@@ -211,3 +211,59 @@ body {
     transform: none;
   }
 }
+
+/*
+  Papel. O relatório do mês vira PDF pelo "Imprimir" do navegador, então a
+  impressão precisa sair limpa: sem menu, sem barra de baixo, sem botão, sempre
+  com as cores do tema claro (no escuro o texto sairia claro no papel branco) e
+  sem cortar um bloco do relatório no meio entre duas páginas.
+
+  Os seletores repetem os do tema escuro para valerem por cima deles: mesmo
+  peso, e este bloco vem depois.
+*/
+@media print {
+  :root,
+  :root:not([data-tema="claro"]),
+  :root[data-tema="escuro"] {
+    color-scheme: light;
+    --color-creme: #ffffff;
+    --color-superficie: #ffffff;
+    --color-areia: #eaf0f8;
+    --color-areia-escura: #d4dfee;
+    --color-terracota: #1d4ed8;
+    --color-terracota-escura: #1e3fa8;
+    --color-acento-texto: #ffffff;
+    --color-oliva: #0369a1;
+    --color-carvao: #0b1220;
+    --color-carvao-suave: #4b5873;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  .nao-imprimir {
+    display: none !important;
+  }
+
+  .cartao {
+    box-shadow: none;
+    padding: 0.75rem 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .bloco-do-relatorio {
+    break-inside: avoid;
+  }
+
+  .animar-entrada,
+  .animar-barra,
+  .animar-largura {
+    animation: none;
+  }
+}

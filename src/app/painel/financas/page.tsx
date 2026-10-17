@@ -1,14 +1,21 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirFinanceiro } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
+import { podeUsar } from "@/lib/recursos";
 import { BotaoConfirmar } from "@/componentes/botoes";
 import { Vazio } from "@/componentes/avisos";
 import {
+  competenciaAtual,
   dataCurta,
   diaDaSemanaCurto,
   emReais,
+  inicioDoMes as inicioDoMesNoFuso,
+  inicioDoProximoMes,
   paraDataLocal,
   somarDias,
 } from "@/lib/formato";
+import { mesesFechados } from "@/lib/fechamento/trava";
+import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
 import { excluirLancamento } from "./acoes";
@@ -26,28 +33,48 @@ const NOMES_DOS_DIAS = [
   "Domingo",
 ];
 
-export default async function PaginaFinancas() {
-  const { usuario } = await exigirFinanceiro();
+export default async function PaginaFinancas({
+  searchParams,
+}: {
+  searchParams: Promise<{ aviso?: string }>;
+}) {
+  const { usuario } = await exigirLeituraDoRecurso("financas");
+  /*
+    Finanças é do Simples; relatório, contador e custos são do Completo. Para
+    quem tem o Simples, os três cartões continuam aparecendo, mas levam direto
+    aos planos, com a etiqueta dizendo de onde é.
+  */
+  const temRelatorio = podeUsar(usuario, "relatorio");
+  const temCustos = podeUsar(usuario, "custos");
+  const NOS_PLANOS = "/painel/assinatura?completo=1";
+  const { aviso } = await searchParams;
 
   const agora = new Date();
-  const inicioDoMes = new Date(
-    Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), 1),
-  );
+  // O mês começa à meia-noite de São Paulo, igual à tela de Custos. Contado em
+  // UTC, o que entrou entre 21h e meia-noite do último dia caía no mês seguinte.
+  const inicioDoMes = inicioDoMesNoFuso(agora);
+  // E termina à meia-noite do dia 1º seguinte: lançamento com data futura, ou
+  // atendimento concluído adiantado, não entra no mês de agora.
+  const fimDoMes = inicioDoProximoMes(agora);
   const inicioDoGrafico = somarDias(agora, -90);
 
-  const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo] =
+  const mesAtual = competenciaAtual(agora);
+
+  const [atendimentosDoMes, lancamentosDoMes, atendimentosDoPeriodo, fechados] =
     await Promise.all([
       prisma.agendamento.findMany({
         where: {
           usuarioId: usuario.id,
           status: "concluido",
-          inicio: { gte: inicioDoMes },
+          inicio: { gte: inicioDoMes, lt: fimDoMes },
         },
         select: { servico: { select: { precoCentavos: true } } },
       }),
       prisma.lancamento.findMany({
-        where: { usuarioId: usuario.id, data: { gte: inicioDoMes } },
+        where: { usuarioId: usuario.id, data: { gte: inicioDoMes, lt: fimDoMes } },
         orderBy: { data: "desc" },
+        // Saída que nasceu de um pagamento da Equipe só muda pela Equipe.
+        include: { pagamentoDeColaborador: { select: { competencia: true } } },
       }),
       prisma.agendamento.findMany({
         where: {
@@ -57,7 +84,9 @@ export default async function PaginaFinancas() {
         },
         select: { inicio: true, servico: { select: { precoCentavos: true } } },
       }),
+      mesesFechados(prisma, usuario.id),
     ]);
+  const mesFechado = fechados.has(mesAtual);
 
   const atendimentosCentavos = atendimentosDoMes.reduce(
     (soma, item) => soma + item.servico.precoCentavos,
@@ -107,6 +136,21 @@ export default async function PaginaFinancas() {
         </p>
       </section>
 
+      <AvisoDeMesFechado aviso={aviso} mes={mesAtual} />
+
+      {mesFechado ? (
+        <div className="cartao animar-entrada border-terracota/40">
+          <p className="font-semibold text-carvao">Este mês está fechado.</p>
+          <p className="mt-1 text-sm text-carvao-suave">
+            Os lançamentos dele não mudam até você reabrir. Lançamentos de outros meses
+            seguem normais.
+          </p>
+          <Link href={`/painel/financas/relatorio?mes=${mesAtual}`} className="botao-suave mt-4">
+            Ver o fechamento
+          </Link>
+        </div>
+      ) : null}
+
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Indicador titulo="Entrou" valor={emReais(entradas)} tom="boa" atraso={0}>
           {emReais(atendimentosCentavos)} de atendimentos
@@ -132,6 +176,52 @@ export default async function PaginaFinancas() {
           depois das despesas e do imposto
         </Indicador>
       </section>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href={temRelatorio ? `/painel/financas/relatorio?mes=${mesAtual}` : NOS_PLANOS}
+          className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+        >
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-carvao">
+              Relatório do mês{temRelatorio ? null : <SoNoCompleto />}
+            </p>
+            <p className="mt-0.5 text-sm text-carvao-suave">
+              Tudo do mês para o contador, em planilha ou PDF, e o fechamento.
+            </p>
+          </div>
+          <span className="botao-suave">Ver relatório</span>
+        </Link>
+        <Link
+          href={temRelatorio ? "/painel/financas/contador" : NOS_PLANOS}
+          className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+        >
+          <div className="min-w-0">
+            <p className="font-display text-lg font-semibold text-carvao">
+              Acesso do contador{temRelatorio ? null : <SoNoCompleto />}
+            </p>
+            <p className="mt-0.5 text-sm text-carvao-suave">
+              Um link só de leitura para o contador ver os relatórios sem senha.
+            </p>
+          </div>
+          <span className="botao-suave">Gerenciar</span>
+        </Link>
+      </div>
+
+      <Link
+        href={temCustos ? "/painel/financas/custos" : NOS_PLANOS}
+        className="cartao animar-entrada flex flex-wrap items-center justify-between gap-3 hover:border-terracota/60"
+      >
+        <div className="min-w-0">
+          <p className="font-display text-lg font-semibold text-carvao">
+            Custos do mês{temCustos ? null : <SoNoCompleto />}
+          </p>
+          <p className="mt-0.5 text-sm text-carvao-suave">
+            Fixos, variáveis e quanto faturar para empatar. A IA ajuda a classificar.
+          </p>
+        </div>
+        <span className="botao-suave">Ver custos</span>
+      </Link>
 
       <section className="cartao animar-entrada">
         <h2 className="font-display text-xl font-semibold text-carvao">
@@ -232,14 +322,29 @@ export default async function PaginaFinancas() {
                     >
                       {entrada ? "+" : "−"} {emReais(lancamento.valorCentavos)}
                     </span>
-                    <form action={excluirLancamento}>
-                      <input type="hidden" name="id" value={lancamento.id} />
-                      <BotaoConfirmar
-                        pergunta={`Apagar o lançamento "${lancamento.descricao}"?`}
+                    {mesFechado ? (
+                      <span className="text-xs font-semibold text-carvao-suave">Mês fechado</span>
+                    ) : lancamento.pagamentoDeColaborador ? (
+                      /*
+                        Apagar aqui deixaria o pagamento da Equipe sem a saída
+                        dele. O caminho é a Equipe, que apaga os dois juntos.
+                      */
+                      <Link
+                        href={`/painel/equipe?aba=pagamentos&mes=${lancamento.pagamentoDeColaborador.competencia}`}
+                        className="botao-texto"
                       >
-                        Apagar
-                      </BotaoConfirmar>
-                    </form>
+                        Veio da Equipe
+                      </Link>
+                    ) : (
+                      <form action={excluirLancamento}>
+                        <input type="hidden" name="id" value={lancamento.id} />
+                        <BotaoConfirmar
+                          pergunta={`Apagar o lançamento "${lancamento.descricao}"?`}
+                        >
+                          Apagar
+                        </BotaoConfirmar>
+                      </form>
+                    )}
                   </div>
                 </li>
               );
@@ -314,5 +419,14 @@ function LinhaDoResumo({
         />
       </div>
     </div>
+  );
+}
+
+/** A etiqueta dos cartões que só o plano Completo abre. */
+function SoNoCompleto() {
+  return (
+    <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle font-sans text-[11px] font-semibold text-carvao-suave">
+      Completo
+    </span>
   );
 }

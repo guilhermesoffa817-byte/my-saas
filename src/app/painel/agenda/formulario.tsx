@@ -7,15 +7,19 @@ import { Aviso } from "@/componentes/avisos";
 
 export type OpcaoCliente = { id: string; nome: string };
 export type OpcaoServico = { id: string; nome: string; preco: string; duracaoMin: number };
+export type OpcaoEquipe = { id: string; nome: string };
 
 export function FormularioAgendamento({
   clientes,
   servicos,
   inicioSugerido,
+  equipe = [],
 }: {
   clientes: OpcaoCliente[];
   servicos: OpcaoServico[];
   inicioSugerido: string;
+  /** Vazia para quem trabalha sozinha: aí o campo nem aparece. */
+  equipe?: OpcaoEquipe[];
 }) {
   const [estado, acao] = useActionState(marcarHorario, null);
   const formulario = useRef<HTMLFormElement>(null);
@@ -59,6 +63,25 @@ export function FormularioAgendamento({
           </select>
         </div>
       </div>
+
+      {equipe.length > 0 ? (
+        <div>
+          <label className="rotulo" htmlFor="colaboradorId">
+            Quem atende <span className="font-normal">(opcional)</span>
+          </label>
+          <select id="colaboradorId" name="colaboradorId" className="campo" defaultValue="">
+            <option value="">Eu mesma</option>
+            {equipe.map((pessoa) => (
+              <option key={pessoa.id} value={pessoa.id}>
+                {pessoa.nome}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs leading-relaxed text-carvao-suave">
+            Os atendimentos concluídos de cada pessoa formam a base da comissão na Equipe.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>

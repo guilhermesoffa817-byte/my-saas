@@ -13,6 +13,11 @@ serviços, faturamento do mês e assinatura a partir de **R$ 169,00 ao mês**, p
 - **Painel** com atendimentos do dia, concluídos no mês e faturamento calculado sozinho.
 - **Finanças (plano VIP)**: entradas, despesas, imposto estimado e um gráfico dos dias
   da semana que mais rendem.
+- **Relatório do mês e fechamento (plano VIP)**: o mês inteiro em Excel, CSV ou PDF
+  (pelo "Imprimir" do navegador); "Fechar o mês" guarda o resumo e trava tudo o que é
+  dinheiro com data nele até a dona reabrir, e a reabertura fica registrada.
+- **Acesso do contador (plano VIP)**: um link secreto, só de leitura, com os relatórios
+  dos últimos doze meses e os downloads. A dona desliga ou troca quando quiser.
 - **Assinatura por Pix**: QR Code, chave para copiar, aviso de pagamento com um clique
   e histórico dos meses.
 - **Área de administração** para conferir os Pix recebidos, liberar mais 30 dias de
@@ -92,6 +97,25 @@ PIX_NOME="Estúdio de Estética"
 ASSINATURA_VALOR_CENTAVOS="16900"   # R$ 169,00 ao mês
 ASSINATURA_ANUAL_CENTAVOS="169000"  # R$ 1.690,00 ao ano
 ```
+
+### Privacidade e termos
+
+As páginas `/privacidade` e `/termos` leem quem responde pelo Bossa destas
+variáveis. Enquanto estiverem em branco, a página mostra `[PREENCHER: ...]`:
+
+```env
+RESPONSAVEL_NOME="Nome completo ou razão social"
+RESPONSAVEL_DOCUMENTO="CPF ou CNPJ"
+CONTATO_EMAIL="contato@seudominio.com.br"
+ENCARREGADO_DE_DADOS="Nome do encarregado"
+```
+
+As duas páginas são montadas na publicação: depois de mudar uma dessas
+variáveis, publique o site de novo.
+
+Os dois textos foram escritos a partir do que o código faz hoje e trazem marcas
+`[REVISAR COM ADVOGADO]` e `[EXEMPLO]` nos pontos que precisam de revisão
+jurídica antes de valer como versão final.
 
 > A chave entra no QR Code exatamente como estiver escrita aqui. Use o mesmo formato
 > que está cadastrado no banco — chaves de telefone costumam ser registradas como

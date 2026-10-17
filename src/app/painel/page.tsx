@@ -1,19 +1,22 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { agoraDoPedido } from "@/lib/agora";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
+import { Icone } from "@/componentes/ui/icones";
 import {
   Etiqueta,
   ROTULO_DA_COBRANCA,
   TOM_DA_COBRANCA,
 } from "@/componentes/ui/etiqueta";
 import {
+  dataCurta,
   dataPorExtenso,
   dataPuraCurta,
   diaDaSemana,
+  diaDaSemanaCurto,
   diferencaEmDias,
   emReais,
   hojeNoEstudio,
@@ -33,9 +36,17 @@ import {
   type PreferenciaDeLembrete,
 } from "@/lib/cobranca";
 import { avisoDoVencimento } from "@/lib/vencimento";
+import { novosPeloLink } from "@/lib/agendamento-online/operacoes";
+import { BotaoEnviar } from "@/componentes/ui/botao";
+import { marcarNovosVistos } from "./agendamento-online/acoes";
 
 export const metadata = { title: "Painel" };
 export const dynamic = "force-dynamic";
+
+/** "19/10", para a lista curta das novidades. */
+function dataCurtaSemAno(data: Date) {
+  return dataCurta(data).slice(0, 5);
+}
 
 function saudacao(data: Date) {
   const horaLocal = Number(hora(data).slice(0, 2));
@@ -53,7 +64,7 @@ function saudacao(data: Date) {
  * cobrar, o que vence nos próximos dias e o documento esperando conferência.
  */
 export default async function PaginaPainel() {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirLeitura();
 
   const agora = agoraDoPedido();
   const hoje = hojeNoEstudio(agora);
@@ -66,8 +77,16 @@ export default async function PaginaPainel() {
   const temLembretes = podeUsar(usuario, "lembretes");
   const temVencimentos = podeUsar(usuario, "vencimentos");
   const temDocumentos = podeUsar(usuario, "documentos");
+  const temAssistente = podeUsar(usuario, "assistente");
 
-  const [hojeLista, concluidosNoMes, cobrancasAbertas, vencimentosProximos, documentosProntos] =
+  const [
+    hojeLista,
+    concluidosNoMes,
+    cobrancasAbertas,
+    vencimentosProximos,
+    documentosProntos,
+    novosDoLink,
+  ] =
     await Promise.all([
       prisma.agendamento.findMany({
         where: {
@@ -115,6 +134,8 @@ export default async function PaginaPainel() {
       temDocumentos
         ? prisma.documento.count({ where: { usuarioId: usuario.id, situacao: "pronto" } })
         : Promise.resolve(0),
+      // Horários que o cliente marcou sozinho pelo link e a dona ainda não viu.
+      novosPeloLink(prisma, usuario.id, agora),
     ]);
 
   const faturamento = concluidosNoMes.reduce(
@@ -153,6 +174,7 @@ export default async function PaginaPainel() {
 
   const pendentes = hojeLista.filter((item) => item.status === "agendado").length;
   const nada =
+    novosDoLink.length === 0 &&
     pendentes === 0 &&
     paraLembrar.length === 0 &&
     vencimentosProximos.length === 0 &&
@@ -182,6 +204,51 @@ export default async function PaginaPainel() {
           </Cartao>
         ) : (
           <ul className="space-y-3">
+            {novosDoLink.length > 0 ? (
+              <li>
+                <Cartao destaque className="animar-entrada">
+                  <div className="flex items-start gap-3">
+                    <Icone nome="link" className="mt-0.5 h-5 w-5 shrink-0 text-terracota" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-carvao">
+                        {novosDoLink.length === 1
+                          ? "1 horário novo marcado pelo link"
+                          : `${novosDoLink.length} horários novos marcados pelo link`}
+                      </p>
+                      <ul className="mt-2 space-y-1.5">
+                        {novosDoLink.slice(0, 5).map((item) => (
+                          <li key={item.id} className="text-sm text-carvao-suave">
+                            <span className="font-semibold text-carvao">{item.cliente.nome}</span>
+                            {" · "}
+                            {item.servico.nome}
+                            {" · "}
+                            {diaDaSemanaCurto(item.inicio)} {dataCurtaSemAno(item.inicio)} às{" "}
+                            {hora(item.inicio)}
+                            {item.colaborador ? ` · com ${primeiroNome(item.colaborador.nome)}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                      {novosDoLink.length > 5 ? (
+                        <p className="mt-1 text-xs text-carvao-suave">
+                          E mais {novosDoLink.length - 5} na agenda.
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Link href="/painel/agenda" className="botao-suave">
+                          Ver na agenda
+                        </Link>
+                        <form action={marcarNovosVistos}>
+                          <BotaoEnviar variante="texto" enviando="Um instante...">
+                            Já vi
+                          </BotaoEnviar>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </Cartao>
+              </li>
+            ) : null}
+
             {pendentes > 0 ? (
               <li>
                 <Link href="/painel/agenda" className="block">
@@ -276,6 +343,22 @@ export default async function PaginaPainel() {
           </ul>
         )}
       </Secao>
+
+      {temAssistente ? (
+        <Link href="/painel/assistente" className="block">
+          <Cartao className="transition hover:border-terracota/50">
+            <div className="flex items-start gap-3">
+              <Icone nome="conversa" className="mt-0.5 h-5 w-5 shrink-0 text-terracota" />
+              <div className="min-w-0">
+                <p className="font-semibold text-carvao">Pergunte ao assistente</p>
+                <p className="mt-0.5 text-sm text-carvao-suave">
+                  “Como foi meu último mês?” “Em que dia a agenda fica mais vazia?” Ele responde com os seus números.
+                </p>
+              </div>
+            </div>
+          </Cartao>
+        </Link>
+      ) : null}
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Indicador

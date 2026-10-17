@@ -11,6 +11,8 @@ export type OpcaoDePlano = {
   periodo: string;
   valor: string;
   dias: number;
+  /** A etiqueta curta no botão do plano ("2 meses de brinde"). */
+  selo: string | null;
   vantagens: string[];
   /** O QR Code já vem desenhado do servidor, um para cada valor. */
   qrCode: string;
@@ -49,10 +51,8 @@ export function PagamentoPix({
             >
               <span className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-carvao">{opcao.nome}</span>
-                {opcao.vantagens.length > 0 ? (
-                  <span className="etiqueta bg-terracota text-acento-texto">
-                    {opcao.vantagens[0]}
-                  </span>
+                {opcao.selo ? (
+                  <span className="etiqueta bg-terracota text-acento-texto">{opcao.selo}</span>
                 ) : null}
               </span>
               <span className="mt-2 block font-display text-2xl font-semibold text-carvao">

@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirAcesso } from "@/lib/guardas";
+import { apagarCliente } from "@/lib/cliente-operacoes";
+import { exigirEscrita } from "@/lib/guardas";
 import { apenasDigitos, cpfValido, deDataLocal } from "@/lib/formato";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -51,7 +53,7 @@ function validar(dados: FormData) {
 }
 
 export async function salvarCliente(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const conferido = validar(dados);
   if ("erro" in conferido) return { erro: conferido.erro };
 
@@ -78,13 +80,13 @@ export async function salvarCliente(_anterior: Resposta, dados: FormData): Promi
 }
 
 export async function excluirCliente(dados: FormData) {
-  const { usuario } = await exigirAcesso();
+  const { usuario } = await exigirEscrita();
   const id = texto(dados, "id");
 
-  const cliente = await prisma.cliente.findFirst({ where: { id, usuarioId: usuario.id } });
-  if (!cliente) return;
+  // Cliente com atendimento concluído ou pagamento num mês fechado não sai.
+  const apagado = await apagarCliente(prisma, usuario.id, id);
+  if ("erro" in apagado) redirect("/painel/clientes?aviso=mes-fechado");
 
-  await prisma.cliente.delete({ where: { id } });
   revalidatePath("/painel/clientes");
   revalidatePath("/painel/agenda");
   revalidatePath("/painel");

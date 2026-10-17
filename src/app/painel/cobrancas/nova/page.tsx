@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import { dataEHora, hojeNoEstudio, paraDataPura } from "@/lib/formato";
@@ -14,7 +14,7 @@ export default async function PaginaNovaCobranca({
 }: {
   searchParams: Promise<{ agendamento?: string; cliente?: string }>;
 }) {
-  const { usuario } = await exigirRecurso("cobrar");
+  const { usuario } = await exigirLeituraDoRecurso("cobrar");
   const { agendamento: agendamentoId, cliente: clienteId } = await searchParams;
 
   // O horário é buscado com o estúdio da sessão junto: um id de outro estúdio

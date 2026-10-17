@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { confirmarEnvio, pedirEnvio } from "./acoes";
+import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
+import { destinoDaRecusa } from "@/lib/demonstracao/resposta";
 
 type Fase = "parado" | "enviando" | "lendo" | "erro";
 
@@ -17,9 +19,12 @@ type Fase = "parado" | "enviando" | "lendo" | "erro";
 export function EnvioDeDocumento({
   limiteMb,
   restam,
+  demonstracao = false,
 }: {
   limiteMb: number;
   restam: number;
+  /** No estúdio de exemplo, tocar para enviar já leva à assinatura. */
+  demonstracao?: boolean;
 }) {
   const [fase, setFase] = useState<Fase>("parado");
   const [recado, setRecado] = useState<string | null>(null);
@@ -35,6 +40,8 @@ export function EnvioDeDocumento({
       tamanhoBytes: arquivo.size,
     });
 
+    // A ação mandou para outra tela (demonstração ou assinatura): nada a fazer aqui.
+    if (!pedido) return;
     if (!pedido.certo) {
       setRecado(pedido.motivo);
       setFase("erro");
@@ -63,7 +70,12 @@ export function EnvioDeDocumento({
       oferece "Tentar de novo": nada se perde.
     */
     try {
-      await fetch(`/api/documentos/${pedido.documentoId}/ler`, { method: "POST" });
+      const resposta = await fetch(`/api/documentos/${pedido.documentoId}/ler`, { method: "POST" });
+      const destino = await destinoDaRecusa(resposta);
+      if (destino) {
+        navegador.push(destino);
+        return;
+      }
     } catch {
       // Silêncio de propósito: a tela já sabe mostrar o documento parado.
     }
@@ -79,6 +91,11 @@ export function EnvioDeDocumento({
         className={`flex min-h-32 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-areia-escura bg-areia/30 px-5 py-8 text-center transition hover:border-terracota/60 ${
           fase === "enviando" || fase === "lendo" ? "pointer-events-none opacity-60" : ""
         }`}
+        onClick={(evento) => {
+          if (!demonstracao) return;
+          evento.preventDefault();
+          navegador.push(DESTINO_DA_DEMONSTRACAO);
+        }}
       >
         <input
           type="file"

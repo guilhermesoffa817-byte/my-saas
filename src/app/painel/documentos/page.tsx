@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
-import { LEITURAS_POR_MES_NO_VIP } from "@/lib/recursos";
+import { exigirLeituraDoRecurso } from "@/lib/guardas";
+import { LEITURAS_POR_MES_NO_COMPLETO } from "@/lib/recursos";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import {
@@ -16,7 +16,8 @@ import { agoraDoPedido } from "@/lib/agora";
 import { TAMANHO_MAXIMO_BYTES, envioConfigurado } from "@/lib/arquivos";
 import { EnvioDeDocumento } from "./envio";
 import { BotaoReler } from "./releitura";
-import { excluirDocumento, leiturasDoMes } from "./acoes";
+import { excluirDocumento } from "./acoes";
+import { leiturasDoMes } from "@/lib/leituras-do-mes";
 
 export const metadata = { title: "Documentos" };
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export const dynamic = "force-dynamic";
 const MINUTOS_ATE_DESISTIR = 5;
 
 export default async function PaginaDocumentos() {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario, demonstracao } = await exigirLeituraDoRecurso("documentos");
 
   const [documentos, usadas] = await Promise.all([
     prisma.documento.findMany({
@@ -43,11 +44,13 @@ export default async function PaginaDocumentos() {
         _count: { select: { itens: true } },
       },
     }),
-    leiturasDoMes(usuario.id),
+    leiturasDoMes(prisma, usuario.id),
   ]);
 
-  const podeEnviar = envioConfigurado();
-  const temChave = Boolean(process.env.ANTHROPIC_API_KEY);
+  // Na demonstração a tela aparece inteira, como para quem assina: enviar ou
+  // reler leva para a assinatura antes de chegar ao espaço de arquivos ou à IA.
+  const podeEnviar = demonstracao || envioConfigurado();
+  const temChave = demonstracao || Boolean(process.env.ANTHROPIC_API_KEY);
   const agora = agoraDoPedido().getTime();
 
   return (
@@ -80,7 +83,8 @@ export default async function PaginaDocumentos() {
       {podeEnviar ? (
         <EnvioDeDocumento
           limiteMb={Math.round(TAMANHO_MAXIMO_BYTES / 1024 / 1024)}
-          restam={Math.max(0, LEITURAS_POR_MES_NO_VIP - usadas)}
+          restam={Math.max(0, LEITURAS_POR_MES_NO_COMPLETO - usadas)}
+          demonstracao={demonstracao}
         />
       ) : null}
 
@@ -161,7 +165,7 @@ export default async function PaginaDocumentos() {
       </Secao>
 
       <p className="text-xs leading-relaxed text-carvao-suave">
-        Leituras usadas neste mês: {usadas} de {LEITURAS_POR_MES_NO_VIP}.
+        Leituras usadas neste mês: {usadas} de {LEITURAS_POR_MES_NO_COMPLETO}.
       </p>
     </div>
   );

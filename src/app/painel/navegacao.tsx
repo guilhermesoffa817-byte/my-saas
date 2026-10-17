@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icone } from "@/componentes/ui/icones";
 import { PRINCIPAIS, SECUNDARIOS, destinosVisiveis, type Destino } from "./itens";
+import type { Recurso } from "@/lib/recursos";
 
 const MAIS: Destino = {
   href: "/painel/mais",
@@ -21,25 +22,32 @@ function estaAtivo(caminho: string, href: string) {
       SECUNDARIOS.some((item) => caminho.startsWith(item.href))
     );
   }
-  return caminho.startsWith(href);
+  if (!caminho.startsWith(href)) return false;
+  /*
+    Custos mora dentro de Finanças (/painel/financas/custos). Sem esta
+    conferência as duas abas acenderiam juntas: vale o destino mais específico.
+  */
+  return ![...PRINCIPAIS, ...SECUNDARIOS].some(
+    (outro) => outro.href.length > href.length && outro.href.startsWith(href) && caminho.startsWith(outro.href),
+  );
 }
 
-type Quem = { admin: boolean; financeiro: boolean };
+type Quem = { admin: boolean; liberados: Recurso[] };
 
 /**
  * A barra fixa embaixo, do celular, ao alcance do polegar. Cabem cinco itens:
  * os quatro principais e "Mais", que guarda o resto.
  */
-export function BarraDeBaixo({ admin, financeiro }: Quem) {
+export function BarraDeBaixo({ admin, liberados }: Quem) {
   const caminho = usePathname();
-  const principais = destinosVisiveis(PRINCIPAIS, { financeiro, admin });
-  const secundarios = destinosVisiveis(SECUNDARIOS, { financeiro, admin });
+  const principais = destinosVisiveis(PRINCIPAIS, { liberados, admin });
+  const secundarios = destinosVisiveis(SECUNDARIOS, { liberados, admin });
   const noCelular = [...principais, ...(secundarios.length > 0 ? [MAIS] : [])];
 
   return (
       <nav
         aria-label="Navegação principal"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-areia-escura/70 bg-superficie/95 backdrop-blur md:hidden"
+        className="nao-imprimir fixed inset-x-0 bottom-0 z-40 border-t border-areia-escura/70 bg-superficie/95 backdrop-blur md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <ul className="flex">
@@ -69,11 +77,11 @@ export function BarraDeBaixo({ admin, financeiro }: Quem) {
  * A mesma lista, em linha, no computador. Sem "Mais": ali o espaço sobra, e
  * esconder destino em menu só faria a pessoa procurar.
  */
-export function NavegacaoLarga({ admin, financeiro }: Quem) {
+export function NavegacaoLarga({ admin, liberados }: Quem) {
   const caminho = usePathname();
   const noComputador = [
-    ...destinosVisiveis(PRINCIPAIS, { financeiro, admin }),
-    ...destinosVisiveis(SECUNDARIOS, { financeiro, admin }),
+    ...destinosVisiveis(PRINCIPAIS, { liberados, admin }),
+    ...destinosVisiveis(SECUNDARIOS, { liberados, admin }),
   ];
 
   return (

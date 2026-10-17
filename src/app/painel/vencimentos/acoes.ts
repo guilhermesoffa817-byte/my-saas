@@ -1,15 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
 import {
   deDataPura,
   hojeNoEstudio,
   paraCentavos,
   paraDataPura,
 } from "@/lib/formato";
-import { ocorrenciasQueFaltam } from "@/lib/vencimento";
+import {
+  apagarVencimento,
+  completarRepeticao,
+  criarVencimento,
+  encerrarRepeticao as encerrarDoBanco,
+  pagarVencimento,
+} from "@/lib/vencimento-operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -30,7 +37,7 @@ export async function salvarVencimento(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
 
   const tipo = TIPOS.includes(texto(dados, "tipo") as (typeof TIPOS)[number])
     ? texto(dados, "tipo")
@@ -63,16 +70,14 @@ export async function salvarVencimento(
   }
 
   if (!repete) {
-    await prisma.vencimento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo,
-        descricao,
-        categoria: categoria || null,
-        valorCentavos,
-        data,
-      },
+    const criado = await criarVencimento(prisma, usuario.id, {
+      tipo,
+      descricao,
+      categoria: categoria || null,
+      valorCentavos,
+      data,
     });
+    if ("erro" in criado) return { erro: criado.erro };
     atualizarTelas();
     return { recado: "Vencimento guardado." };
   }
@@ -90,7 +95,7 @@ export async function salvarVencimento(
     select: { id: true },
   });
 
-  await completarRepeticao(repeticao.id, usuario.id);
+  await completarRepeticao(prisma, usuario.id, repeticao.id, hojeNoEstudio());
 
   atualizarTelas();
   return {
@@ -100,155 +105,46 @@ export async function salvarVencimento(
   };
 }
 
-/**
- * Completa as ocorrências que faltam de uma repetição.
- *
- * É chamada quando a tela abre e quando o combinado é criado. Não existe tarefa
- * agendada: a cada visita o Bossa compara o que deveria existir com o que
- * existe e grava a diferença. O par repetição e data é único no banco, então
- * duas visitas ao mesmo tempo não criam a mesma data duas vezes.
- */
-export async function completarRepeticao(repeticaoId: string, usuarioId: string) {
-  const repeticao = await prisma.repeticaoDeVencimento.findFirst({
-    where: { id: repeticaoId, usuarioId, ativa: true },
-    select: {
-      id: true,
-      tipo: true,
-      descricao: true,
-      categoria: true,
-      valorCentavos: true,
-      primeira: true,
-      ate: true,
-      vencimentos: { select: { data: true } },
-    },
-  });
-  if (!repeticao) return;
-
-  const faltam = ocorrenciasQueFaltam({
-    primeira: repeticao.primeira,
-    ate: repeticao.ate,
-    jaGravadas: repeticao.vencimentos.map((item) => item.data),
-    hoje: hojeNoEstudio(),
-  });
-  if (faltam.length === 0) return;
-
-  await prisma.vencimento.createMany({
-    data: faltam.map((data) => ({
-      usuarioId,
-      repeticaoId: repeticao.id,
-      tipo: repeticao.tipo,
-      descricao: repeticao.descricao,
-      categoria: repeticao.categoria,
-      valorCentavos: repeticao.valorCentavos,
-      data,
-    })),
-    skipDuplicates: true,
-  });
-}
-
 export async function marcarComoPago(
   _anterior: Resposta,
   dados: FormData,
 ): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
 
   const id = texto(dados, "id");
   const pagoEm = deDataPura(texto(dados, "pagoEm") || paraDataPura(hojeNoEstudio()));
   if (!pagoEm) return { erro: "Não consegui entender a data do pagamento." };
 
-  const vencimento = await prisma.vencimento.findFirst({
-    where: { id, usuarioId: usuario.id },
-    select: { id: true, pago: true, tipo: true, descricao: true, categoria: true, valorCentavos: true },
-  });
-  if (!vencimento) return { erro: "Não encontramos esse vencimento." };
-  if (vencimento.pago) return { recado: "Esse já estava marcado como pago." };
-
-  await prisma.$transaction(async (tx) => {
-    /*
-      A condição `pago: false` dentro do próprio UPDATE é o que impede a saída
-      de ser lançada duas vezes. O segundo toque muda zero linhas e para aqui.
-    */
-    const mudados = await tx.vencimento.updateMany({
-      where: { id: vencimento.id, usuarioId: usuario.id, pago: false },
-      data: { pago: true, pagoEm },
-    });
-    if (mudados.count === 0) return;
-
-    // Prazo de contrato não é dinheiro: marcar como resolvido não lança nada.
-    if (vencimento.tipo !== "conta" || !vencimento.valorCentavos) return;
-
-    const lancamento = await tx.lancamento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo: "saida",
-        descricao: vencimento.descricao,
-        categoria: vencimento.categoria ?? "Conta",
-        valorCentavos: vencimento.valorCentavos,
-        data: pagoEm,
-      },
-      select: { id: true },
-    });
-
-    await tx.vencimento.update({
-      where: { id: vencimento.id },
-      data: { lancamentoId: lancamento.id },
-    });
-  });
+  const pago = await pagarVencimento(prisma, usuario.id, id, pagoEm);
+  if ("erro" in pago) return { erro: pago.erro };
+  if (pago.resultado === "ja_pago") return { recado: "Esse já estava marcado como pago." };
 
   atualizarTelas();
   return {
     recado:
-      vencimento.tipo === "conta"
+      pago.tipo === "conta"
         ? "Pago. A saída já entrou nas suas finanças."
         : "Marcado como resolvido.",
   };
 }
 
 export async function excluirVencimento(dados: FormData) {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
   const id = texto(dados, "id");
 
-  const vencimento = await prisma.vencimento.findFirst({
-    where: { id, usuarioId: usuario.id },
-    select: { id: true, lancamentoId: true },
-  });
-  if (!vencimento) return;
-
-  await prisma.$transaction(async (tx) => {
-    // O lançamento sai junto: o dinheiro só existia por causa deste vencimento.
-    if (vencimento.lancamentoId) {
-      await tx.lancamento.deleteMany({
-        where: { id: vencimento.lancamentoId, usuarioId: usuario.id },
-      });
-    }
-    await tx.vencimento.deleteMany({ where: { id: vencimento.id, usuarioId: usuario.id } });
-  });
+  // Conta de mês fechado fica; o lançamento do pagamento sai junto, se o mês dele estiver aberto.
+  const apagado = await apagarVencimento(prisma, usuario.id, id);
+  if ("erro" in apagado) redirect("/painel/vencimentos?aviso=mes-fechado");
 
   atualizarTelas();
 }
 
 export async function encerrarRepeticao(dados: FormData) {
-  const { usuario } = await exigirRecurso("vencimentos");
+  const { usuario } = await exigirEscritaDoRecurso("vencimentos");
   const id = texto(dados, "id");
 
-  await prisma.$transaction(async (tx) => {
-    const mudadas = await tx.repeticaoDeVencimento.updateMany({
-      where: { id, usuarioId: usuario.id, ativa: true },
-      data: { ativa: false },
-    });
-    if (mudadas.count === 0) return;
-
-    // As datas futuras que ninguém pagou somem; o que já foi pago fica no
-    // histórico, porque aquilo aconteceu de verdade.
-    await tx.vencimento.deleteMany({
-      where: {
-        repeticaoId: id,
-        usuarioId: usuario.id,
-        pago: false,
-        data: { gt: hojeNoEstudio() },
-      },
-    });
-  });
+  // As datas futuras que ninguém pagou somem, menos as de um mês já fechado.
+  await encerrarDoBanco(prisma, usuario.id, id, hojeNoEstudio());
 
   atualizarTelas();
 }

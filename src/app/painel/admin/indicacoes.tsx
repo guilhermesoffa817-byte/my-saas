@@ -6,7 +6,7 @@ export type ContaIndicada = {
   nome: string;
   nomeNegocio: string;
   criadoEm: Date;
-  situacao: "teste" | "ativa" | "aguardando" | "expirada";
+  situacao: "teste" | "demonstracao" | "ativa" | "aguardando" | "expirada";
   totalPagoCentavos: number;
 };
 
@@ -19,6 +19,7 @@ export type Parceiro = {
 const TOM_POR_SITUACAO = {
   ativa: "boa",
   teste: "calma",
+  demonstracao: "calma",
   aguardando: "atencao",
   expirada: "erro",
 } as const;
@@ -26,6 +27,7 @@ const TOM_POR_SITUACAO = {
 const ROTULO_POR_SITUACAO = {
   ativa: "Pagando",
   teste: "Em teste",
+  demonstracao: "Conhecendo",
   aguardando: "Conferindo Pix",
   expirada: "Vencida",
 } as const;

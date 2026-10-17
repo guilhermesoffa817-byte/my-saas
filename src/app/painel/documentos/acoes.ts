@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { exigirRecurso } from "@/lib/guardas";
-import { LEITURAS_POR_MES_NO_VIP } from "@/lib/recursos";
-import { deDataPura, inicioDoMes, paraCentavos } from "@/lib/formato";
+import { exigirEscritaDoRecurso } from "@/lib/guardas";
+import { LEITURAS_POR_MES_NO_COMPLETO } from "@/lib/recursos";
+import { deDataPura, hojeNoEstudio, paraCentavos } from "@/lib/formato";
 import {
   TAMANHO_MAXIMO_BYTES,
   apagar,
@@ -13,7 +14,9 @@ import {
   envioConfigurado,
   tipoAceito,
 } from "@/lib/arquivos";
-import { completarRepeticao } from "../vencimentos/acoes";
+import { leiturasDoMes } from "@/lib/leituras-do-mes";
+import { completarRepeticao } from "@/lib/vencimento-operacoes";
+import { MesFechadoErro, exigirMesesAbertos, mesDoDiaPuro } from "@/lib/fechamento/trava";
 
 export type Resposta = { erro?: string; recado?: string } | null;
 
@@ -26,18 +29,6 @@ function atualizarTelas() {
   revalidatePath("/painel");
   revalidatePath("/painel/documentos");
   revalidatePath("/painel/vencimentos");
-}
-
-/** Quantas leituras este estúdio já gastou no mês corrente. */
-export async function leiturasDoMes(usuarioId: string) {
-  return prisma.documento.count({
-    where: {
-      usuarioId,
-      criadoEm: { gte: inicioDoMes(new Date()) },
-      // Documento que nem chegou a ser lido não gasta a cota.
-      situacao: { not: "falhou" },
-    },
-  });
 }
 
 /**
@@ -55,7 +46,7 @@ export async function pedirEnvio(entrada: {
   | { certo: true; documentoId: string; endereco: string; caminho: string }
   | { certo: false; motivo: string }
 > {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   if (!envioConfigurado()) {
     return {
@@ -76,11 +67,11 @@ export async function pedirEnvio(entrada: {
     };
   }
 
-  const usadas = await leiturasDoMes(usuario.id);
-  if (usadas >= LEITURAS_POR_MES_NO_VIP) {
+  const usadas = await leiturasDoMes(prisma, usuario.id);
+  if (usadas >= LEITURAS_POR_MES_NO_COMPLETO) {
     return {
       certo: false,
-      motivo: `Você já usou as ${LEITURAS_POR_MES_NO_VIP} leituras deste mês. No mês que vem elas voltam.`,
+      motivo: `Você já usou as ${LEITURAS_POR_MES_NO_COMPLETO} leituras deste mês. No mês que vem elas voltam.`,
     };
   }
 
@@ -114,7 +105,7 @@ export async function pedirEnvio(entrada: {
 
 /** Marca que o arquivo subiu e a leitura pode começar. */
 export async function confirmarEnvio(documentoId: string) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   await prisma.documento.updateMany({
     where: { id: documentoId, usuarioId: usuario.id },
@@ -129,7 +120,7 @@ export async function confirmarEnvio(documentoId: string) {
 /* ------------------------------------------------------------------ */
 
 export async function salvarItem(_anterior: Resposta, dados: FormData): Promise<Resposta> {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
 
   const id = texto(dados, "id");
   const descricao = texto(dados, "descricao");
@@ -159,7 +150,7 @@ export async function salvarItem(_anterior: Resposta, dados: FormData): Promise<
 }
 
 export async function descartarItem(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   await prisma.itemDoDocumento.updateMany({
@@ -178,13 +169,14 @@ export async function descartarItem(dados: FormData) {
  * condição `decisao: null` no próprio UPDATE garante isso.
  */
 export async function aceitarItem(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   const item = await prisma.itemDoDocumento.findFirst({
     where: { id, documento: { usuarioId: usuario.id } },
     select: {
       id: true,
+      documentoId: true,
       descricao: true,
       tipo: true,
       valorCentavos: true,
@@ -201,61 +193,75 @@ export async function aceitarItem(dados: FormData) {
 
   let repeticaoId: string | null = null;
 
-  await prisma.$transaction(async (tx) => {
-    const marcados = await tx.itemDoDocumento.updateMany({
-      where: { id: item.id, decisao: null },
-      data: { decisao: "aceito" },
-    });
-    if (marcados.count === 0) return;
+  try {
+    await prisma.$transaction(async (tx) => {
+      const marcados = await tx.itemDoDocumento.updateMany({
+        where: { id: item.id, decisao: null },
+        data: { decisao: "aceito" },
+      });
+      if (marcados.count === 0) return;
 
-    if (item.repeticao === "mensal") {
-      const repeticao = await tx.repeticaoDeVencimento.create({
+      if (item.repeticao === "mensal") {
+        const repeticao = await tx.repeticaoDeVencimento.create({
+          data: {
+            usuarioId: usuario.id,
+            tipo: "conta",
+            descricao: item.descricao,
+            categoria: "Do documento",
+            valorCentavos: item.valorCentavos,
+            primeira: item.data!,
+            ate: item.repeteAte,
+          },
+          select: { id: true },
+        });
+        repeticaoId = repeticao.id;
+        await tx.itemDoDocumento.update({
+          where: { id: item.id },
+          data: { vencimentoId: repeticao.id },
+        });
+        return;
+      }
+
+      /*
+        Conta com valor entra nas "Contas a pagar" do relatório do mês. Num mês
+        fechado ela não entra: o erro desfaz a transação inteira, e o item
+        continua esperando decisão.
+      */
+      if (item.valorCentavos) await exigirMesesAbertos(tx, usuario.id, [mesDoDiaPuro(item.data!)]);
+
+      const vencimento = await tx.vencimento.create({
         data: {
           usuarioId: usuario.id,
           tipo: "conta",
           descricao: item.descricao,
           categoria: "Do documento",
           valorCentavos: item.valorCentavos,
-          primeira: item.data!,
-          ate: item.repeteAte,
+          data: item.data!,
         },
         select: { id: true },
       });
-      repeticaoId = repeticao.id;
       await tx.itemDoDocumento.update({
         where: { id: item.id },
-        data: { vencimentoId: repeticao.id },
+        data: { vencimentoId: vencimento.id },
       });
-      return;
+    });
+  } catch (erro) {
+    if (erro instanceof MesFechadoErro) {
+      redirect(`/painel/documentos/${item.documentoId}?aviso=mes-fechado&mes=${erro.competencia}`);
     }
-
-    const vencimento = await tx.vencimento.create({
-      data: {
-        usuarioId: usuario.id,
-        tipo: "conta",
-        descricao: item.descricao,
-        categoria: "Do documento",
-        valorCentavos: item.valorCentavos,
-        data: item.data!,
-      },
-      select: { id: true },
-    });
-    await tx.itemDoDocumento.update({
-      where: { id: item.id },
-      data: { vencimentoId: vencimento.id },
-    });
-  });
+    throw erro;
+  }
 
   // As ocorrências da repetição são geradas fora da transação, porque elas
   // chamam a mesma rotina que a tela de vencimentos usa.
-  if (repeticaoId) await completarRepeticao(repeticaoId, usuario.id);
+  if (repeticaoId) await completarRepeticao(prisma, usuario.id, repeticaoId, hojeNoEstudio());
 
   atualizarTelas();
 }
 
 /** Fecha a conferência: o que sobrou sem decisão é dado por descartado. */
 export async function encerrarConferencia(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   await prisma.$transaction(async (tx) => {
@@ -279,7 +285,7 @@ export async function encerrarConferencia(dados: FormData) {
 }
 
 export async function excluirDocumento(dados: FormData) {
-  const { usuario } = await exigirRecurso("documentos");
+  const { usuario } = await exigirEscritaDoRecurso("documentos");
   const id = texto(dados, "id");
 
   const documento = await prisma.documento.findFirst({

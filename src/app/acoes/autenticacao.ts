@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { criarSessao, encerrarSessao } from "@/lib/sessao";
-import { DIAS_DE_TESTE } from "@/lib/assinatura";
-import { apenasDigitos, documentoValido, somarDias } from "@/lib/formato";
+import { apenasDigitos, documentoValido } from "@/lib/formato";
+import { PAPEL_DA_DEMONSTRACAO, ehContaDeExemplo, emailReservado } from "@/lib/demonstracao/conta";
 
 export type EstadoFormulario = { erro?: string } | null;
 
@@ -52,14 +52,16 @@ export async function criarConta(
   }
 
   const jaExiste = await prisma.usuario.findUnique({ where: { email } });
-  if (jaExiste) {
+  if (jaExiste || emailReservado(email)) {
     return {
       erro: "Já existe uma conta com esse e-mail. Que tal entrar em vez de criar outra?",
     };
   }
 
   // A primeira conta criada é a da administração, que confere os Pix recebidos.
-  const primeiraConta = (await prisma.usuario.count()) === 0;
+  // O estúdio de exemplo da demonstração não conta: ele pode já existir antes.
+  const primeiraConta =
+    (await prisma.usuario.count({ where: { papel: { not: PAPEL_DA_DEMONSTRACAO } } })) === 0;
 
   // Só guarda a indicação se o código existir de verdade, para o painel não
   // mostrar parceiro que nunca existiu.
@@ -82,11 +84,18 @@ export async function criarConta(
       indicadoPor: quemIndicou?.codigoIndicacao ?? null,
       papel: primeiraConta ? "admin" : "dona",
       senhaHash: await bcrypt.hash(senha, 10),
+      /*
+        Sem teste grátis: a conta nasce na demonstração. Ela entra no painel e
+        vê o estúdio de exemplo com todas as funções; quando tenta fazer algo,
+        vai para a assinatura. O Pix confirmado pela administração troca o
+        status para "ativa" e o painel passa a mostrar os dados dela.
+      */
       assinatura: {
-        create: {
-          status: "teste",
-          validaAte: somarDias(new Date(), DIAS_DE_TESTE),
-        },
+        // A administração (primeira conta) é a dona do Bossa: entra com tudo
+        // liberado, como no `npm run seed`, para usar o painel de verdade.
+        create: primeiraConta
+          ? { status: "ativa", plano: "vip_anual", validaAte: new Date("2100-01-01T00:00:00.000Z") }
+          : { status: "demonstracao", validaAte: new Date() },
       },
     },
   });
@@ -106,7 +115,9 @@ export async function entrar(
     return { erro: "Preencha o e-mail e a senha para continuar." };
   }
 
-  const usuario = await prisma.usuario.findUnique({ where: { email } });
+  const encontrado = await prisma.usuario.findUnique({ where: { email } });
+  // A conta do estúdio de exemplo não entra nunca: para o login, ela não existe.
+  const usuario = encontrado && !ehContaDeExemplo(encontrado) ? encontrado : null;
   const confere = usuario
     ? await bcrypt.compare(senha, usuario.senhaHash)
     : await bcrypt.compare(senha, HASH_FALSO);
