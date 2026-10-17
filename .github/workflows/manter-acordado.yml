@@ -1,0 +1,30 @@
+# Visita o site uma vez por dia para o banco do Supabase grátis não pausar.
+#
+# O plano grátis do Supabase pausa o projeto depois de uma semana sem uso, e aí
+# ninguém consegue entrar, criar conta ou pagar. A rota /api/saude faz uma
+# consulta mínima no banco, que basta para ele contar como usado.
+#
+# Em repositório público as Actions do GitHub não têm custo. Se o endereço do
+# site mudar (por exemplo, para a Vercel ou um domínio próprio), troque o
+# ENDERECO abaixo.
+name: Manter o banco acordado
+
+on:
+  schedule:
+    - cron: "17 11 * * *" # todo dia, 8h17 em Brasília
+  workflow_dispatch:
+
+jobs:
+  visitar:
+    runs-on: ubuntu-latest
+    env:
+      ENDERECO: https://agendaonlinecontabilidade.netlify.app
+    steps:
+      - name: Visitar /api/saude
+        run: |
+          for tentativa in 1 2 3; do
+            if curl -fsS --max-time 30 "$ENDERECO/api/saude"; then exit 0; fi
+            sleep 20
+          done
+          echo "O site ou o banco não respondeu. Confira se o projeto do Supabase está ativo."
+          exit 1
