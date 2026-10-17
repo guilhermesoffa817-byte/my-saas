@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Marca } from "@/componentes/marca";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
 import { RECADO_DA_DEMONSTRACAO } from "@/lib/assinatura";
-import { RECURSOS, recursosLiberados } from "@/lib/recursos";
+import { recursosLigados, recursosLiberados } from "@/lib/recursos";
 import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 import { primeiroNome } from "@/lib/formato";
 import { sair } from "@/app/acoes/autenticacao";
@@ -17,7 +17,7 @@ export default async function LayoutPainel({
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
   // Na demonstração o estúdio de exemplo é Completo: todas as abas aparecem.
-  const liberados = situacao.demonstracao ? RECURSOS : recursosLiberados(usuario);
+  const liberados = situacao.demonstracao ? recursosLigados() : recursosLiberados(usuario);
 
   return (
     <div className="min-h-screen">

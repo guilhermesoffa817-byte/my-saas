@@ -76,7 +76,31 @@ export function soNoCompleto(recurso: Recurso) {
   return SO_NO_COMPLETO[recurso];
 }
 
+/**
+ * Se o recurso está ligado neste servidor.
+ *
+ * A leitura de documentos e o assistente dependem de serviços pagos por uso (a
+ * IA da Anthropic) e de chaves que só existem no ambiente da hospedagem. Sem
+ * elas, o recurso some do menu, da página de vendas e da tela de planos, para o
+ * Bossa nunca vender o que não está funcionando. Quando a chave entra, ele
+ * aparece sozinho no próximo deploy (a página de vendas é montada no build).
+ */
+export function recursoLigado(recurso: Recurso) {
+  const temIa = Boolean(process.env.ANTHROPIC_API_KEY);
+  if (recurso === "assistente") return temIa;
+  if (recurso === "documentos") {
+    return temIa && Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  }
+  return true;
+}
+
+/** Os recursos ligados neste servidor, para a demonstração mostrar só o que existe de verdade. */
+export function recursosLigados(): Recurso[] {
+  return RECURSOS.filter(recursoLigado);
+}
+
 export function podeUsar(usuario: ComAssinatura, recurso: Recurso, agora = new Date()) {
+  if (!recursoLigado(recurso)) return false;
   if (!SO_NO_COMPLETO[recurso]) return true;
   return temPlanoCompleto(usuario.assinatura, agora);
 }

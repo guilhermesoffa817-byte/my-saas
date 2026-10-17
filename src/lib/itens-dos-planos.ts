@@ -1,6 +1,7 @@
 import {
   LEITURAS_POR_MES_NO_COMPLETO,
   PERGUNTAS_POR_MES_NO_COMPLETO,
+  recursoLigado,
   type Recurso,
 } from "@/lib/recursos";
 import type { FamiliaDoPlano } from "@/lib/assinatura";
@@ -70,9 +71,14 @@ export const ITENS_DO_COMPLETO: ItemDoPlano[] = [
 
 export const TUDO_DO_SIMPLES = "Tudo do Simples";
 
+/** Só as linhas cujos recursos estão ligados neste servidor: nada é vendido desligado. */
+function ligados(itens: ItemDoPlano[]) {
+  return itens.filter((item) => item.recursos.every(recursoLigado));
+}
+
 /** Os textos, prontos para a lista da tela. */
 export function textosDoPlano(familia: FamiliaDoPlano) {
   return familia === "simples"
-    ? ITENS_DO_SIMPLES.map((item) => item.texto)
-    : [TUDO_DO_SIMPLES, ...ITENS_DO_COMPLETO.map((item) => item.texto)];
+    ? ligados(ITENS_DO_SIMPLES).map((item) => item.texto)
+    : [TUDO_DO_SIMPLES, ...ligados(ITENS_DO_COMPLETO).map((item) => item.texto)];
 }

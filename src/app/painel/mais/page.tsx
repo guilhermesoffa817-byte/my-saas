@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
-import { RECURSOS, recursosLiberados } from "@/lib/recursos";
+import { recursosLigados, recursosLiberados } from "@/lib/recursos";
 import { sair } from "@/app/acoes/autenticacao";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { BotaoEnviar } from "@/componentes/ui/botao";
@@ -19,7 +19,7 @@ export default async function PaginaMais() {
   const situacao = await situacaoDoUsuario(usuario);
   // Na demonstração o estúdio de exemplo tem tudo: todas as abas aparecem.
   const destinos = destinosVisiveis(SECUNDARIOS, {
-    liberados: situacao.demonstracao ? RECURSOS : recursosLiberados(usuario),
+    liberados: situacao.demonstracao ? recursosLigados() : recursosLiberados(usuario),
     admin: usuario.papel === "admin",
   });
 

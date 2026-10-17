@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ITENS_DO_COMPLETO,
   ITENS_DO_SIMPLES,
@@ -11,6 +11,17 @@ import {
   RECURSOS,
   soNoCompleto,
 } from "@/lib/recursos";
+
+// Os testes de plano partem de um servidor com a IA e o espaço de arquivos
+// ligados. O bloco "só vende o que está ligado" desliga de propósito.
+beforeEach(() => {
+  vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
+  vi.stubEnv("SUPABASE_URL", "https://exemplo.supabase.co");
+  vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "chave-de-servico");
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe("o que cada plano promete", () => {
   it("não promete no Simples nada que só o Completo libera", () => {
@@ -64,5 +75,39 @@ describe("o que cada plano promete", () => {
   it("não promete o que o Bossa não faz", () => {
     const tudo = [...textosDoPlano("simples"), ...textosDoPlano("completo")].join(" ");
     expect(tudo).not.toMatch(/garant|aumenta|folha de pagamento|eSocial|substitui/i);
+  });
+});
+
+describe("só vende o que está ligado no servidor", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("sem a chave da IA, nem a leitura de documentos nem o assistente aparecem no Completo", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+    const textos = textosDoPlano("completo").join(" | ");
+    expect(textos).not.toMatch(/lida pela IA/);
+    expect(textos).not.toMatch(/Assistente/);
+    // O resto do Completo continua sendo vendido.
+    expect(textos).toMatch(/Custos fixos e variáveis/);
+    expect(textos).toMatch(/Equipe/);
+  });
+
+  it("com a chave da IA e o espaço de arquivos, as duas linhas voltam sozinhas", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
+    vi.stubEnv("SUPABASE_URL", "https://exemplo.supabase.co");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "chave-de-servico");
+    const textos = textosDoPlano("completo").join(" | ");
+    expect(textos).toMatch(/lida pela IA/);
+    expect(textos).toMatch(/Assistente/);
+  });
+
+  it("com a IA mas sem o espaço de arquivos, o assistente aparece e a leitura não", () => {
+    vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+    const textos = textosDoPlano("completo").join(" | ");
+    expect(textos).toMatch(/Assistente/);
+    expect(textos).not.toMatch(/lida pela IA/);
   });
 });
