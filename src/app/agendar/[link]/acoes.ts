@@ -1,7 +1,6 @@
 "use server";
 
 import { headers } from "next/headers";
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { embaralhar } from "@/lib/agendamento-online/embaralhar";
 import { ipDoPedido } from "@/lib/ip";
@@ -47,10 +46,14 @@ export async function confirmarHorario(
     },
   );
 
-  if ("ok" in resposta) {
-    // O horário novo já aparece no Início e na agenda da dona.
-    revalidatePath("/painel");
-    revalidatePath("/painel/agenda");
-  }
+  /*
+    Nada de revalidatePath aqui. No Next 16, qualquer revalidação (ou cookie
+    gravado) dentro de uma ação faz a resposta trazer esta página montada de
+    novo; montada de novo, ela já vê o horário ocupado, tira o formulário da
+    tela e a cliente lê "Esse horário não está mais livre" em vez da
+    confirmação. As telas da dona (Início e agenda) são dinâmicas e leem o
+    banco a cada visita, então o horário novo aparece lá sem revalidar nada.
+    O teste src/testes/agendar-pelo-link-banco.teste.ts segura isso.
+  */
   return resposta;
 }
