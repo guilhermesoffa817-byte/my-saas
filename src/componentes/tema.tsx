@@ -4,21 +4,6 @@ import { useSyncExternalStore } from "react";
 
 type Tema = "claro" | "escuro";
 
-/**
- * Script que roda antes da página aparecer, para o tema salvo já valer no
- * primeiro desenho. Sem isso o site pisca branco antes de ficar escuro.
- */
-export const scriptDoTema = `
-(function () {
-  try {
-    var salvo = localStorage.getItem("tema");
-    if (salvo === "claro" || salvo === "escuro") {
-      document.documentElement.dataset.tema = salvo;
-    }
-  } catch (e) {}
-})();
-`;
-
 /** O tema vive no `<html>`, fora do React — daí a leitura ser por assinatura. */
 function assinar(avisar: () => void) {
   const observador = new MutationObserver(avisar);

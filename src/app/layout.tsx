@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
-import { scriptDoTema } from "@/componentes/tema";
+import { scriptDoTema } from "@/componentes/script-do-tema";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
