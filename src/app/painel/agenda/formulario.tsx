@@ -26,8 +26,9 @@ export type OpcaoEquipe = { id: string; nome: string };
 function enviarSemLimpar(acao: (dados: FormData) => void) {
   return (evento: React.FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
-    const quemEnviou = (evento.nativeEvent as SubmitEvent).submitter;
-    const dados = new FormData(evento.currentTarget, quemEnviou);
+    // Sem o segundo argumento (submitter): os botões daqui não têm nome, e ele
+    // só existe a partir do Safari 16.4.
+    const dados = new FormData(evento.currentTarget);
     startTransition(() => acao(dados));
   };
 }
