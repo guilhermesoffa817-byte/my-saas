@@ -7,6 +7,9 @@
  * numa página com valor legal.
  */
 
+import { telefoneBonito } from "@/lib/formato";
+import { telefoneParaWhatsApp } from "@/lib/telefone";
+
 function ouAviso(valor: string | undefined, aviso: string) {
   const limpo = (valor ?? "").trim();
   return limpo || `[PREENCHER: ${aviso}]`;
@@ -23,4 +26,26 @@ export const RESPONSAVEL = {
 /** Só vira link de e-mail quando há um e-mail de verdade preenchido. */
 export function emailDeContatoValido() {
   return /^[^\s@[\]]+@[^\s@]+\.[^\s@]+$/.test(RESPONSAVEL.email);
+}
+
+export type CanalDeContato = { tipo: "email" | "whatsapp"; rotulo: string; href: string };
+
+/**
+ * Por onde o cliente fala com o Bossa (suporte, devolução, Pix que demorou).
+ * Vem de CONTATO_EMAIL e CONTATO_WHATSAPP. Sem nada preenchido devolve lista
+ * vazia, e quem usa deve esconder a frase "é só nos chamar" em vez de
+ * prometer um canal que não existe.
+ */
+export function canaisDeContato(): CanalDeContato[] {
+  const canais: CanalDeContato[] = [];
+  const email = (process.env.CONTATO_EMAIL ?? "").trim();
+  if (/^[^\s@[\]]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    canais.push({ tipo: "email", rotulo: email, href: `mailto:${email}` });
+  }
+  const telefone = telefoneParaWhatsApp(process.env.CONTATO_WHATSAPP);
+  if (telefone.certo) {
+    const local = telefone.paraWhatsApp.slice(2);
+    canais.push({ tipo: "whatsapp", rotulo: telefoneBonito(local), href: `https://wa.me/${telefone.paraWhatsApp}` });
+  }
+  return canais;
 }
