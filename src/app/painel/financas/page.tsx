@@ -18,6 +18,7 @@ import {
 import { impostoEstimado } from "@/lib/relatorio/montar";
 import { mesesFechados } from "@/lib/fechamento/trava";
 import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
+import { iaConfigurada } from "@/lib/ia/cliente";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
@@ -223,7 +224,9 @@ export default async function PaginaFinancas({
             Custos do mês{temCustos ? null : <SoNoCompleto />}
           </p>
           <p className="mt-0.5 text-sm text-carvao-suave">
-            Fixos, variáveis e quanto faturar para empatar. A IA ajuda a classificar.
+            Fixos, variáveis e quanto faturar para empatar.
+            {/* Só fala da IA quando ela está ligada neste servidor. */}
+            {iaConfigurada() ? " A IA ajuda a classificar." : null}
           </p>
         </div>
         <span className="botao-suave">Ver custos</span>

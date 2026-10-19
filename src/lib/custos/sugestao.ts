@@ -94,7 +94,8 @@ export function resumoDaSugestao(params: {
   if (params.semIa > 0) {
     const restam = params.semIa === 1 ? "1 despesa ficou" : `${params.semIa} despesas ficaram`;
     if (params.motivoSemIa === "nao_configurada") {
-      frase += ` ${restam} sem classificação: a IA não está ligada, então só as regras foram aplicadas.`;
+      // A IA está desligada no servidor: a frase não fala dela.
+      frase += ` ${restam} sem classificação: as regras automáticas não reconheceram. Classifique na lista.`;
     } else if (params.motivoSemIa === "franquia") {
       frase += ` ${restam} sem classificação: a franquia de IA do mês acabou.`;
     } else if (params.motivoSemIa === "proxima_rodada") {
