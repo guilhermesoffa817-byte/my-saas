@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirLeitura } from "@/lib/guardas";
+import { exigirLeitura, exigirUsuario } from "@/lib/guardas";
+import { chamadaDeHoje } from "@/lib/agenda-do-dia";
 import { podeUsar } from "@/lib/recursos";
 import { agoraDoPedido } from "@/lib/agora";
 import { Cartao, Indicador, Secao, TituloDaTela } from "@/componentes/ui/cartao";
@@ -64,7 +65,12 @@ function saudacao(data: Date) {
  * cobrar, o que vence nos próximos dias e o documento esperando conferência.
  */
 export default async function PaginaPainel() {
-  const { usuario } = await exigirLeitura();
+  const { usuario, demonstracao } = await exigirLeitura();
+  /*
+    Na demonstração os dados são do estúdio de exemplo, mas quem lê é a dona da
+    conta: a saudação fala com ela, igual ao "Oi" do topo.
+  */
+  const quemLe = demonstracao ? await exigirUsuario() : usuario;
 
   const agora = agoraDoPedido();
   const hoje = hojeNoEstudio(agora);
@@ -172,10 +178,10 @@ export default async function PaginaPainel() {
     (item) => diferencaEmDias(hoje, item.data) < 0,
   ).length;
 
-  const pendentes = hojeLista.filter((item) => item.status === "agendado").length;
+  const deHoje = chamadaDeHoje(hojeLista, agora);
   const nada =
     novosDoLink.length === 0 &&
-    pendentes === 0 &&
+    !deHoje &&
     paraLembrar.length === 0 &&
     vencimentosProximos.length === 0 &&
     documentosProntos === 0;
@@ -187,7 +193,7 @@ export default async function PaginaPainel() {
           {diaDaSemana(agora).replace(/^./, (l) => l.toUpperCase())}, {dataPorExtenso(agora)}
         </p>
         <TituloDaTela>
-          {saudacao(agora)}, {primeiroNome(usuario.nome)}
+          {saudacao(agora)}, {primeiroNome(quemLe.nome)}
         </TituloDaTela>
       </section>
 
@@ -249,19 +255,12 @@ export default async function PaginaPainel() {
               </li>
             ) : null}
 
-            {pendentes > 0 ? (
+            {deHoje ? (
               <li>
                 <Link href="/painel/agenda" className="block">
                   <Cartao className="transition hover:border-terracota/50">
-                    <p className="font-semibold text-carvao">
-                      {pendentes === 1
-                        ? "1 atendimento hoje"
-                        : `${pendentes} atendimentos hoje`}
-                    </p>
-                    <p className="mt-0.5 text-sm text-carvao-suave">
-                      O primeiro é às {hora(hojeLista[0].inicio)}, de{" "}
-                      {hojeLista[0].cliente.nome}.
-                    </p>
+                    <p className="font-semibold text-carvao">{deHoje.titulo}</p>
+                    <p className="mt-0.5 text-sm text-carvao-suave">{deHoje.detalhe}</p>
                   </Cartao>
                 </Link>
               </li>
