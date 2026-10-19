@@ -1,19 +1,27 @@
 import { prisma } from "@/lib/prisma";
 import { qrCodeSvg } from "@/lib/qrcode";
 import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
+import { agoraDoPedido } from "@/lib/agora";
 import { Aviso, Etiqueta } from "@/componentes/avisos";
+import { LinksDeContato } from "@/componentes/contato";
+import { canaisDeContato } from "@/lib/contato";
 import {
   NOME_DA_FAMILIA,
   PIX_CHAVE,
   PIX_NOME,
   PLANOS,
+  aplicarPagamento,
   economiaDoAnual,
+  identificadorDoPix,
   mensalDoAnual,
   pixCopiaECola,
+  planoPorCodigo,
+  planoValendo,
   type CodigoPlano,
   type FamiliaDoPlano,
 } from "@/lib/assinatura";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
+import { oQueOCompletoLibera } from "./completo";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import {
   competenciaPorExtenso,
@@ -38,6 +46,8 @@ const rotuloPagamento = {
   aguardando: "Conferindo",
   confirmado: "Confirmado",
   recusado: "Não localizado",
+  // Aviso gravado duas vezes antes de existir a regra de um aviso por conta.
+  repetido: "Aviso repetido",
 } as const;
 
 const FAMILIAS: FamiliaDoPlano[] = ["simples", "completo"];
@@ -53,14 +63,36 @@ export default async function PaginaAssinatura({
   const veioDaDemonstracao = Boolean(busca.demonstracao);
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
+  const agora = agoraDoPedido();
 
   const pagamentos = await prisma.pagamento.findMany({
     where: { usuarioId: usuario.id },
-    orderBy: { criadoEm: "desc" },
+    orderBy: [{ criadoEm: "desc" }, { id: "desc" }],
     take: 12,
   });
 
-  const jaAvisou = pagamentos.some((pagamento) => pagamento.status === "aguardando");
+  // Só existe um aviso esperando por conta (o banco garante).
+  const pendente = pagamentos.find((pagamento) => pagamento.status === "aguardando") ?? null;
+  const planoDoPendente = pendente ? planoPorCodigo(pendente.plano) : null;
+  // O último Pix foi marcado como não localizado e nada foi avisado depois.
+  const recusado = !pendente && pagamentos[0]?.status === "recusado" ? pagamentos[0] : null;
+
+  /*
+    O plano de hoje: o pago e valendo. Quem já pagou e venceu renova pelo
+    último plano que pagou. O teste antigo e a demonstração não têm plano.
+  */
+  const vigente = planoValendo(usuario.assinatura, agora);
+  const ultimoPlanoPago = usuario.assinatura?.status === "ativa" ? planoPorCodigo(usuario.assinatura.plano) : null;
+  const temContato = canaisDeContato().length > 0;
+
+  /*
+    O plano que já vem marcado é o de hoje (ou o do Pix avisado), nunca o
+    Simples mensal por padrão: quem tinha o Completo e tocava em "Já fiz o Pix"
+    sem olhar avisava o Simples. Sem plano nenhum, quem veio de uma função do
+    Completo encontra o Completo; os outros escolhem, sem nada marcado.
+  */
+  const planoInicial: CodigoPlano | null =
+    planoDoPendente?.codigo ?? ultimoPlanoPago?.codigo ?? (pediuCompleto ? "vip_mensal" : null);
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
@@ -93,10 +125,25 @@ export default async function PaginaAssinatura({
     },
   };
 
-  // Quem veio de uma função do Completo já encontra o Completo escolhido.
-  const ordem: CodigoPlano[] = pediuCompleto
+  // A família do plano marcado vem primeiro; quem veio de uma função do Completo vê o Completo antes.
+  const completoPrimeiro = pediuCompleto || Boolean(planoInicial && PLANOS[planoInicial].completo);
+  const ordem: CodigoPlano[] = completoPrimeiro
     ? ["vip_mensal", "vip_anual", "mensal", "anual"]
     : ["mensal", "anual", "vip_mensal", "vip_anual"];
+
+  /** O que este Pix faria se fosse confirmado hoje, pela mesma regra da confirmação do admin. */
+  const previsao = (codigo: CodigoPlano) => {
+    const plano = PLANOS[codigo];
+    const resultado = aplicarPagamento(usuario.assinatura, codigo, agora);
+    const ate = dataCurta(resultado.validaAte);
+    if (resultado.conversao && vigente) {
+      return `Os dias que faltam no ${vigente.nome} viram ${emReais(resultado.conversao.creditoCentavos)} de crédito, que dão mais ${resultado.conversao.diasExtras} dias no ${plano.nome}. Se confirmarmos hoje, vale até ${ate}.`;
+    }
+    if (vigente) {
+      return `Os ${plano.dias} dias deste Pix se somam aos que você já tem: vale até ${ate}.`;
+    }
+    return `Acesso por ${plano.dias} dias a partir da confirmação. Se confirmarmos hoje, vale até ${ate}.`;
+  };
 
   const opcoes: OpcaoDePlano[] = pixConfigurado
     ? await Promise.all(
@@ -106,23 +153,29 @@ export default async function PaginaAssinatura({
             chave: PIX_CHAVE,
             nome: PIX_NOME,
             valorCentavos: plano.valorCentavos,
-            identificador: plano.codigo === "anual" ? "AGENDAANUAL" : "AGENDA",
+            // Um por conta: no extrato, o admin sabe de quem é o Pix.
+            identificador: identificadorDoPix(usuario.id),
           });
 
           return {
             codigo: plano.codigo,
             nome: plano.nome,
+            familia: plano.familia,
             periodo: plano.periodo,
             valor: emReais(plano.valorCentavos),
             dias: plano.dias,
             selo: sobreOPlano[plano.codigo].selo,
             vantagens: sobreOPlano[plano.codigo].vantagens,
+            atual: vigente?.codigo === plano.codigo,
+            previsao: previsao(plano.codigo),
             copiaECola,
             qrCode: await qrCodeSvg(copiaECola),
           };
         }),
       )
     : [];
+
+  const fraseDoCompleto = oQueOCompletoLibera();
 
   return (
     <div className="space-y-8">
@@ -139,12 +192,28 @@ export default async function PaginaAssinatura({
             seu, começando vazio, só com os seus dados.
           </p>
         </div>
-      ) : pediuCompleto ? (
+      ) : pediuCompleto && !vigente?.completo ? (
+        /* Quem já paga o Completo nunca vê este convite. A frase só cita o que está ligado. */
         <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
           <p className="font-semibold text-carvao">Essa parte é do plano Completo</p>
-          <p className="mt-1 text-sm leading-relaxed text-carvao-suave">
-            O Completo libera lembretes de cobrança, contas a pagar, leitura de documentos,
-            custos, relatório para o contador, equipe e o assistente.
+          {fraseDoCompleto ? (
+            <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{fraseDoCompleto}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {recusado ? (
+        <div role="alert" className="rounded-2xl border border-rose-300/70 bg-rose-50 px-5 py-4 text-rose-800 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
+          <p className="font-semibold">Não localizamos o seu Pix</p>
+          <p className="mt-1 text-sm leading-relaxed">
+            O Pix de {emReais(recusado.valorCentavos)} ({planoPorCodigo(recusado.plano).nome}) avisado em{" "}
+            {dataEHora(recusado.criadoEm)} não apareceu na nossa conta. Confira no comprovante se o
+            valor e o nome de quem recebe estão certos e avise de novo aqui embaixo.
+            {temContato ? (
+              <>
+                {" "}Se o Pix saiu certinho, fale com a gente: <LinksDeContato />.
+              </>
+            ) : null}
           </p>
         </div>
       ) : null}
@@ -175,7 +244,11 @@ export default async function PaginaAssinatura({
                 <h2 className="font-display text-xl font-semibold text-carvao">
                   {NOME_DA_FAMILIA[familia]}
                 </h2>
-                {destaque ? <Etiqueta tom="espera">Tudo liberado</Etiqueta> : null}
+                {vigente?.familia === familia ? (
+                  <Etiqueta tom="boa">Seu plano</Etiqueta>
+                ) : destaque ? (
+                  <Etiqueta tom="espera">Tudo liberado</Etiqueta>
+                ) : null}
               </div>
               <p className="mt-3">
                 <span className="font-display text-3xl font-semibold tabular-nums text-carvao">
@@ -214,14 +287,14 @@ export default async function PaginaAssinatura({
             <h2 className="font-display text-xl font-semibold text-carvao">Como está hoje</h2>
             <Etiqueta
               tom={
-                situacao.status === "ativa"
+                situacao.status === "ativa" && !situacao.venceLogo
                   ? "boa"
                   : situacao.status === "expirada"
                     ? "erro"
                     : "atencao"
               }
             >
-              {rotuloStatus[situacao.status]}
+              {situacao.venceLogo ? "Perto de vencer" : rotuloStatus[situacao.status]}
             </Etiqueta>
           </div>
 
@@ -231,16 +304,30 @@ export default async function PaginaAssinatura({
               : situacao.recado}
           </p>
 
-          {situacao.demonstracao ? null : (
-            <dl className="mt-6 space-y-3 text-sm">
+          <dl className="mt-6 space-y-3 text-sm">
+            {ultimoPlanoPago ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-carvao-suave">{vigente ? "Seu plano" : "Último plano"}</dt>
+                <dd className="text-right font-semibold text-carvao">{ultimoPlanoPago.nome}</dd>
+              </div>
+            ) : null}
+            {situacao.demonstracao ? null : (
               <div className="flex justify-between gap-4">
                 <dt className="text-carvao-suave">
                   {situacao.liberada ? "Vale até" : "Venceu em"}
                 </dt>
-                <dd className="font-semibold text-carvao">{dataCurta(situacao.validaAte)}</dd>
+                <dd className="text-right font-semibold text-carvao">{dataCurta(situacao.validaAte)}</dd>
               </div>
-            </dl>
-          )}
+            )}
+            {pendente && planoDoPendente ? (
+              <div className="flex justify-between gap-4">
+                <dt className="text-carvao-suave">Pix avisado</dt>
+                <dd className="text-right font-semibold text-carvao">
+                  {planoDoPendente.nome} · {emReais(pendente.valorCentavos)}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
 
           {situacao.status === "expirada" ? (
             <div className="mt-5">
@@ -253,7 +340,12 @@ export default async function PaginaAssinatura({
 
           <p className="mt-6 border-t border-areia-escura/60 pt-4 text-xs leading-relaxed text-carvao-suave">
             Garantia de {DIAS_PARA_DESISTIR} dias: se desistir nesse prazo, devolvemos o seu dinheiro
-            (direito de arrependimento do Código de Defesa do Consumidor). É só nos chamar.
+            (direito de arrependimento do Código de Defesa do Consumidor).
+            {temContato ? (
+              <>
+                {" "}Para pedir, fale com a gente: <LinksDeContato />.
+              </>
+            ) : null}
           </p>
         </div>
 
@@ -268,7 +360,14 @@ export default async function PaginaAssinatura({
 
           {pixConfigurado ? (
             <div className="mt-5">
-              <PagamentoPix opcoes={opcoes} pixNome={PIX_NOME} jaAvisou={jaAvisou} />
+              <PagamentoPix
+                opcoes={opcoes}
+                pixNome={PIX_NOME}
+                planoInicial={planoInicial}
+                planoAvisado={planoDoPendente?.codigo ?? null}
+                planoAtual={vigente ? { nome: vigente.nome, familia: vigente.familia } : null}
+                contato={temContato ? <LinksDeContato /> : null}
+              />
             </div>
           ) : (
             <p className="mt-5 rounded-2xl border border-areia-escura bg-creme px-4 py-3 text-sm text-carvao-suave">
@@ -299,11 +398,10 @@ export default async function PaginaAssinatura({
               >
                 <div>
                   <p className="text-sm font-semibold text-carvao">
-                    {competenciaPorExtenso(pagamento.competencia)} ·{" "}
-                    {emReais(pagamento.valorCentavos)}
+                    {planoPorCodigo(pagamento.plano).nome} · {emReais(pagamento.valorCentavos)}
                   </p>
                   <p className="text-xs text-carvao-suave">
-                    Avisado em {dataEHora(pagamento.criadoEm)}
+                    {competenciaPorExtenso(pagamento.competencia)} · avisado em {dataEHora(pagamento.criadoEm)}
                     {pagamento.observacao ? ` · "${pagamento.observacao}"` : ""}
                   </p>
                 </div>
@@ -313,7 +411,9 @@ export default async function PaginaAssinatura({
                       ? "boa"
                       : pagamento.status === "recusado"
                         ? "erro"
-                        : "atencao"
+                        : pagamento.status === "repetido"
+                          ? "calma"
+                          : "atencao"
                   }
                 >
                   {rotuloPagamento[pagamento.status as keyof typeof rotuloPagamento] ??
