@@ -138,6 +138,8 @@ export default async function PaginaAgenda({
         {podeAgendar ? (
           <div className="mt-5">
             <FormularioAgendamento
+              /* Outro dia, outra sugestão de horário: o formulário recomeça. */
+              key={chaveDoDia}
               inicioSugerido={sugestao}
               clientes={clientes}
               equipe={equipe}
@@ -264,7 +266,7 @@ export default async function PaginaAgenda({
                           : "Agendado"}
                     </Etiqueta>
 
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex flex-wrap items-start justify-end gap-2">
                       {/* Concluir só o que está agendado: cancelado volta para agendado antes. */}
                       {item.status === "agendado" ? (
                         <form action={mudarStatus}>
@@ -346,9 +348,10 @@ export default async function PaginaAgenda({
 
                       {item.status === "agendado" ? (
                         <RemarcarHorario
-                          /* Remarcou: a chave muda e o formulário volta fechado. */
+                          /* Remarcou: a chave muda e a janela volta fechada. */
                           key={`${item.inicio.getTime()}-${item.servicoId}-${item.colaboradorId ?? ""}`}
                           id={item.id}
+                          nomeCliente={item.cliente.nome}
                           inicio={paraHorarioLocal(item.inicio)}
                           servicoId={item.servicoId}
                           colaboradorId={item.colaboradorId}

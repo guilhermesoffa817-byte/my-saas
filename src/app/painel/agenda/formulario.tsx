@@ -1,13 +1,36 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef } from "react";
+import { startTransition, useActionState, useId, useState } from "react";
 import { marcarHorario, remarcarHorario } from "./acoes";
 import { BotaoEnviar } from "@/componentes/botoes";
 import { Aviso } from "@/componentes/avisos";
+import { Janela } from "@/componentes/ui/janela";
+import { primeiroNome } from "@/lib/formato";
 
 export type OpcaoCliente = { id: string; nome: string };
 export type OpcaoServico = { id: string; nome: string; preco: string; duracaoMin: number };
 export type OpcaoEquipe = { id: string; nome: string };
+
+/*
+  O React 19 limpa o formulário (form.reset()) depois de toda ação enviada
+  pelo `action`, inclusive quando ela volta com erro. Aqui isso apagava
+  cliente, serviço e hora junto com o "Esse horário esbarra no atendimento
+  de...", e um <select> voltava para a primeira opção da lista, mostrando um
+  cliente que a dona não escolheu. Por isso:
+  - os campos são controlados (valor guardado em estado);
+  - o envio passa por `enviarSemLimpar`: o onSubmit segura o envio do
+    navegador e chama a ação dentro de startTransition. O React ainda mostra
+    "Marcando..." (useFormStatus), mas não pede o reset. O `action` continua
+    no <form> para funcionar mesmo sem JavaScript.
+*/
+function enviarSemLimpar(acao: (dados: FormData) => void) {
+  return (evento: React.FormEvent<HTMLFormElement>) => {
+    evento.preventDefault();
+    const quemEnviou = (evento.nativeEvent as SubmitEvent).submitter;
+    const dados = new FormData(evento.currentTarget, quemEnviou);
+    startTransition(() => acao(dados));
+  };
+}
 
 export function FormularioAgendamento({
   clientes,
@@ -17,25 +40,39 @@ export function FormularioAgendamento({
 }: {
   clientes: OpcaoCliente[];
   servicos: OpcaoServico[];
+  /** Muda com o dia escolhido; a página põe o dia na `key` para recomeçar. */
   inicioSugerido: string;
   /** Vazia para quem trabalha sozinha: aí o campo nem aparece. */
   equipe?: OpcaoEquipe[];
 }) {
   const [estado, acao] = useActionState(marcarHorario, null);
-  const formulario = useRef<HTMLFormElement>(null);
+  const vazio = { clienteId: "", servicoId: "", colaboradorId: "", inicio: inicioSugerido, observacoes: "" };
+  const [campos, setCampos] = useState(vazio);
+  const mudar = (campo: keyof typeof vazio) => (evento: { target: { value: string } }) =>
+    setCampos((atuais) => ({ ...atuais, [campo]: evento.target.value }));
 
-  useEffect(() => {
-    if (estado?.recado) formulario.current?.reset();
-  }, [estado]);
+  // Marcou: o formulário volta limpo para o próximo. Errou: fica como estava.
+  const [respostaVista, setRespostaVista] = useState(estado);
+  if (estado !== respostaVista) {
+    setRespostaVista(estado);
+    if (estado?.recado) setCampos(vazio);
+  }
 
   return (
-    <form ref={formulario} action={acao} className="space-y-4">
+    <form action={acao} onSubmit={enviarSemLimpar(acao)} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="rotulo" htmlFor="clienteId">
             Cliente
           </label>
-          <select id="clienteId" name="clienteId" required className="campo" defaultValue="">
+          <select
+            id="clienteId"
+            name="clienteId"
+            required
+            className="campo"
+            value={campos.clienteId}
+            onChange={mudar("clienteId")}
+          >
             <option value="" disabled>
               Escolha quem será atendido
             </option>
@@ -51,7 +88,14 @@ export function FormularioAgendamento({
           <label className="rotulo" htmlFor="servicoId">
             Serviço
           </label>
-          <select id="servicoId" name="servicoId" required className="campo" defaultValue="">
+          <select
+            id="servicoId"
+            name="servicoId"
+            required
+            className="campo"
+            value={campos.servicoId}
+            onChange={mudar("servicoId")}
+          >
             <option value="" disabled>
               Escolha o serviço
             </option>
@@ -69,7 +113,13 @@ export function FormularioAgendamento({
           <label className="rotulo" htmlFor="colaboradorId">
             Quem atende <span className="font-normal">(opcional)</span>
           </label>
-          <select id="colaboradorId" name="colaboradorId" className="campo" defaultValue="">
+          <select
+            id="colaboradorId"
+            name="colaboradorId"
+            className="campo"
+            value={campos.colaboradorId}
+            onChange={mudar("colaboradorId")}
+          >
             <option value="">Eu mesma</option>
             {equipe.map((pessoa) => (
               <option key={pessoa.id} value={pessoa.id}>
@@ -93,8 +143,9 @@ export function FormularioAgendamento({
             name="inicio"
             type="datetime-local"
             required
-            defaultValue={inicioSugerido}
             className="campo"
+            value={campos.inicio}
+            onChange={mudar("inicio")}
           />
         </div>
 
@@ -107,6 +158,8 @@ export function FormularioAgendamento({
             name="observacoes"
             className="campo"
             placeholder="Vai trazer a irmã, quer encaixe às 15h..."
+            value={campos.observacoes}
+            onChange={mudar("observacoes")}
           />
         </div>
       </div>
@@ -119,21 +172,9 @@ export function FormularioAgendamento({
   );
 }
 
-/**
- * Remarcar um horário agendado: novo dia e hora, e também serviço e quem
- * atende. Cliente e observação ficam como estão. A conferência de choque é a
- * mesma de quem marca; dando certo, a agenda vai para o dia novo.
- */
-export function RemarcarHorario({
-  id,
-  inicio,
-  servicoId,
-  colaboradorId,
-  servicos,
-  equipe = [],
-  servicoTravado = false,
-}: {
+type DadosDoHorario = {
   id: string;
+  nomeCliente: string;
   /** Como o <input type="datetime-local"> espera: "2026-10-20T14:30". */
   inicio: string;
   servicoId: string;
@@ -143,17 +184,70 @@ export function RemarcarHorario({
   equipe?: OpcaoEquipe[];
   /** Com cobrança no horário, o serviço não muda (o valor já foi combinado). */
   servicoTravado?: boolean;
-}) {
-  const [estado, acao] = useActionState(remarcarHorario, null);
-  // Vários horários na mesma tela: cada formulário precisa de ids próprios.
+};
+
+/**
+ * Remarcar um horário agendado: novo dia e hora, e também serviço e quem
+ * atende. Cliente e observação ficam como estão. A conferência de choque é a
+ * mesma de quem marca; dando certo, a agenda vai para o dia novo.
+ *
+ * Abre numa janela, e não dentro do cartão: o formulário no meio dos botões
+ * empurrava e esticava as outras ações do horário.
+ */
+export function RemarcarHorario(dados: DadosDoHorario) {
+  const [aberta, setAberta] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setAberta(true)} className="botao-suave">
+        Remarcar
+      </button>
+      {/* Montada só quando aberta: várias janelas fechadas na lista repetiriam os ids. */}
+      {aberta ? <JanelaDeRemarcar {...dados} aoFechar={() => setAberta(false)} /> : null}
+    </>
+  );
+}
+
+function JanelaDeRemarcar({
+  id,
+  nomeCliente,
+  inicio,
+  servicoId,
+  colaboradorId,
+  servicos,
+  equipe = [],
+  servicoTravado = false,
+  aoFechar,
+}: DadosDoHorario & { aoFechar: () => void }) {
+  const [estado, acao, enviando] = useActionState(remarcarHorario, null);
+  const [campos, setCampos] = useState({ inicio, servicoId, colaboradorId: colaboradorId ?? "" });
+  const mudar = (campo: keyof typeof campos) => (evento: { target: { value: string } }) =>
+    setCampos((atuais) => ({ ...atuais, [campo]: evento.target.value }));
   const base = useId();
+  const idDoFormulario = `${base}-formulario`;
 
   return (
-    <details className="w-full sm:w-auto">
-      <summary className="botao-suave w-full cursor-pointer list-none">Remarcar</summary>
+    <Janela
+      aberta
+      aoFechar={aoFechar}
+      titulo={`Remarcar ${primeiroNome(nomeCliente)}`}
+      texto="Escolha o novo dia e hora. Cliente e observação ficam como estão."
+      confirmar={
+        <button
+          type="submit"
+          form={idDoFormulario}
+          disabled={enviando}
+          aria-busy={enviando}
+          className="botao w-full"
+        >
+          {enviando ? "Remarcando..." : "Salvar novo horário"}
+        </button>
+      }
+    >
       <form
+        id={idDoFormulario}
         action={acao}
-        className="mt-3 space-y-3 rounded-xl border border-areia-escura bg-areia/40 p-3 text-left sm:w-80"
+        onSubmit={enviarSemLimpar(acao)}
+        className="space-y-3 text-left"
       >
         <input type="hidden" name="id" value={id} />
 
@@ -166,8 +260,9 @@ export function RemarcarHorario({
             name="inicio"
             type="datetime-local"
             required
-            defaultValue={inicio}
             className="campo"
+            value={campos.inicio}
+            onChange={mudar("inicio")}
           />
         </div>
 
@@ -179,10 +274,11 @@ export function RemarcarHorario({
             id={`${base}-servico`}
             name="servicoId"
             required
-            defaultValue={servicoId}
             disabled={servicoTravado}
             aria-describedby={servicoTravado ? `${base}-servico-dica` : undefined}
             className="campo"
+            value={campos.servicoId}
+            onChange={mudar("servicoId")}
           >
             {servicos.map((servico) => (
               <option key={servico.id} value={servico.id}>
@@ -209,8 +305,9 @@ export function RemarcarHorario({
             <select
               id={`${base}-quem`}
               name="colaboradorId"
-              defaultValue={colaboradorId ?? ""}
               className="campo"
+              value={campos.colaboradorId}
+              onChange={mudar("colaboradorId")}
             >
               <option value="">Eu mesma</option>
               {equipe.map((pessoa) => (
@@ -224,11 +321,7 @@ export function RemarcarHorario({
 
         {estado?.erro ? <Aviso tom="erro">{estado.erro}</Aviso> : null}
         {estado?.recado ? <Aviso tom="boa">{estado.recado}</Aviso> : null}
-
-        <BotaoEnviar className="w-full" enviando="Remarcando...">
-          Salvar novo horário
-        </BotaoEnviar>
       </form>
-    </details>
+    </Janela>
   );
 }
