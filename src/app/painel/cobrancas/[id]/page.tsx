@@ -21,6 +21,7 @@ import {
   montarMensagem,
   prazoPorExtenso,
   situacaoDaCobranca,
+  tomDoPrazo,
   type CodigoDoMomento,
   type PreferenciaDeLembrete,
   type Tom,
@@ -110,11 +111,12 @@ export default async function PaginaDaCobranca({
     vencimento: cobranca.vencimento,
     hoje,
     preferencias,
+    situacao: cobranca.situacao,
     jaEnviados: cobranca.lembretes.map((item) => item.momento as CodigoDoMomento),
   });
 
   const temLembretes = podeUsar(usuario, "lembretes");
-  const tomSugerido: Tom = escolha?.momento.tomSugerido ?? (situacao === "atrasada" ? "direto" : "gentil");
+  const tomSugerido: Tom = escolha?.momento.tomSugerido ?? tomDoPrazo(cobranca.vencimento, hoje);
 
   const telefone = telefoneParaWhatsApp(cobranca.cliente.telefone);
   const linkBase = telefone.certo ? linkDoWhatsApp(telefone.paraWhatsApp, "") : null;

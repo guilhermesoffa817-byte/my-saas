@@ -108,7 +108,14 @@ export function Mensagem({
         </Aviso>
       )}
 
-      <BotaoCopiar texto={texto} rotulo="Copiar mensagem" className="w-full" />
+      {/* Na demonstração, os três botões levam aos planos, como o resto das ações. */}
+      {demonstracao ? (
+        <Link href={DESTINO_DA_DEMONSTRACAO} className="botao-suave w-full">
+          Copiar mensagem
+        </Link>
+      ) : (
+        <BotaoCopiar texto={texto} rotulo="Copiar mensagem" className="w-full" />
+      )}
 
       {/* A confirmação só aparece depois que a pessoa abriu o WhatsApp. */}
       {mandou && podeLembrar ? (

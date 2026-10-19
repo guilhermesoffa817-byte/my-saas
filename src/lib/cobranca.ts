@@ -74,6 +74,10 @@ export const LEMBRETES_PADRAO: PreferenciaDeLembrete = {
  * Quais momentos já chegaram a hora para esta cobrança e ainda não foram
  * enviados. Devolve do mais antigo para o mais recente.
  *
+ * Momento anterior ao último aviso já enviado não volta: quem já mandou o
+ * aviso de sete dias de atraso não vai receber, depois, a sugestão de mandar o
+ * "lembrete da véspera", gentil, como se a cobrança nem tivesse vencido.
+ *
  * Nenhuma tarefa agendada roda por trás: isto é calculado na hora em que a
  * tela abre, a partir das datas.
  */
@@ -88,12 +92,33 @@ export function momentosPendentes({
   preferencias: PreferenciaDeLembrete;
   jaEnviados: CodigoDoMomento[];
 }) {
+  const ultimoEnviado = Math.max(
+    -Infinity,
+    ...MOMENTOS.filter((momento) => jaEnviados.includes(momento.codigo)).map((momento) => momento.dias),
+  );
   return MOMENTOS.filter((momento) => {
     if (!preferencias[momento.codigo]) return false;
     if (jaEnviados.includes(momento.codigo)) return false;
+    if (momento.dias <= ultimoEnviado) return false;
     const dia = somarDiasPuros(vencimento, momento.dias);
     return diferencaEmDias(hoje, dia) <= 0;
   });
+}
+
+/**
+ * O tom que combina com o prazo, quando não há lembrete pendente: o do último
+ * momento que já passou (véspera e dia são gentis, três dias é direto, sete
+ * dias é firme). Uma cobrança com 16 dias de atraso não abre no tom "gentil,
+ * para o primeiro aviso".
+ */
+export function tomDoPrazo(vencimento: Date, hoje: Date): Tom {
+  let tom: Tom = "gentil";
+  for (const momento of MOMENTOS) {
+    if (diferencaEmDias(hoje, somarDiasPuros(vencimento, momento.dias)) <= 0) {
+      tom = momento.tomSugerido;
+    }
+  }
+  return tom;
 }
 
 /**
@@ -108,7 +133,14 @@ export function lembreteDeHoje(entrada: {
   hoje: Date;
   preferencias: PreferenciaDeLembrete;
   jaEnviados: CodigoDoMomento[];
+  /**
+   * A situação gravada. Paga ou cancelada não tem o que lembrar, por mais que
+   * as datas digam o contrário: a lista "Para lembrar hoje" chegou a mostrar
+   * cobranças já pagas ao abrir as resolvidas.
+   */
+  situacao?: string;
 }) {
+  if (entrada.situacao !== undefined && entrada.situacao !== "aberta") return null;
   const pendentes = momentosPendentes(entrada);
   if (pendentes.length === 0) return null;
   const escolhido = pendentes[pendentes.length - 1];
