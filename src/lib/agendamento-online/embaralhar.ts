@@ -10,7 +10,7 @@ import { createHmac } from "node:crypto";
  * servidor (SESSAO_SEGREDO), então quem abrir o banco não consegue testar
  * telefones um a um para descobrir quem tentou.
  */
-export function embaralhar(tipo: "ip" | "telefone", valor: string) {
+export function embaralhar(tipo: "ip" | "telefone" | "email", valor: string) {
   const segredo = process.env.SESSAO_SEGREDO;
   if (!segredo || segredo.length < 16) {
     throw new Error("Defina SESSAO_SEGREDO no arquivo .env com pelo menos 16 caracteres.");
