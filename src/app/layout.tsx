@@ -36,23 +36,23 @@ export const metadata: Metadata = {
   keywords: PALAVRAS_CHAVE,
   applicationName: NOME_DO_PRODUTO,
   category: "business",
-  alternates: { canonical: "/" },
+  /*
+    Sem canônico nem robots aqui: o que fica no layout vale para todas as
+    páginas, e um canônico "/" herdado diz ao Google que /criar-conta, /entrar
+    e até a página de erro são cópias da inicial. Cada página pública diz o
+    próprio endereço; a de erro ganha o "noindex" que o Next põe sozinho.
+  */
 
-  // Como o Google e os buscadores devem tratar o site.
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, "max-image-preview": "large" },
-  },
-
-  // O cartão que aparece quando alguém manda o link no WhatsApp ou no Instagram.
+  /*
+    O cartão que aparece quando alguém manda o link no WhatsApp ou no
+    Instagram. Título e descrição ficam de fora de propósito: o Next copia os
+    da página aberta, então o cartão dos Termos diz "Termos de uso", e não o
+    título da página inicial.
+  */
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: ENDERECO_DO_SITE,
     siteName: NOME_DO_PRODUTO,
-    title: TITULO_PADRAO,
-    description: DESCRICAO_CURTA,
     images: [
       {
         url: "/capa.png",
@@ -64,8 +64,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: TITULO_PADRAO,
-    description: DESCRICAO_CURTA,
     images: ["/capa.png"],
   },
 };
