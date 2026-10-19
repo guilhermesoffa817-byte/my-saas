@@ -10,7 +10,7 @@
  * para reais com vírgula é `reaisDaCelula`, no Excel; no CSV o texto "1234,56"
  * é montado a partir do inteiro, sem conta com vírgula flutuante.
  */
-import { dataPuraCurta, deDataPura } from "@/lib/formato";
+import { dataPuraCurta, deDataPura, percentualBonito } from "@/lib/formato";
 import {
   AVISO_DAS_COBRANCAS,
   AVISO_DO_IMPOSTO,
@@ -118,7 +118,7 @@ export function linhasDaPlanilha(relatorio: RelatorioDoMes, cabecalho: Cabecalho
 
   linha("Resultado", "Entrou menos saiu", resultado.resultadoCentavos, { destaque: true });
   linha("Resultado", "Imposto estimado", resultado.impostoEstimadoCentavos, {
-    detalhe: `${relatorio.impostoPercentual}% sobre as entradas · estimativa, não é guia`,
+    detalhe: `${percentualBonito(relatorio.impostoPercentual)}% sobre as entradas · estimativa, não é guia`,
   });
   linha("Resultado", "Depois do imposto estimado", resultado.depoisDoImpostoCentavos, {
     destaque: true,

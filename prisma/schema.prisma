@@ -19,7 +19,9 @@ model Usuario {
   /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
   documento         String?
   /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
-  impostoPercentual Int       @default(6)
+  /// Aceita até duas casas (4,5 = 4,5%). Não é dinheiro: o imposto em reais
+  /// sai em centavos inteiros (impostoEstimado, em lib/relatorio/montar.ts).
+  impostoPercentual Float     @default(6)
   /// Código do link de indicação desta pessoa. Só quem indica tem um.
   codigoIndicacao   String?   @unique
   /// Código de quem trouxe esta conta, guardado no momento do cadastro.

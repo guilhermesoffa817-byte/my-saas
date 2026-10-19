@@ -12,8 +12,10 @@ import {
   inicioDoMes as inicioDoMesNoFuso,
   inicioDoProximoMes,
   paraDataLocal,
+  percentualBonito,
   somarDias,
 } from "@/lib/formato";
+import { impostoEstimado } from "@/lib/relatorio/montar";
 import { mesesFechados } from "@/lib/fechamento/trava";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
@@ -100,7 +102,8 @@ export default async function PaginaFinancas({
     .reduce((soma, item) => soma + item.valorCentavos, 0);
 
   const entradas = atendimentosCentavos + entradasManuais;
-  const imposto = Math.round((entradas * usuario.impostoPercentual) / 100);
+  // A mesma conta do Relatório, com o percentual de até duas casas.
+  const imposto = impostoEstimado(entradas, usuario.impostoPercentual);
   const sobrou = entradas - saidas - imposto;
 
   // Segunda a domingo, na ordem em que a semana é vivida no estúdio.
@@ -165,7 +168,7 @@ export default async function PaginaFinancas({
           tom="neutra"
           atraso={160}
         >
-          {usuario.impostoPercentual}% sobre o que entrou
+          {percentualBonito(usuario.impostoPercentual)}% sobre o que entrou
         </Indicador>
         <Indicador
           titulo="Sobrou para você"
@@ -268,7 +271,7 @@ export default async function PaginaFinancas({
               conforme o seu regime e confirme com sua contadora.
             </p>
           </div>
-          <FormularioImposto percentual={usuario.impostoPercentual} />
+          <FormularioImposto percentual={percentualBonito(usuario.impostoPercentual)} />
         </div>
       </section>
 
