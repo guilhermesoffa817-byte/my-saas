@@ -161,6 +161,13 @@ model Agendamento {
   /// Quando a dona viu, no Início, o horário que chegou pelo link. Enquanto
   /// estiver vazio, o horário aparece em destaque como novidade.
   vistoEm       DateTime?
+  /// O preço deste atendimento, guardado quando ele é marcado. Mudar o preço
+  /// do serviço depois não mexe no que já foi marcado nem no que já entrou.
+  /// Cobrança do horário recebida com outro valor passa a valer o recebido.
+  /// Vazio só em gravação que esqueceu de mandar: um gatilho do banco preenche
+  /// com o preço do serviço (migração 20261019100000_preco_do_atendimento).
+  /// Para ler, use precoDoAtendimento() de lib/preco-do-atendimento.ts.
+  precoCentavos Int?
   criadoEm      DateTime  @default(now())
 
   usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)

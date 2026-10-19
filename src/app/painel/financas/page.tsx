@@ -17,6 +17,7 @@ import {
 } from "@/lib/formato";
 import { impostoEstimado } from "@/lib/relatorio/montar";
 import { mesesFechados } from "@/lib/fechamento/trava";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
@@ -70,7 +71,7 @@ export default async function PaginaFinancas({
           status: "concluido",
           inicio: { gte: inicioDoMes, lt: fimDoMes },
         },
-        select: { servico: { select: { precoCentavos: true } } },
+        select: { precoCentavos: true, servico: { select: { precoCentavos: true } } },
       }),
       prisma.lancamento.findMany({
         where: { usuarioId: usuario.id, data: { gte: inicioDoMes, lt: fimDoMes } },
@@ -84,14 +85,16 @@ export default async function PaginaFinancas({
           status: "concluido",
           inicio: { gte: inicioDoGrafico },
         },
-        select: { inicio: true, servico: { select: { precoCentavos: true } } },
+        select: { inicio: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
       }),
       mesesFechados(prisma, usuario.id),
     ]);
   const mesFechado = fechados.has(mesAtual);
 
+  // O preço guardado em cada atendimento: mudar o preço do serviço hoje não
+  // reescreve o que já entrou.
   const atendimentosCentavos = atendimentosDoMes.reduce(
-    (soma, item) => soma + item.servico.precoCentavos,
+    (soma, item) => soma + precoDoAtendimento(item),
     0,
   );
   const entradasManuais = lancamentosDoMes
@@ -113,7 +116,7 @@ export default async function PaginaFinancas({
     const atual = porDia.get(chave) ?? { atendimentos: 0, centavos: 0 };
     porDia.set(chave, {
       atendimentos: atual.atendimentos + 1,
-      centavos: atual.centavos + atendimento.servico.precoCentavos,
+      centavos: atual.centavos + precoDoAtendimento(atendimento),
     });
   }
 

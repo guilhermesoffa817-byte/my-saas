@@ -335,6 +335,7 @@ export function montarEstudioDeExemplo(agora: Date): DadosDoExemplo {
         usuarioId: U,
         clienteId: cliente.id!,
         servicoId: `exemplo-servico-${servico.chave}`,
+        precoCentavos: servico.precoCentavos,
         inicio,
         status,
         colaboradorId: quem === "dona" ? null : ID_DE[quem],

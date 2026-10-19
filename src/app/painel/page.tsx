@@ -37,6 +37,7 @@ import {
 } from "@/lib/cobranca";
 import { avisoDoVencimento } from "@/lib/vencimento";
 import { novosPeloLink } from "@/lib/agendamento-online/operacoes";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { BotaoEnviar } from "@/componentes/ui/botao";
 import { marcarNovosVistos } from "./agendamento-online/acoes";
 
@@ -103,7 +104,7 @@ export default async function PaginaPainel() {
           status: "concluido",
           inicio: { gte: comecoDoMes, lt: fimDoMes },
         },
-        select: { servico: { select: { precoCentavos: true } } },
+        select: { precoCentavos: true, servico: { select: { precoCentavos: true } } },
       }),
       temCobranca
         ? prisma.cobranca.findMany({
@@ -139,7 +140,7 @@ export default async function PaginaPainel() {
     ]);
 
   const faturamento = concluidosNoMes.reduce(
-    (soma, item) => soma + item.servico.precoCentavos,
+    (soma, item) => soma + precoDoAtendimento(item),
     0,
   );
 
@@ -424,7 +425,7 @@ export default async function PaginaPainel() {
                         {item.cliente.nome}
                       </p>
                       <p className="truncate text-sm text-carvao-suave">
-                        {item.servico.nome} · {emReais(item.servico.precoCentavos)}
+                        {item.servico.nome} · {emReais(precoDoAtendimento(item))}
                       </p>
                     </div>
                     {item.status === "concluido" ? (

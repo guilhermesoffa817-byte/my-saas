@@ -19,6 +19,7 @@ import {
 } from "@/lib/formato";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { HORARIO_JA_OCUPADO } from "@/lib/agenda-operacoes";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { FormularioAgendamento } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
@@ -65,10 +66,11 @@ export default async function PaginaAgenda({
         inicio: true,
         status: true,
         observacoes: true,
+        precoCentavos: true,
         cliente: { select: { nome: true, telefone: true } },
         servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
         /* Para saber se o horário já foi cobrado e se a cobrança está de pé. */
-        cobrancas: { select: { id: true, situacao: true } },
+        cobrancas: { select: { id: true, situacao: true, valorCentavos: true } },
         colaborador: { select: { nome: true } },
       },
       orderBy: { inicio: "asc" },
@@ -98,7 +100,7 @@ export default async function PaginaAgenda({
   );
   const previsto = agendamentosDoDia
     .filter((item) => item.status !== "cancelado")
-    .reduce((soma, item) => soma + item.servico.precoCentavos, 0);
+    .reduce((soma, item) => soma + precoDoAtendimento(item), 0);
 
   return (
     <div className="space-y-8">
@@ -221,7 +223,7 @@ export default async function PaginaAgenda({
                         {item.cliente.nome}
                       </p>
                       <p className="text-sm text-carvao-suave">
-                        {item.servico.nome} · {emReais(item.servico.precoCentavos)} ·{" "}
+                        {item.servico.nome} · {emReais(precoDoAtendimento(item))} ·{" "}
                         {telefoneBonito(item.cliente.telefone)}
                       </p>
                       {item.colaborador ? (
@@ -311,7 +313,7 @@ export default async function PaginaAgenda({
                           <div className="mt-2 space-y-2 rounded-xl border border-areia-escura bg-areia/40 p-3">
                             <p className="text-xs leading-relaxed text-carvao-suave">
                               Esse horário tem uma cobrança em aberto de{" "}
-                              {emReais(item.servico.precoCentavos)}. O que fazer com ela?
+                              {emReais(cobrancaAberta.valorCentavos)}. O que fazer com ela?
                             </p>
                             <form action={mudarStatus}>
                               <input type="hidden" name="id" value={item.id} />

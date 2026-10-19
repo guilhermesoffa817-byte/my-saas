@@ -11,6 +11,7 @@ import {
   dataPuraCurta,
   emReais,
   hojeNoEstudio,
+  paraDataLocal,
   paraDataPura,
   telefoneBonito,
 } from "@/lib/formato";
@@ -220,7 +221,7 @@ export default async function PaginaDaCobranca({
           titulo="Recebeu?"
           explicacao={
             cobranca.agendamentoId
-              ? "Esse dinheiro entra no faturamento pelo atendimento concluído na agenda, para não ser contado duas vezes."
+              ? "O valor recebido passa a ser o valor desse atendimento nas Finanças, e entra no faturamento pelo atendimento concluído na agenda, para não ser contado duas vezes."
               : "Ao marcar como paga, o valor entra como entrada nas suas finanças."
           }
         >
@@ -239,6 +240,26 @@ export default async function PaginaDaCobranca({
             </Aviso>
           ) : null}
         </Secao>
+      ) : null}
+
+      {/*
+        Paga, mas o horário segue só marcado: o dinheiro já entrou, e o
+        faturamento só conta atendimento concluído. Sem este aviso, o Pix pago
+        não aparecia em lugar nenhum das Finanças.
+      */}
+      {situacao === "paga" &&
+      cobranca.agendamento &&
+      cobranca.agendamento.status === "agendado" ? (
+        <Aviso tom="atencao">
+          O pagamento está registrado, mas o atendimento ainda não foi concluído na agenda. Ele
+          entra nas Finanças, com o valor recebido, quando você marcar como concluído.{" "}
+          <Link
+            href={`/painel/agenda?dia=${paraDataLocal(cobranca.agendamento.inicio)}`}
+            className="font-semibold underline"
+          >
+            Abrir o dia na agenda
+          </Link>
+        </Aviso>
       ) : null}
 
       {cobranca.lembretes.length > 0 ? (

@@ -41,7 +41,16 @@ export async function salvarServico(_anterior: Resposta, dados: FormData): Promi
     await prisma.servico.update({ where: { id }, data: valores });
     revalidatePath("/painel/servicos");
     revalidatePath("/painel/agenda");
-    return { recado: `${nome} foi atualizado.` };
+    /*
+      Cada horário guarda o preço do dia em que foi marcado. O preço novo vale
+      daqui para a frente; o faturamento do que já foi marcado não muda.
+    */
+    return {
+      recado:
+        existente.precoCentavos === preco
+          ? `${nome} foi atualizado.`
+          : `${nome} foi atualizado. O preço novo vale para os próximos horários; os que já estão marcados continuam com o preço da época.`,
+    };
   }
 
   await prisma.servico.create({ data: { ...valores, usuarioId: usuario.id } });
