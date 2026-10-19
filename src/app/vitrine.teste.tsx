@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import Erro from "./error";
 import PaginaInicial, { metadata as metadadosDaInicial } from "./page";
 import PaginaPrivacidade from "./privacidade/page";
 import PaginaTermos from "./termos/page";
@@ -126,6 +127,23 @@ describe("IA ligada: os termos e a privacidade contam o que vai para a IA", () =
     expect(texto("privacidade")).toContain("Duas funções do plano Completo usam o Claude");
     expect(texto("privacidade")).not.toMatch(/Documentos enviados para leitura/);
   });
+
+  it("sem o armazenamento de documentos, a pergunta sobre IA da página de vendas não fala de documentos", () => {
+    ambiente(IA, { SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "" });
+    const pedaco = html("inicial");
+    const resposta = /<summary[^>]*>A inteligência artificial vê os meus clientes\?[\s\S]*?<\/details>/.exec(pedaco)![0];
+    expect(resposta).toContain("No assistente e na classificação de custos");
+    expect(resposta).not.toMatch(/documento/i);
+    // Nem nos dados que o Google lê.
+    expect(pedaco).not.toMatch(/leitura de documentos/i);
+  });
+
+  it("com tudo ligado, a pergunta sobre IA também fala da leitura de documentos", () => {
+    ambiente(IA);
+    const pedaco = html("inicial");
+    const resposta = /<summary[^>]*>A inteligência artificial vê os meus clientes\?[\s\S]*?<\/details>/.exec(pedaco)![0];
+    expect(resposta).toContain("Na leitura de documentos, ela lê o arquivo que você enviar.");
+  });
 });
 
 describe("termos e privacidade sem marcas de rascunho", () => {
@@ -157,6 +175,17 @@ describe("termos e privacidade sem marcas de rascunho", () => {
       "O Bossa é oferecido por Marina Albuquerque Serviços Digitais Ltda., CPF ou CNPJ 12.345.678/0001-90.",
     );
     expect(texto("privacidade")).toContain("Encarregado de dados: Marina Albuquerque");
+  });
+
+  it.each([
+    ["só o contato", [CONTATO], "Contato"],
+    ["só o encarregado", [{ ENCARREGADO_DE_DADOS: "Marina Albuquerque" }], "Encarregado de dados"],
+    ["contato e encarregado", [CONTATO, RESPONSAVEL], "Contato e encarregado de dados"],
+    ["só quem oferece", [{ RESPONSAVEL_NOME: "Marina Albuquerque Serviços Digitais Ltda." }], "Quem oferece o Bossa"],
+  ])("privacidade: o título da seção de contato diz só o que ela tem (%s)", (_caso, partes, esperado) => {
+    ambiente(...partes);
+    const titulo = /<h2 id="contato"[^>]*>\d+\. ([^<]+)<\/h2>/.exec(html("privacidade"))![1];
+    expect(titulo).toBe(esperado);
   });
 });
 
@@ -219,6 +248,12 @@ describe("contato", () => {
     ambiente(CONTATO);
     const fim = /<main[\s\S]*<\/main>/.exec(html(pagina))![0];
     expect(fim).toMatch(/id="fale-com-a-gente"[\s\S]*mailto:contato@bossa-teste\.com\.br/);
+  });
+
+  it("a tela de erro não manda chamar ninguém: ela é do navegador e não sabe se há canal", () => {
+    const lido = renderToStaticMarkup(<Erro error={new Error("teste")} reset={() => {}} />);
+    expect(lido).not.toMatch(MANDA_CHAMAR);
+    expect(lido).toContain("Tentar de novo");
   });
 
   it("a garantia nos termos manda para o contato só quando ele existe", () => {

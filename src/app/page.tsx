@@ -149,7 +149,8 @@ type Pergunta = {
   pergunta: string;
   /** Só aparece quando este recurso está ligado no servidor. */
   precisa?: "assistente" | "documentos";
-  resposta: string;
+  /** Uma função quando o texto depende do que está ligado no servidor. */
+  resposta: string | (() => string);
   /** Termina com o contato, quando há canal preenchido no servidor. */
   contato?: boolean;
   link?: { href: string; rotulo: string };
@@ -184,8 +185,16 @@ const PERGUNTAS: Pergunta[] = [
   {
     pergunta: "A inteligência artificial vê os meus clientes?",
     precisa: "assistente",
-    resposta:
-      "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no plano Completo e só quando você usa.",
+    // A leitura de documentos precisa também do armazenamento: com só a chave
+    // da IA, a resposta não pode citar uma função que não está ligada.
+    resposta: () =>
+      [
+        "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes.",
+        recursoLigado("documentos") ? "Na leitura de documentos, ela lê o arquivo que você enviar." : null,
+        "Tudo isso só no plano Completo e só quando você usa.",
+      ]
+        .filter(Boolean)
+        .join(" "),
     link: { href: "/privacidade", rotulo: "Ver a Política de privacidade" },
   },
   {
@@ -291,7 +300,10 @@ function EtiquetaCompleto() {
 
 /** As perguntas frequentes, sem as que falam de recurso desligado neste servidor. */
 function perguntasLigadas() {
-  return PERGUNTAS.filter((item) => !item.precisa || recursoLigado(item.precisa));
+  return PERGUNTAS.filter((item) => !item.precisa || recursoLigado(item.precisa)).map((item) => ({
+    ...item,
+    resposta: typeof item.resposta === "function" ? item.resposta() : item.resposta,
+  }));
 }
 
 export default function PaginaInicial() {

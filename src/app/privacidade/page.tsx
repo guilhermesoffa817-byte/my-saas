@@ -47,6 +47,16 @@ export default function PaginaPrivacidade() {
   const responsavel = dadosDoResponsavel();
   const temContato = canaisDeContato().length > 0;
   const temSecaoDeContato = Boolean(responsavel.nome || responsavel.encarregado || temContato);
+  // O título diz só o que a seção tem: "Contato e encarregado" sem encarregado
+  // preenchido prometeria um nome que não aparece.
+  const tituloDoContato =
+    temContato && responsavel.encarregado
+      ? "Contato e encarregado de dados"
+      : temContato
+        ? "Contato"
+        : responsavel.encarregado
+          ? "Encarregado de dados"
+          : `Quem oferece o ${NOME_DO_PRODUTO}`;
 
   const telasParaApagar = ["Clientes", "Equipe", ...(leitura ? ["Documentos"] : []), ...(assistente ? ["Assistente"] : [])];
 
@@ -61,15 +71,7 @@ export default function PaginaPrivacidade() {
     { id: "prazos", titulo: "Por quanto tempo" },
     { id: "direitos", titulo: "Seus direitos e como pedir" },
     { id: "cookies", titulo: "Cookies" },
-    ...(temSecaoDeContato
-      ? [
-          {
-            id: "contato",
-            titulo:
-              temContato || responsavel.encarregado ? "Contato e encarregado" : `Quem oferece o ${NOME_DO_PRODUTO}`,
-          },
-        ]
-      : []),
+    ...(temSecaoDeContato ? [{ id: "contato", titulo: tituloDoContato }] : []),
     { id: "mudancas", titulo: "Mudanças nesta política" },
   ];
   const titulo = numerarSecoes(sumario);

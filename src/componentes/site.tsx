@@ -15,9 +15,16 @@ import { FRASE_DA_MARCA } from "@/lib/site";
 export function CabecalhoDoSite() {
   return (
     <header className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-4 sm:gap-3 sm:px-5 sm:py-5">
-      <Marca />
+      <Marca encolhe />
       <nav aria-label="Conta" className="flex items-center gap-1 sm:gap-3">
-        <BotaoTema />
+        {/*
+          Abaixo de 380px os quatro itens não cabem numa linha: o botão de tema
+          sai do topo (o site segue o tema do celular) e, abaixo de 340px, o
+          nome da marca vira só o escudo. Sem isso a página rola para o lado.
+        */}
+        <div className="flex max-[379px]:hidden">
+          <BotaoTema />
+        </div>
         <Link
           href="/entrar"
           className="rounded-xl px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-carvao-suave transition hover:text-terracota sm:px-3"
