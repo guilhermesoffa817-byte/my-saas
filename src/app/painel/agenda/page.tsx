@@ -19,7 +19,7 @@ import {
 } from "@/lib/formato";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { HORARIO_JA_OCUPADO } from "@/lib/agenda-operacoes";
-import { FormularioAgendamento } from "./formulario";
+import { FormularioAgendamento, RemarcarHorario, type OpcaoServico } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
 
@@ -65,11 +65,13 @@ export default async function PaginaAgenda({
         inicio: true,
         status: true,
         observacoes: true,
+        servicoId: true,
+        colaboradorId: true,
         cliente: { select: { nome: true, telefone: true } },
         servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
         /* Para saber se o horário já foi cobrado e se a cobrança está de pé. */
         cobrancas: { select: { id: true, situacao: true } },
-        colaborador: { select: { nome: true } },
+        colaborador: { select: { id: true, nome: true } },
       },
       orderBy: { inicio: "asc" },
     }),
@@ -96,9 +98,25 @@ export default async function PaginaAgenda({
   const sugestao = paraHorarioLocal(
     new Date(diaEscolhido.getTime() + 9 * 60 * 60 * 1000),
   );
-  const previsto = agendamentosDoDia
-    .filter((item) => item.status !== "cancelado")
-    .reduce((soma, item) => soma + item.servico.precoCentavos, 0);
+  // Cancelado fica na lista (riscado), mas não conta como atendimento nem como previsto.
+  const deVerdade = agendamentosDoDia.filter((item) => item.status !== "cancelado");
+  const cancelados = agendamentosDoDia.length - deVerdade.length;
+  const previsto = deVerdade.reduce((soma, item) => soma + item.servico.precoCentavos, 0);
+  const resumoDoDia = [
+    deVerdade.length === 0
+      ? "Nenhum atendimento nesse dia"
+      : `${deVerdade.length} ${deVerdade.length === 1 ? "atendimento" : "atendimentos"} · ${emReais(previsto)} previstos`,
+    cancelados === 0 ? null : cancelados === 1 ? "1 cancelado" : `${cancelados} cancelados`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const opcoesDeServico: OpcaoServico[] = servicos.map((servico) => ({
+    id: servico.id,
+    nome: servico.nome,
+    preco: emReais(servico.precoCentavos),
+    duracaoMin: servico.duracaoMin,
+  }));
 
   return (
     <div className="space-y-8">
@@ -112,6 +130,7 @@ export default async function PaginaAgenda({
 
       <AvisoDeMesFechado aviso={aviso} mes={chaveDoDia.slice(0, 7)} />
       {aviso === "horario-ocupado" ? <Aviso tom="erro">{HORARIO_JA_OCUPADO}</Aviso> : null}
+      {aviso === "remarcado" ? <Aviso tom="boa">Horário remarcado. Ele já está neste dia.</Aviso> : null}
 
       <section className="cartao">
         <h2 className="font-display text-xl font-semibold text-carvao">Marcar um horário</h2>
@@ -122,12 +141,7 @@ export default async function PaginaAgenda({
               inicioSugerido={sugestao}
               clientes={clientes}
               equipe={equipe}
-              servicos={servicos.map((servico) => ({
-                id: servico.id,
-                nome: servico.nome,
-                preco: emReais(servico.precoCentavos),
-                duracaoMin: servico.duracaoMin,
-              }))}
+              servicos={opcoesDeServico}
             />
           </div>
         ) : (
@@ -161,11 +175,7 @@ export default async function PaginaAgenda({
               {diaDaSemana(diaEscolhido).replace(/^./, (l) => l.toUpperCase())},{" "}
               {dataPorExtenso(diaEscolhido)}
             </h2>
-            <p className="text-sm text-carvao-suave">
-              {agendamentosDoDia.length === 0
-                ? "Nenhum atendimento nesse dia."
-                : `${agendamentosDoDia.length} ${agendamentosDoDia.length === 1 ? "atendimento" : "atendimentos"} · ${emReais(previsto)} previstos`}
-            </p>
+            <p className="text-sm text-carvao-suave">{resumoDoDia}.</p>
           </div>
 
           <form className="flex gap-2">
@@ -255,7 +265,8 @@ export default async function PaginaAgenda({
                     </Etiqueta>
 
                     <div className="flex flex-wrap justify-end gap-2">
-                      {item.status !== "concluido" ? (
+                      {/* Concluir só o que está agendado: cancelado volta para agendado antes. */}
+                      {item.status === "agendado" ? (
                         <form action={mudarStatus}>
                           <input type="hidden" name="id" value={item.id} />
                           <input type="hidden" name="status" value="concluido" />
@@ -331,6 +342,39 @@ export default async function PaginaAgenda({
                             </form>
                           </div>
                         </details>
+                      ) : null}
+
+                      {item.status === "agendado" ? (
+                        <RemarcarHorario
+                          /* Remarcou: a chave muda e o formulário volta fechado. */
+                          key={`${item.inicio.getTime()}-${item.servicoId}-${item.colaboradorId ?? ""}`}
+                          id={item.id}
+                          inicio={paraHorarioLocal(item.inicio)}
+                          servicoId={item.servicoId}
+                          colaboradorId={item.colaboradorId}
+                          servicos={
+                            opcoesDeServico.some((opcao) => opcao.id === item.servicoId)
+                              ? opcoesDeServico
+                              : [
+                                  // Serviço guardado depois de marcado: continua na lista deste horário.
+                                  {
+                                    id: item.servicoId,
+                                    nome: item.servico.nome,
+                                    preco: emReais(item.servico.precoCentavos),
+                                    duracaoMin: item.servico.duracaoMin,
+                                  },
+                                  ...opcoesDeServico,
+                                ]
+                          }
+                          equipe={
+                            !comEquipe
+                              ? []
+                              : item.colaborador && !equipe.some((pessoa) => pessoa.id === item.colaborador!.id)
+                                ? [...equipe, item.colaborador]
+                                : equipe
+                          }
+                          servicoTravado={item.cobrancas.some((c) => c.situacao !== "cancelada")}
+                        />
                       ) : null}
 
                       {item.status !== "agendado" ? (
