@@ -4,6 +4,7 @@ import { Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
 import { avaliarAssinatura, DIAS_DE_CORTESIA, PLANOS, planoPorCodigo } from "@/lib/assinatura";
 import { PAPEL_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
+import { pedidosEsperando } from "@/lib/pedidos-de-senha";
 import {
   competenciaPorExtenso,
   dataCurta,
@@ -47,12 +48,8 @@ export default async function PaginaAdmin() {
       orderBy: { respondidoEm: "desc" },
       take: 10,
     }),
-    /* Quem pediu senha nova e ainda não recebeu link. */
-    prisma.pedidoDeSenha.findMany({
-      where: { usadoEm: null, entregueEm: null, expiraEm: { gt: new Date() } },
-      orderBy: { criadoEm: "asc" },
-      select: { usuarioId: true, criadoEm: true },
-    }),
+    /* Quem pediu senha nova e ainda não recebeu link, por mais antigo que seja o pedido. */
+    pedidosEsperando(prisma),
   ]);
 
   const pediuSenhaEm = new Map(
