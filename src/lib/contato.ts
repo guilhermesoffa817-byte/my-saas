@@ -1,31 +1,41 @@
 /**
- * Quem responde pelo Bossa, para as páginas de privacidade e de termos.
+ * Quem responde pelo Bossa e por onde falar com ele.
  *
  * Os valores vêm das variáveis de ambiente da Netlify, para o dono preencher
- * sem mexer no código. Enquanto não forem preenchidos, a página mostra o aviso
- * entre colchetes: melhor um "[PREENCHER]" à vista do que um nome inventado
- * numa página com valor legal.
+ * sem mexer no código. Campo vazio volta `null`, e quem usa omite a frase: a
+ * página nunca mostra "[PREENCHER]" nem um nome ou e-mail inventado.
+ *
+ * Tudo é lido na hora da chamada, e não quando o arquivo carrega. As páginas
+ * públicas são montadas no build, então elas acompanham o que estiver
+ * preenchido no ambiente da publicação.
  */
 
 import { telefoneBonito } from "@/lib/formato";
 import { telefoneParaWhatsApp } from "@/lib/telefone";
 
-function ouAviso(valor: string | undefined, aviso: string) {
+function lido(valor: string | undefined) {
   const limpo = (valor ?? "").trim();
-  return limpo || `[PREENCHER: ${aviso}]`;
+  return limpo || null;
 }
 
-export const RESPONSAVEL = {
-  nome: ouAviso(process.env.RESPONSAVEL_NOME, "nome completo ou razão social"),
-  documento: ouAviso(process.env.RESPONSAVEL_DOCUMENTO, "CPF ou CNPJ"),
-  email: ouAviso(process.env.CONTATO_EMAIL, "e-mail de contato"),
+const EMAIL = /^[^\s@[\]]+@[^\s@]+\.[^\s@]+$/;
+
+export type DadosDoResponsavel = {
+  /** Nome completo ou razão social de quem oferece o Bossa. */
+  nome: string | null;
+  /** CPF ou CNPJ, como foi preenchido. */
+  documento: string | null;
   /** O encarregado de dados (LGPD, art. 41). Pode ser a mesma pessoa. */
-  encarregado: ouAviso(process.env.ENCARREGADO_DE_DADOS, "nome do encarregado de dados"),
+  encarregado: string | null;
 };
 
-/** Só vira link de e-mail quando há um e-mail de verdade preenchido. */
-export function emailDeContatoValido() {
-  return /^[^\s@[\]]+@[^\s@]+\.[^\s@]+$/.test(RESPONSAVEL.email);
+/** Quem oferece o Bossa, para os termos e a política de privacidade. */
+export function dadosDoResponsavel(): DadosDoResponsavel {
+  return {
+    nome: lido(process.env.RESPONSAVEL_NOME),
+    documento: lido(process.env.RESPONSAVEL_DOCUMENTO),
+    encarregado: lido(process.env.ENCARREGADO_DE_DADOS),
+  };
 }
 
 export type CanalDeContato = { tipo: "email" | "whatsapp"; rotulo: string; href: string };
@@ -39,7 +49,7 @@ export type CanalDeContato = { tipo: "email" | "whatsapp"; rotulo: string; href:
 export function canaisDeContato(): CanalDeContato[] {
   const canais: CanalDeContato[] = [];
   const email = (process.env.CONTATO_EMAIL ?? "").trim();
-  if (/^[^\s@[\]]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (EMAIL.test(email)) {
     canais.push({ tipo: "email", rotulo: email, href: `mailto:${email}` });
   }
   const telefone = telefoneParaWhatsApp(process.env.CONTATO_WHATSAPP);
@@ -48,4 +58,15 @@ export function canaisDeContato(): CanalDeContato[] {
     canais.push({ tipo: "whatsapp", rotulo: telefoneBonito(local), href: `https://wa.me/${telefone.paraWhatsApp}` });
   }
   return canais;
+}
+
+/**
+ * Os canais escritos numa frase, para texto que não vira link (os dados que o
+ * Google lê, por exemplo): "pelo e-mail x ou pelo WhatsApp y". Vazio quando
+ * não há canal.
+ */
+export function canaisPorExtenso(canais = canaisDeContato()) {
+  return canais
+    .map((canal) => (canal.tipo === "email" ? `pelo e-mail ${canal.rotulo}` : `pelo WhatsApp ${canal.rotulo}`))
+    .join(" ou ");
 }
