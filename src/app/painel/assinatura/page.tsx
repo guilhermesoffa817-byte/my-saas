@@ -139,7 +139,8 @@ export default async function PaginaAssinatura({
     if (resultado.conversao && vigente) {
       return `Os dias que faltam no ${vigente.nome} viram ${emReais(resultado.conversao.creditoCentavos)} de crédito, que dão mais ${resultado.conversao.diasExtras} dias no ${plano.nome}. Se confirmarmos hoje, vale até ${ate}.`;
     }
-    if (vigente) {
+    // Plano pago valendo, ou o teste antigo ainda valendo: os dias se somam.
+    if (vigente || (usuario.assinatura && usuario.assinatura.validaAte.getTime() > agora.getTime())) {
       return `Os ${plano.dias} dias deste Pix se somam aos que você já tem: vale até ${ate}.`;
     }
     return `Acesso por ${plano.dias} dias a partir da confirmação. Se confirmarmos hoje, vale até ${ate}.`;
@@ -203,19 +204,17 @@ export default async function PaginaAssinatura({
       ) : null}
 
       {recusado ? (
-        <div role="alert" className="rounded-2xl border border-rose-300/70 bg-rose-50 px-5 py-4 text-rose-800 dark:border-rose-400/30 dark:bg-rose-400/10 dark:text-rose-300">
-          <p className="font-semibold">Não localizamos o seu Pix</p>
-          <p className="mt-1 text-sm leading-relaxed">
-            O Pix de {emReais(recusado.valorCentavos)} ({planoPorCodigo(recusado.plano).nome}) avisado em{" "}
-            {dataEHora(recusado.criadoEm)} não apareceu na nossa conta. Confira no comprovante se o
-            valor e o nome de quem recebe estão certos e avise de novo aqui embaixo.
-            {temContato ? (
-              <>
-                {" "}Se o Pix saiu certinho, fale com a gente: <LinksDeContato />.
-              </>
-            ) : null}
-          </p>
-        </div>
+        <Aviso tom="erro">
+          <strong className="block font-semibold">Não localizamos o seu Pix</strong>
+          O Pix de {emReais(recusado.valorCentavos)} ({planoPorCodigo(recusado.plano).nome}) avisado em{" "}
+          {dataEHora(recusado.criadoEm)} não apareceu na nossa conta. Confira no comprovante se o
+          valor e o nome de quem recebe estão certos e avise de novo aqui embaixo.
+          {temContato ? (
+            <>
+              {" "}Se o Pix saiu certinho, fale com a gente: <LinksDeContato />.
+            </>
+          ) : null}
+        </Aviso>
       ) : null}
 
       <section>
