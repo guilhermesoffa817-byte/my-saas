@@ -92,6 +92,9 @@ model Pagamento {
   valorCentavos Int       @default(16900)
   plano         String    @default("mensal")
   competencia   String
+  /// "aguardando", "confirmado", "recusado" ou "repetido" (aviso duplicado de antes da regra).
+  /// Só um "aguardando" por conta: índice único parcial criado na migração
+  /// 20261019130000_um_pix_aguardando_por_conta (o Prisma 6 não descreve índice parcial).
   status        String    @default("aguardando")
   observacao    String?
   criadoEm      DateTime  @default(now())
