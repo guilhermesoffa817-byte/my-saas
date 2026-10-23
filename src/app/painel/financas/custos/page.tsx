@@ -8,8 +8,8 @@ import { Aviso, Etiqueta, type Tom } from "@/componentes/ui/etiqueta";
 import { competenciaAtual, competenciaPorExtenso, dataPuraCurta, deDataPura, emReais } from "@/lib/formato";
 import {
   ROTULO_DA_NATUREZA,
-  ROTULO_DA_ORIGEM,
   deslocarMes,
+  rotuloDaOrigem,
   montarResumoDeCustos,
   type MesDaTendencia,
   type Natureza,
@@ -159,7 +159,8 @@ export default async function PaginaCustos({
                 {cota ? ` Franquia do mês: ${cota.usados} de ${cota.limite} despesas. As regras não contam.` : ""}
               </>
             ) : (
-              "A IA não está ligada nesta conta: o botão aplica só as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo."
+              /* Sem a IA no servidor, nada aqui fala dela: só as regras trabalham. */
+              "O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo."
             )}
           </p>
         </Cartao>
@@ -199,7 +200,7 @@ export default async function PaginaCustos({
                     )}
                     {despesa.origem ? (
                       <span className="text-xs text-carvao-suave">
-                        Origem: {ROTULO_DA_ORIGEM[despesa.origem]}
+                        Origem: {rotuloDaOrigem(despesa.origem, ligada)}
                       </span>
                     ) : null}
                   </div>

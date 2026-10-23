@@ -88,6 +88,7 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
         inicio,
         observacoes: observacoes || null,
         colaboradorId,
+        precoCentavos: servico.precoCentavos,
       },
     });
     return null;

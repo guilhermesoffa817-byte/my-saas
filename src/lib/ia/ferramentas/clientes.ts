@@ -15,6 +15,7 @@ import {
   validarPeriodo,
   type Periodo,
 } from "./base";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 
 export const DIAS_PARA_INATIVO = 60;
 
@@ -91,7 +92,7 @@ export const clientesEmNumeros = ferramenta({
       ctx.db.agendamento.findMany({
         where: { usuarioId: ctx.usuarioId, status: "concluido", inicio: { lt: ate } },
         orderBy: { inicio: "desc" },
-        select: { clienteId: true, inicio: true, servico: { select: { precoCentavos: true } } },
+        select: { clienteId: true, inicio: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
         take: LINHAS_MAXIMAS,
       }),
       ctx.db.cliente.count({ where: { usuarioId: ctx.usuarioId } }),
@@ -101,7 +102,7 @@ export const clientesEmNumeros = ferramenta({
       visitas: visitas.map((v) => ({
         clienteId: v.clienteId,
         dia: paraDataLocal(v.inicio),
-        valorCentavos: v.servico.precoCentavos,
+        valorCentavos: precoDoAtendimento(v),
       })),
       periodo,
       hoje: ctx.hoje,

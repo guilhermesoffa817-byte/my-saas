@@ -7,6 +7,7 @@ import {
   montarResumoDeCustos,
   receitaDoMes,
   rotuloCurtoDoMes,
+  rotuloDaOrigem,
   somarCustos,
   tendenciaDeSeisMeses,
   type DespesaParaCusto,
@@ -237,5 +238,20 @@ describe("montarResumoDeCustos", () => {
       diferencaVariaveisCentavos: 20_000,
       diferencaMargemCentavos: 30_000,
     });
+  });
+});
+
+describe("rótulo da origem da classificação", () => {
+  it("com a IA desligada, nenhuma origem fala de IA", () => {
+    for (const origem of ["regra", "ia", "voce"] as const) {
+      expect(rotuloDaOrigem(origem, false)).not.toMatch(/\bIA\b|intelig/i);
+    }
+    expect(rotuloDaOrigem("ia", false)).toBe("Sugestão automática");
+  });
+
+  it("com a IA ligada, diz de onde veio", () => {
+    expect(rotuloDaOrigem("ia", true)).toBe("Sugestão da IA");
+    expect(rotuloDaOrigem("regra", true)).toBe("Regra");
+    expect(rotuloDaOrigem("voce", true)).toBe("Você");
   });
 });

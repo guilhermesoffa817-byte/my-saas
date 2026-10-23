@@ -11,6 +11,12 @@ export type DiaDoGrafico = {
  * Faturamento por dia da semana. Uma medida só, um eixo só — a quantidade de
  * atendimentos vive no rótulo de cada barra, e não num segundo eixo, que
  * confundiria as duas escalas.
+ *
+ * O valor do dia mais forte vai na frase de cima, e não em cima da barra: no
+ * celular, cada coluna tem uns 40px, e "R$ 5.510,00" (com espaço que não
+ * quebra) alargava as colunas, desalinhava as barras dos dias e empurrava a
+ * página para o lado. Colunas e rótulos dividem a largura por igual
+ * (basis-0, min-w-0), então ficam sempre um embaixo do outro.
  */
 export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
   const maior = Math.max(...dias.map((dia) => dia.centavos), 1);
@@ -29,7 +35,11 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
       {temMovimento ? (
         <p className="mt-1 text-sm text-carvao-suave">
           <strong className="text-carvao">{melhor.nomeCompleto}</strong> é o dia que mais
-          traz dinheiro para o seu estúdio.
+          traz dinheiro para o seu estúdio:{" "}
+          <strong className="whitespace-nowrap tabular-nums text-carvao">
+            {emReais(melhor.centavos)}
+          </strong>{" "}
+          em {melhor.atendimentos} {melhor.atendimentos === 1 ? "atendimento" : "atendimentos"}.
         </p>
       ) : (
         <p className="mt-1 text-sm text-carvao-suave">
@@ -43,16 +53,7 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
           const destaque = temMovimento && dia.centavos === maior;
 
           return (
-            <div key={dia.rotulo} className="flex h-full flex-1 flex-col justify-end gap-2">
-              <p
-                className={`text-center text-[11px] leading-tight font-semibold tabular-nums ${
-                  destaque ? "text-carvao" : "text-transparent"
-                }`}
-                aria-hidden={!destaque}
-              >
-                {emReais(dia.centavos)}
-              </p>
-
+            <div key={dia.rotulo} className="flex h-full min-w-0 flex-1 basis-0 flex-col justify-end">
               <div
                 title={`${dia.nomeCompleto}: ${emReais(dia.centavos)} em ${dia.atendimentos} ${
                   dia.atendimentos === 1 ? "atendimento" : "atendimentos"
@@ -74,7 +75,9 @@ export function GraficoPorDiaDaSemana({ dias }: { dias: DiaDoGrafico[] }) {
         {dias.map((dia) => (
           <p
             key={dia.rotulo}
-            className="flex-1 text-center text-[11px] font-semibold tracking-wide text-carvao-suave uppercase"
+            className={`min-w-0 flex-1 basis-0 text-center text-[11px] font-semibold tracking-wide uppercase ${
+              temMovimento && dia.centavos === maior ? "text-carvao" : "text-carvao-suave"
+            }`}
           >
             {dia.rotulo}
           </p>

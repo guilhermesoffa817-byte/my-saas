@@ -19,6 +19,7 @@ import {
 } from "@/lib/formato";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { HORARIO_JA_OCUPADO } from "@/lib/agenda-operacoes";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { FormularioAgendamento, RemarcarHorario, type OpcaoServico } from "./formulario";
 import { DockDaSemana, type DiaDaSemana } from "./semana";
 import { excluirAgendamento, mudarStatus } from "./acoes";
@@ -66,11 +67,12 @@ export default async function PaginaAgenda({
         status: true,
         observacoes: true,
         servicoId: true,
+        precoCentavos: true,
         colaboradorId: true,
         cliente: { select: { nome: true, telefone: true } },
         servico: { select: { nome: true, precoCentavos: true, duracaoMin: true } },
         /* Para saber se o horário já foi cobrado e se a cobrança está de pé. */
-        cobrancas: { select: { id: true, situacao: true } },
+        cobrancas: { select: { id: true, situacao: true, valorCentavos: true } },
         colaborador: { select: { id: true, nome: true } },
       },
       orderBy: { inicio: "asc" },
@@ -101,7 +103,7 @@ export default async function PaginaAgenda({
   // Cancelado fica na lista (riscado), mas não conta como atendimento nem como previsto.
   const deVerdade = agendamentosDoDia.filter((item) => item.status !== "cancelado");
   const cancelados = agendamentosDoDia.length - deVerdade.length;
-  const previsto = deVerdade.reduce((soma, item) => soma + item.servico.precoCentavos, 0);
+  const previsto = deVerdade.reduce((soma, item) => soma + precoDoAtendimento(item), 0);
   const resumoDoDia = [
     deVerdade.length === 0
       ? "Nenhum atendimento nesse dia"
@@ -233,7 +235,7 @@ export default async function PaginaAgenda({
                         {item.cliente.nome}
                       </p>
                       <p className="text-sm text-carvao-suave">
-                        {item.servico.nome} · {emReais(item.servico.precoCentavos)} ·{" "}
+                        {item.servico.nome} · {emReais(precoDoAtendimento(item))} ·{" "}
                         {telefoneBonito(item.cliente.telefone)}
                       </p>
                       {item.colaborador ? (
@@ -324,7 +326,7 @@ export default async function PaginaAgenda({
                           <div className="mt-2 space-y-2 rounded-xl border border-areia-escura bg-areia/40 p-3">
                             <p className="text-xs leading-relaxed text-carvao-suave">
                               Esse horário tem uma cobrança em aberto de{" "}
-                              {emReais(item.servico.precoCentavos)}. O que fazer com ela?
+                              {emReais(cobrancaAberta.valorCentavos)}. O que fazer com ela?
                             </p>
                             <form action={mudarStatus}>
                               <input type="hidden" name="id" value={item.id} />
@@ -363,7 +365,7 @@ export default async function PaginaAgenda({
                                   {
                                     id: item.servicoId,
                                     nome: item.servico.nome,
-                                    preco: emReais(item.servico.precoCentavos),
+                                    preco: emReais(precoDoAtendimento(item)),
                                     duracaoMin: item.servico.duracaoMin,
                                   },
                                   ...opcoesDeServico,

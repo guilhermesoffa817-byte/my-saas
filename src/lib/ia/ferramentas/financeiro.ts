@@ -21,6 +21,7 @@ import {
   type ContextoFerramenta,
   type Periodo,
 } from "./base";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 
 /**
  * Um movimento de dinheiro, do jeito que a página Finanças conta: atendimento
@@ -111,7 +112,7 @@ export function resumirFinanceiro(params: {
   return {
     periodo: { ...periodo, dias: diasDoPeriodo(periodo) },
     historico: descreverHistorico(params.primeiroDia, params.hoje),
-    base: "Regime de caixa, como na página Finanças: atendimentos concluídos (pelo preço do serviço) mais entradas lançadas; saídas lançadas. Retirada da dona não entra como custo. Não inclui imposto.",
+    base: "Regime de caixa, como na página Finanças: atendimentos concluídos (pelo valor de cada atendimento: o preço da época ou o valor recebido) mais entradas lançadas; saídas lançadas. Retirada da dona não entra como custo. Não inclui imposto.",
     entradas: brl(atual.entradas),
     entradas_de_atendimentos: brl(atual.atendimentos),
     entradas_lancadas_a_mao: brl(atual.entradasLancadas),
@@ -172,7 +173,7 @@ export const resumoFinanceiro = ferramenta({
     const [atendimentos, lancamentos, primeiroDia, nomes] = await Promise.all([
       ctx.db.agendamento.findMany({
         where: { usuarioId: ctx.usuarioId, status: "concluido", inicio: { gte: de, lt: ate } },
-        select: { inicio: true, servico: { select: { precoCentavos: true } } },
+        select: { inicio: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
         take: LINHAS_MAXIMAS,
       }),
       ctx.db.lancamento.findMany({
@@ -187,7 +188,7 @@ export const resumoFinanceiro = ferramenta({
     const movimentos: MovimentoDoResumo[] = [
       ...atendimentos.map((a) => ({
         tipo: "entrada" as const,
-        valorCentavos: a.servico.precoCentavos,
+        valorCentavos: precoDoAtendimento(a),
         dia: paraDataLocal(a.inicio),
         categoria: null,
         descricao: "",

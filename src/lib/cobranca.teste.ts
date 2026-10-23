@@ -6,6 +6,7 @@ import {
   montarMensagem,
   prazoPorExtenso,
   situacaoDaCobranca,
+  tomDoPrazo,
   type CodigoDoMomento,
 } from "@/lib/cobranca";
 import { deDataPura, emReais } from "@/lib/formato";
@@ -90,6 +91,44 @@ describe("lembrete do dia", () => {
       preferencias: { antes: false, no_dia: false, tres_dias: false, sete_dias: false },
     });
     expect(resultado).toBeNull();
+  });
+
+  it("cobrança paga ou cancelada não tem lembrete, por mais velha que seja", () => {
+    // O erro: "Ver as já resolvidas" listava pagas e canceladas em "Para lembrar hoje".
+    const velha = { ...base, vencimento: dia("2026-09-01") };
+    expect(lembreteDeHoje({ ...velha, situacao: "paga" })).toBeNull();
+    expect(lembreteDeHoje({ ...velha, situacao: "cancelada" })).toBeNull();
+    expect(lembreteDeHoje({ ...velha, situacao: "aberta" })?.momento.codigo).toBe("sete_dias");
+  });
+
+  it("não volta a um aviso anterior ao último já enviado", () => {
+    // Atrasada há 16 dias, com os avisos do dia, de três e de sete dias já
+    // mandados. A véspera nunca foi enviada, mas sugerir agora o "gentil, para
+    // o primeiro aviso" seria voltar no tempo.
+    const resultado = lembreteDeHoje({
+      ...base,
+      vencimento: dia("2026-09-19"),
+      jaEnviados: ["no_dia", "tres_dias", "sete_dias"],
+    });
+    expect(resultado).toBeNull();
+
+    const pendentes = momentosPendentes({
+      vencimento: dia("2026-09-19"),
+      hoje: HOJE,
+      preferencias: LEMBRETES_PADRAO,
+      jaEnviados: ["no_dia"],
+    });
+    expect(pendentes.map((m) => m.codigo)).toEqual(["tres_dias", "sete_dias"]);
+  });
+
+  it("sem lembrete pendente, o tom acompanha o tamanho do atraso", () => {
+    expect(tomDoPrazo(dia("2026-10-10"), HOJE)).toBe("gentil");
+    expect(tomDoPrazo(dia("2026-10-06"), HOJE)).toBe("gentil");
+    expect(tomDoPrazo(HOJE, HOJE)).toBe("gentil");
+    expect(tomDoPrazo(dia("2026-10-03"), HOJE)).toBe("gentil");
+    expect(tomDoPrazo(dia("2026-10-02"), HOJE)).toBe("direto");
+    expect(tomDoPrazo(dia("2026-09-28"), HOJE)).toBe("firme");
+    expect(tomDoPrazo(dia("2026-09-19"), HOJE)).toBe("firme");
   });
 
   it("lista os pendentes do mais antigo para o mais novo", () => {

@@ -503,6 +503,7 @@ export async function agendarPeloLink(
           servicoId: servico.id,
           inicio,
           colaboradorId: livre.quem,
+          precoCentavos: servico.precoCentavos,
           origem: "link",
           observacoes: cliente.nomeDiferente
             ? `${OBSERVACAO_DO_LINK} · nome informado: ${nome}`

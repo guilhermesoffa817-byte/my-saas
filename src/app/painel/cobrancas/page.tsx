@@ -64,18 +64,20 @@ export default async function PaginaCobrancas({
     na hora em que a tela abre. Cobrança com mais de um momento vencido aparece
     uma vez só, porque `lembreteDeHoje` devolve um momento, não vários.
   */
-  const paraLembrar = temLembretes
-    ? comSituacao.filter(
-        (cobranca) =>
-          !cobranca.cliente.semLembretes &&
-          lembreteDeHoje({
-            vencimento: cobranca.vencimento,
-            hoje,
-            preferencias,
-            jaEnviados: cobranca.lembretes.map((item) => item.momento as CodigoDoMomento),
-          }) !== null,
-      )
-    : [];
+  const paraLembrar =
+    temLembretes && !mostrarPagas
+      ? comSituacao.filter(
+          (cobranca) =>
+            !cobranca.cliente.semLembretes &&
+            lembreteDeHoje({
+              vencimento: cobranca.vencimento,
+              hoje,
+              preferencias,
+              situacao: cobranca.situacao,
+              jaEnviados: cobranca.lembretes.map((item) => item.momento as CodigoDoMomento),
+            }) !== null,
+        )
+      : [];
 
   const aReceber = comSituacao
     .filter((c) => c.situacao === "aberta")

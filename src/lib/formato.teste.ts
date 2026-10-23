@@ -8,6 +8,9 @@ import {
   inicioDoMes,
   inicioDoProximoMes,
   instanteDoDiaPuro,
+  lerPercentual,
+  paraCentavos,
+  percentualBonito,
   somarMeses,
   diferencaEmDias,
   hojeNoEstudio,
@@ -109,5 +112,91 @@ describe("dia puro que vira lançamento", () => {
   it("o pagamento do dia 1º fica no mês certo", () => {
     const instante = instanteDoDiaPuro(deDataPura("2026-11-01")!);
     expect(instante.getTime()).toBeGreaterThanOrEqual(inicioDaCompetencia("2026-11").getTime());
+  });
+});
+
+describe("valor digitado em centavos, do jeito brasileiro", () => {
+  it("ponto sozinho com três casas é milhar: 1.500 é mil e quinhentos", () => {
+    // O erro antigo: "1.500" virava R$ 1,50 no serviço, na cobrança e nas Finanças.
+    expect(paraCentavos("1.500")).toBe(150_000);
+    expect(paraCentavos("12.345")).toBe(1_234_500);
+    expect(paraCentavos("1.234.567")).toBe(123_456_700);
+    expect(paraCentavos("R$ 1.500")).toBe(150_000);
+  });
+
+  it("vírgula é a dos centavos, com ou sem o ponto de milhar", () => {
+    expect(paraCentavos("1.500,50")).toBe(150_050);
+    expect(paraCentavos("1.234,56")).toBe(123_456);
+    expect(paraCentavos("1500,5")).toBe(150_050);
+    expect(paraCentavos("15,5")).toBe(1_550);
+    expect(paraCentavos("70,00")).toBe(7_000);
+    expect(paraCentavos(",50")).toBe(50);
+    expect(paraCentavos("150,")).toBe(15_000);
+    expect(paraCentavos("R$ 1.300,00")).toBe(130_000);
+  });
+
+  it("número inteiro e ponto com uma ou duas casas", () => {
+    expect(paraCentavos("1500")).toBe(150_000);
+    expect(paraCentavos("45")).toBe(4_500);
+    expect(paraCentavos("0")).toBe(0);
+    expect(paraCentavos("1500.50")).toBe(150_050);
+    expect(paraCentavos("15.5")).toBe(1_550);
+    expect(paraCentavos("1.50")).toBe(150);
+    expect(paraCentavos("1.5")).toBe(150);
+  });
+
+  it("o que o próprio Bossa escreve no campo volta igual", () => {
+    for (const centavos of [1, 99, 4_500, 123_456, 130_000, 9_999_999]) {
+      const naTela = (centavos / 100).toFixed(2).replace(".", ",");
+      expect(paraCentavos(naTela)).toBe(centavos);
+    }
+  });
+
+  it("não adivinha: o que não é número brasileiro volta vazio para a tela pedir de novo", () => {
+    // Vírgula antes do ponto é o jeito americano; lido como brasileiro, viraria R$ 1,23.
+    expect(paraCentavos("1,234.56")).toBeNull();
+    // Mais de duas casas depois da vírgula: "1,234" não é mil duzentos e trinta e quatro.
+    expect(paraCentavos("1,234")).toBeNull();
+    expect(paraCentavos("1.2345")).toBeNull();
+    expect(paraCentavos("1.500.50")).toBeNull();
+    expect(paraCentavos("1,5,0")).toBeNull();
+    expect(paraCentavos("-50")).toBeNull();
+    expect(paraCentavos("")).toBeNull();
+    expect(paraCentavos("abc")).toBeNull();
+    expect(paraCentavos("R$")).toBeNull();
+  });
+
+  it("valor que não cabe na coluna do banco volta vazio, em vez de derrubar a gravação", () => {
+    expect(paraCentavos("21.474.836,47")).toBe(2_147_483_647);
+    expect(paraCentavos("21.474.836,48")).toBeNull();
+    expect(paraCentavos("99.999.999")).toBeNull();
+    expect(paraCentavos("9".repeat(30))).toBeNull();
+  });
+});
+
+describe("percentual do imposto", () => {
+  it("aceita casas decimais em vez de arredondar sem avisar", () => {
+    // O erro antigo: 4,5 era gravado como 5.
+    expect(lerPercentual("4,5")).toBe(4.5);
+    expect(lerPercentual("4.5")).toBe(4.5);
+    expect(lerPercentual("6")).toBe(6);
+    expect(lerPercentual(" 6 % ")).toBe(6);
+    expect(lerPercentual("4,53")).toBe(4.53);
+    expect(lerPercentual("0")).toBe(0);
+    expect(lerPercentual("100")).toBe(100);
+  });
+
+  it("recusa o que não dá para guardar sem mudar", () => {
+    expect(lerPercentual("4,535")).toBeNull();
+    expect(lerPercentual("100,01")).toBeNull();
+    expect(lerPercentual("-1")).toBeNull();
+    expect(lerPercentual("")).toBeNull();
+    expect(lerPercentual("seis")).toBeNull();
+  });
+
+  it("aparece do jeito brasileiro", () => {
+    expect(percentualBonito(4.5)).toBe("4,5");
+    expect(percentualBonito(6)).toBe("6");
+    expect(percentualBonito(4.53)).toBe("4,53");
   });
 });

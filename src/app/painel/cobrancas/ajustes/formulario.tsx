@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { Campo } from "@/componentes/ui/campo";
+import { Campo, Escolha } from "@/componentes/ui/campo";
 import { BotaoEnviar } from "@/componentes/ui/botao";
 import { Aviso } from "@/componentes/ui/etiqueta";
 import { MOMENTOS } from "@/lib/cobranca";
-import { salvarAjustesDeCobranca, type Resposta } from "../acoes";
+import { ROTULO_DO_TIPO_DE_CHAVE, TIPOS_DE_CHAVE } from "@/lib/pix";
+import { salvarAjustesDeCobranca, type RespostaDosAjustes } from "../acoes";
 
 export function FormularioDeAjustes({
   pixChave,
@@ -18,10 +19,12 @@ export function FormularioDeAjustes({
   lembretes: Record<string, boolean>;
   temLembretes: boolean;
 }) {
-  const [resposta, enviar] = useActionState<Resposta, FormData>(
+  const [resposta, enviar] = useActionState<RespostaDosAjustes, FormData>(
     salvarAjustesDeCobranca,
     null,
   );
+  // Depois de um erro, o formulário volta com o que a pessoa tinha digitado.
+  const campos = resposta?.campos;
 
   const nomeDoCampo: Record<string, string> = {
     antes: "lembreteAntes",
@@ -35,20 +38,39 @@ export function FormularioDeAjustes({
       {resposta?.erro ? <Aviso tom="erro">{resposta.erro}</Aviso> : null}
       {resposta?.recado ? <Aviso tom="boa">{resposta.recado}</Aviso> : null}
 
-      <div className="space-y-4">
+      <div className="space-y-4" key={campos ? "digitado" : pixChave}>
         <Campo
           nome="pixChave"
           rotulo="Sua chave Pix"
           obrigatorio={false}
-          defaultValue={pixChave}
+          defaultValue={campos?.pixChave ?? pixChave}
           placeholder="(66) 99251-3501"
-          dica="Telefone, CPF, CNPJ, e-mail ou chave aleatória, exatamente como no seu banco. É com ela que o código de pagamento é gerado."
+          dica="Celular, CPF, CNPJ, e-mail ou chave aleatória, exatamente como no seu banco. É com ela que o código de pagamento é gerado."
         />
+        <div
+          className={
+            resposta?.pedeTipo
+              ? "rounded-2xl border border-terracota/50 bg-terracota/5 p-3"
+              : undefined
+          }
+        >
+          <Escolha
+            nome="pixTipo"
+            rotulo="Tipo da chave"
+            obrigatorio={false}
+            defaultValue={campos?.pixTipo ?? ""}
+            opcoes={[
+              { valor: "", rotulo: "O Bossa reconhece pela chave" },
+              ...TIPOS_DE_CHAVE.map((tipo) => ({ valor: tipo, rotulo: ROTULO_DO_TIPO_DE_CHAVE[tipo] })),
+            ]}
+            dica="Só precisa escolher quando o número serve para mais de um tipo, como onze números que podem ser CPF ou celular."
+          />
+        </div>
         <Campo
           nome="pixCidade"
           rotulo="Cidade de quem recebe"
           obrigatorio={false}
-          defaultValue={pixCidade}
+          defaultValue={campos?.pixCidade ?? pixCidade}
           placeholder="Cuiabá"
           dica="O código Pix exige a cidade junto com o nome. Sem ela, o banco do cliente recusa o código."
         />

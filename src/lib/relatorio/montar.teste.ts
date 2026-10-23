@@ -169,6 +169,14 @@ describe("relatório do mês: saídas, equipe e resultado", () => {
     expect(impostoEstimado(-500, 6)).toBe(0);
     expect(impostoEstimado(12345, 0)).toBe(0);
   });
+
+  it("o imposto aceita percentual com casas decimais, com a conta em centavos inteiros", () => {
+    // 4,5% de R$ 1.000,00 = R$ 45,00 (antes o 4,5 virava 5 e dava R$ 50,00).
+    expect(impostoEstimado(100000, 4.5)).toBe(4500);
+    // 4,53% de R$ 1.234,56 = R$ 55,925568: arredonda para R$ 55,93.
+    expect(impostoEstimado(123456, 4.53)).toBe(5593);
+    expect(Number.isInteger(impostoEstimado(99999, 6.25))).toBe(true);
+  });
 });
 
 describe("relatório do mês: cobranças e contas na virada", () => {

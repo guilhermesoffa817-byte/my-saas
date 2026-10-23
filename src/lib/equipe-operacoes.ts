@@ -43,6 +43,7 @@ import {
   type Vinculo,
 } from "@/lib/equipe";
 import { naturezaDoPagamentoDaEquipe } from "@/lib/custos/regras";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { conferirMesesAbertos, mesDoDiaPuro, mesDoInstante } from "@/lib/fechamento/trava";
 
 type Banco = PrismaClient;
@@ -519,7 +520,7 @@ export async function basesDoMes(
       colaboradorId: { not: null },
       inicio: { gte: de, lt: ate },
     },
-    select: { colaboradorId: true, servico: { select: { precoCentavos: true } } },
+    select: { colaboradorId: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
   });
 
   const bases: Record<string, BaseDoMes> = {};
@@ -527,7 +528,7 @@ export async function basesDoMes(
     if (!atendimento.colaboradorId) continue;
     const atual = bases[atendimento.colaboradorId] ?? { baseCentavos: 0, atendimentos: 0 };
     bases[atendimento.colaboradorId] = {
-      baseCentavos: atual.baseCentavos + atendimento.servico.precoCentavos,
+      baseCentavos: atual.baseCentavos + precoDoAtendimento(atendimento),
       atendimentos: atual.atendimentos + 1,
     };
   }

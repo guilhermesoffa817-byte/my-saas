@@ -7,7 +7,7 @@
  * Só mostra totais. Nenhum nome de cliente aparece aqui: o contador precisa do
  * dinheiro do mês, não de quem foi atendido.
  */
-import { dataPuraCurta, deDataPura, emReais } from "@/lib/formato";
+import { dataPuraCurta, deDataPura, emReais, percentualBonito } from "@/lib/formato";
 import {
   AVISO_DAS_COBRANCAS,
   AVISO_DO_IMPOSTO,
@@ -192,7 +192,7 @@ export function RelatorioNaTela({
         <Numero
           rotulo="Imposto estimado"
           valorCentavos={resultado.impostoEstimadoCentavos}
-          detalhe={`${relatorio.impostoPercentual}% das entradas · não é guia`}
+          detalhe={`${percentualBonito(relatorio.impostoPercentual)}% das entradas · não é guia`}
         />
       </div>
 
@@ -267,7 +267,7 @@ export function RelatorioNaTela({
             {
               rotulo: "Imposto estimado",
               valorCentavos: -resultado.impostoEstimadoCentavos,
-              detalhe: `${relatorio.impostoPercentual}% sobre as entradas`,
+              detalhe: `${percentualBonito(relatorio.impostoPercentual)}% sobre as entradas`,
             },
             {
               rotulo: "Depois do imposto estimado",
