@@ -174,6 +174,19 @@ describe.skipIf(!TEM_BANCO)("acesso com banco", () => {
       expect(await db.tentativaDeEntrada.count()).toBe(0);
     });
 
+    it("muitas senhas erradas ao mesmo tempo não furam o freio", async () => {
+      await criarDona();
+      const { entrar } = await acoes();
+      relogio(new Date("2026-10-19T13:00:00Z"));
+      const respostas = await Promise.all(
+        Array.from({ length: 15 }, (_, i) =>
+          entrar(null, formulario({ email: "carla@teste.com.br", senha: `chute-paralelo-${i}` })),
+        ),
+      );
+      const conferidas = respostas.filter((r) => !r?.erro?.startsWith("Muitas tentativas"));
+      expect(conferidas).toHaveLength(REGRAS.email.livres);
+    });
+
     it("o freio vale igual para e-mail sem conta, para não contar quem tem conta aqui", async () => {
       const { entrar } = await acoes();
       relogio(new Date("2026-10-19T13:00:00Z"));

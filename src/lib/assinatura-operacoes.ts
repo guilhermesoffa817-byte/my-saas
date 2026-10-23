@@ -108,6 +108,11 @@ export async function confirmarPix(
   db: Banco,
   pagamentoId: string,
   agora = new Date(),
+  /**
+   * O plano e o valor que o admin viu na tela. Se a cliente trocou o plano do
+   * aviso depois disso, não confirma: o Pix pago pode ser de outro valor.
+   */
+  esperado?: { plano: string; valorCentavos: number },
 ): Promise<ResultadoDoPagamento | null> {
   return db.$transaction(async (tx) => {
     const pagamento = await tx.pagamento.findUnique({
@@ -121,7 +126,7 @@ export async function confirmarPix(
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`assinatura:${pagamento.usuarioId}`}, 0))`;
 
     const { count } = await tx.pagamento.updateMany({
-      where: { id: pagamentoId, status: "aguardando" },
+      where: { id: pagamentoId, status: "aguardando", ...(esperado ?? {}) },
       data: { status: "confirmado", respondidoEm: agora },
     });
     if (count !== 1) return null;

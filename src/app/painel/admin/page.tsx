@@ -225,6 +225,9 @@ export default async function PaginaAdmin() {
                   <div className="flex flex-wrap gap-2">
                     <form action={confirmarPagamento}>
                       <input type="hidden" name="id" value={pagamento.id} />
+                      {/* O que o admin viu: se a cliente trocar o plano do aviso antes do clique, a confirmação é recusada. */}
+                      <input type="hidden" name="plano" value={pagamento.plano} />
+                      <input type="hidden" name="valorCentavos" value={pagamento.valorCentavos} />
                       <BotaoEnviar>
                         {efeito.conversao
                           ? `Confirmar e trocar para o ${plano.nome}`

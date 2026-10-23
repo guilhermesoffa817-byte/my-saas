@@ -70,6 +70,25 @@ export async function situacaoDaEntrada(db: Banco, chaves: Chaves, agora: Date):
   return liberaEm ? { liberado: false, liberaEm } : { liberado: true };
 }
 
+/**
+ * Confere o freio e já guarda esta tentativa como errada, numa transação com
+ * trava pelo e-mail: pedidos em paralelo entram na fila e cada um vê as
+ * tentativas dos anteriores, então 50 de uma vez não viram 50 palpites. Se a
+ * senha conferir, quem chamou apaga as erradas do e-mail (esquecerErradasDoEmail).
+ */
+export async function reservarTentativa(
+  db: Pick<PrismaClient, "$transaction">,
+  chaves: Chaves,
+  agora: Date,
+): Promise<Situacao> {
+  return db.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`entrada:${chaves.emailHash}`}, 0))`;
+    const situacao = await situacaoDaEntrada(tx, chaves, agora);
+    if (situacao.liberado) await registrarSenhaErrada(tx, chaves, agora);
+    return situacao;
+  });
+}
+
 /** Guarda uma senha errada e aproveita para jogar fora as de mais de um dia. */
 export async function registrarSenhaErrada(db: Banco, chaves: Chaves, agora: Date) {
   await db.tentativaDeEntrada.create({ data: { ...chaves, criadoEm: agora } });

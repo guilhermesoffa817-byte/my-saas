@@ -81,7 +81,7 @@ async function pagar(conta: { id: string }, plano: string) {
 
   sessao.usuario = await novaConta(undefined, "admin");
   const { confirmarPagamento } = await import("@/app/painel/admin/acoes");
-  await confirmarPagamento(formulario({ id: pagamento.id }));
+  await confirmarPagamento(formulario({ id: pagamento.id, plano: pagamento.plano, valorCentavos: String(pagamento.valorCentavos) }));
   return db.assinatura.findUniqueOrThrow({ where: { usuarioId: conta.id } });
 }
 
@@ -173,6 +173,23 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
       await db.pagamento.create({ data: { ...aviso, status: "recusado" } });
     });
 
+    it("aviso trocado depois que o admin abriu a tela não é confirmado com o plano novo", async () => {
+      const conta = await novaConta({ status: "demonstracao", plano: "mensal", validaAte: new Date() });
+      sessao.usuario = conta;
+      await avisar("mensal");
+      const db = await banco();
+      const visto = await db.pagamento.findFirstOrThrow({ where: { usuarioId: conta.id } });
+      // A cliente troca para o Completo anual antes do clique do admin.
+      await avisar("vip_anual");
+
+      sessao.usuario = await novaConta(undefined, "admin");
+      const { confirmarPagamento } = await import("@/app/painel/admin/acoes");
+      await confirmarPagamento(formulario({ id: visto.id, plano: visto.plano, valorCentavos: String(visto.valorCentavos) }));
+
+      const depois = await db.pagamento.findUniqueOrThrow({ where: { id: visto.id } });
+      expect(depois).toMatchObject({ status: "aguardando", plano: "vip_anual" });
+    });
+
     it("dois cliques em 'Confirmar' liberam os dias uma vez só", async () => {
       const conta = await novaConta({ status: "demonstracao", plano: "mensal", validaAte: new Date() });
       sessao.usuario = conta;
@@ -183,8 +200,8 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
       sessao.usuario = await novaConta(undefined, "admin");
       const { confirmarPagamento } = await import("@/app/painel/admin/acoes");
       await Promise.all([
-        confirmarPagamento(formulario({ id: pagamento.id })),
-        confirmarPagamento(formulario({ id: pagamento.id })),
+        confirmarPagamento(formulario({ id: pagamento.id, plano: "mensal", valorCentavos: String(pagamento.valorCentavos) })),
+        confirmarPagamento(formulario({ id: pagamento.id, plano: "mensal", valorCentavos: String(pagamento.valorCentavos) })),
       ]);
 
       const assinatura = await db.assinatura.findUniqueOrThrow({ where: { usuarioId: conta.id } });

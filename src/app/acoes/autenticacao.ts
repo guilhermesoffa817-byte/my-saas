@@ -12,7 +12,7 @@ import { ipDoPedido } from "@/lib/ip";
 import { embaralhar } from "@/lib/agendamento-online/embaralhar";
 import {
   esquecerErradasDoEmail,
-  registrarSenhaErrada,
+  reservarTentativa,
   situacaoDaEntrada,
   tempoDeEspera,
 } from "@/lib/limite-de-entrada";
@@ -147,7 +147,8 @@ export async function entrar(
     conta aqui.
   */
   const chaves = await chavesDaEntrada(email);
-  const antes = await situacaoDaEntrada(prisma, chaves, new Date());
+  // Já conta como errada até a senha conferir: assim pedidos em paralelo não furam o freio.
+  const antes = await reservarTentativa(prisma, chaves, new Date());
   if (!antes.liberado) {
     return {
       erro: `Muitas tentativas com a senha errada. Por segurança, espere ${tempoDeEspera(antes.liberaEm, new Date())} e tente de novo. ${ESQUECI}`,
@@ -164,7 +165,6 @@ export async function entrar(
 
   if (!usuario || !confere) {
     const agora = new Date();
-    await registrarSenhaErrada(prisma, chaves, agora);
     const depois = await situacaoDaEntrada(prisma, chaves, agora);
     if (!depois.liberado) {
       return {

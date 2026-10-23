@@ -17,7 +17,10 @@ export async function confirmarPagamento(dados: FormData) {
   await exigirAdmin();
   // A regra de troca de plano (mesma família soma dias; família diferente
   // converte o saldo em dias do plano novo) mora em lib/assinatura.ts.
-  await confirmarPix(prisma, idDo(dados));
+  const plano = dados.get("plano");
+  const valorCentavos = Number(dados.get("valorCentavos"));
+  if (typeof plano !== "string" || !Number.isInteger(valorCentavos)) return;
+  await confirmarPix(prisma, idDo(dados), new Date(), { plano, valorCentavos });
 
   revalidatePath("/painel/admin");
   revalidatePath("/painel/assinatura");
