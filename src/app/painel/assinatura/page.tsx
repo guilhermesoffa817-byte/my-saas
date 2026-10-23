@@ -96,7 +96,9 @@ export default async function PaginaAssinatura({
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
-  const pixConfigurado = PIX_CHAVE.trim().length > 0;
+  // Chave ambígua (11 dígitos: CPF ou telefone?) não gera código: conta como sem Pix.
+  const pixConfigurado =
+    PIX_CHAVE.trim().length > 0 && pixCopiaECola({ chave: PIX_CHAVE, nome: PIX_NOME, valorCentavos: 100 }) !== "";
 
   /*
     As listas de cada plano saem de itens-dos-planos.ts, a mesma fonte da
@@ -370,9 +372,13 @@ export default async function PaginaAssinatura({
             </div>
           ) : (
             <p className="mt-5 rounded-2xl border border-areia-escura bg-creme px-4 py-3 text-sm text-carvao-suave">
-              A chave Pix ainda não foi configurada, então o QR Code não pode ser
-              gerado. Defina <code>PIX_CHAVE</code> e <code>PIX_NOME</code> nas
-              variáveis de ambiente do site.
+              O pagamento por Pix está indisponível neste momento. Tente de novo mais tarde
+              {temContato ? (
+                <>
+                  {" "}ou fale com a gente: <LinksDeContato />
+                </>
+              ) : null}
+              .
             </p>
           )}
         </div>

@@ -61,6 +61,8 @@ describe.skipIf(!TEM_BANCO)("remarcar horário", () => {
     const depois = await db.agendamento.findUniqueOrThrow({ where: { id: horario.id } });
     expect(depois.inicio).toEqual(sp("2026-10-22T15:30"));
     expect(depois.servicoId).toBe(escova.id);
+    // O preço guardado acompanha o serviço novo (gatilho do banco).
+    expect(depois.precoCentavos).toBe(escova.precoCentavos);
     expect(depois.clienteId).toBe(estudio.cliente.id);
     expect(depois.observacoes).toBe("Marcado pelo link · vai trazer a irmã");
     expect(depois.origem).toBe("link");
