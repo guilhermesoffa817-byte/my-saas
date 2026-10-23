@@ -185,12 +185,15 @@ function formularioComIdsDoExemplo() {
 
 /* -------------------------------------------------------------- testes */
 
+// Com a IA ligada o exemplo mostra tudo; o caso sem IA está em dados.teste.ts.
+const COM_IA = { ia: true, documentos: true };
+
 describe.skipIf(!TEM_BANCO)("demonstração", () => {
   const AGORA = new Date();
 
   beforeAll(async () => {
     await limpar();
-    await refazerEstudioDeExemplo(await banco(), AGORA, true);
+    await refazerEstudioDeExemplo(await banco(), AGORA, true, COM_IA);
   });
 
   beforeEach(() => {
@@ -211,16 +214,22 @@ describe.skipIf(!TEM_BANCO)("demonstração", () => {
 
   it("não refaz os dados enquanto estão frescos, e refaz quando ficam velhos", async () => {
     const db = await banco();
-    const antes = await estudioDeExemplo(db, AGORA);
-    const deNovo = await estudioDeExemplo(db, new Date(AGORA.getTime() + 60_000));
+    const antes = await estudioDeExemplo(db, AGORA, COM_IA);
+    const deNovo = await estudioDeExemplo(db, new Date(AGORA.getTime() + 60_000), COM_IA);
     expect(deNovo.criadoEm.getTime()).toBe(antes.criadoEm.getTime());
 
     const depois = new Date(AGORA.getTime() + 13 * 3_600_000);
-    const refeito = await estudioDeExemplo(db, depois);
+    const refeito = await estudioDeExemplo(db, depois, COM_IA);
     expect(refeito.criadoEm.getTime()).toBe(depois.getTime());
 
+    // A IA saiu do servidor: refaz na hora, mesmo com os dados frescos.
+    const semIa = await estudioDeExemplo(db, new Date(depois.getTime() + 60_000), { ia: false, documentos: false });
+    expect(semIa.iaAceitaEm).toBeNull();
+    expect(await db.documento.count({ where: { usuarioId: semIa.id } })).toBe(0);
+    expect(await db.lancamento.count({ where: { usuarioId: semIa.id, naturezaOrigem: "ia" } })).toBe(0);
+
     // Volta para "agora", para os outros testes verem a agenda de hoje.
-    await refazerEstudioDeExemplo(db, AGORA, true);
+    await refazerEstudioDeExemplo(db, AGORA, true, COM_IA);
   });
 
   it("dois visitantes ao mesmo tempo: refaz uma vez só, sem duplicar nada", async () => {
@@ -232,9 +241,9 @@ describe.skipIf(!TEM_BANCO)("demonstração", () => {
     const contagemEsperada = await linhasDa(ID_DO_ESTUDIO_DE_EXEMPLO);
 
     const resultados = await Promise.all([
-      refazerEstudioDeExemplo(db, AGORA),
-      refazerEstudioDeExemplo(db, AGORA),
-      refazerEstudioDeExemplo(db, AGORA),
+      refazerEstudioDeExemplo(db, AGORA, false, COM_IA),
+      refazerEstudioDeExemplo(db, AGORA, false, COM_IA),
+      refazerEstudioDeExemplo(db, AGORA, false, COM_IA),
     ]);
     expect(resultados.filter(Boolean)).toHaveLength(1);
     expect(await linhasDa(ID_DO_ESTUDIO_DE_EXEMPLO)).toEqual(contagemEsperada);
