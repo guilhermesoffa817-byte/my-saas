@@ -3,7 +3,11 @@ import { Marca } from "@/componentes/marca";
 import { Cartao } from "@/componentes/ui/cartao";
 import { FormularioDeRecuperacao } from "./formulario";
 
-export const metadata = { title: "Esqueci minha senha" };
+export const metadata = {
+  title: "Esqueci minha senha",
+  description: "Esqueceu a senha do Bossa? Diga o seu e-mail e receba pelo WhatsApp um link para escolher outra.",
+  alternates: { canonical: "/esqueci-senha" },
+};
 
 export default function PaginaEsqueciSenha() {
   return (

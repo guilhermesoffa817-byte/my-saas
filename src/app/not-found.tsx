@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Marca } from "@/componentes/marca";
+
+/** O título da aba; o "noindex" o Next acrescenta sozinho, por ser um 404. */
+export const metadata: Metadata = {
+  title: "Página não encontrada",
+};
 
 export default function NaoEncontrado() {
   return (
