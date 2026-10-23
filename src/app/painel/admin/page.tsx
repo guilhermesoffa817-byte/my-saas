@@ -2,7 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
 import { Etiqueta, Vazio } from "@/componentes/avisos";
 import { BotaoConfirmar, BotaoEnviar } from "@/componentes/botoes";
-import { avaliarAssinatura, DIAS_DE_CORTESIA, PLANOS, planoPorCodigo } from "@/lib/assinatura";
+import {
+  aplicarPagamento,
+  avaliarAssinatura,
+  DIAS_DE_CORTESIA,
+  identificadorDoPix,
+  planoPorCodigo,
+  receitaMensalCentavos,
+} from "@/lib/assinatura";
 import { PAPEL_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 import { pedidosEsperando } from "@/lib/pedidos-de-senha";
 import {
@@ -33,7 +40,7 @@ export default async function PaginaAdmin() {
   const [aguardando, assinantes, confirmados, pedidosDeSenha] = await Promise.all([
     prisma.pagamento.findMany({
       where: { status: "aguardando" },
-      include: { usuario: true },
+      include: { usuario: { include: { assinatura: true } } },
       orderBy: { criadoEm: "asc" },
     }),
     prisma.usuario.findMany({
@@ -68,9 +75,15 @@ export default async function PaginaAdmin() {
   // Quem está esperando vem primeiro.
   contasParaSenha.sort((a, b) => Number(Boolean(b.pediuEm)) - Number(Boolean(a.pediuEm)));
 
-  const receitaAtiva = assinantes.filter(
-    (assinante) => avaliarAssinatura(assinante.assinatura).status === "ativa",
+  const agora = new Date();
+  const emDia = assinantes.filter(
+    (assinante) => avaliarAssinatura(assinante.assinatura, agora).status === "ativa",
   ).length;
+  // Cada assinatura pelo próprio plano, com o anual dividido por doze.
+  const receitaPorMes = receitaMensalCentavos(
+    assinantes.map((assinante) => assinante.assinatura),
+    agora,
+  );
 
   // Parceiros são as contas que têm um código de indicação criado.
   const comCodigo = await prisma.usuario.findMany({
@@ -130,11 +143,8 @@ export default async function PaginaAdmin() {
       <section className="grid gap-4 sm:grid-cols-3">
         {[
           { rotulo: "Avisos para conferir", valor: String(aguardando.length) },
-          { rotulo: "Assinaturas em dia", valor: String(receitaAtiva) },
-          {
-            rotulo: "Receita recorrente",
-            valor: emReais(receitaAtiva * PLANOS.mensal.valorCentavos),
-          },
+          { rotulo: "Assinaturas em dia", valor: String(emDia) },
+          { rotulo: "Receita por mês", valor: emReais(receitaPorMes) },
         ].map((item) => (
           <div key={item.rotulo} className="cartao py-5">
             <p className="text-xs font-semibold tracking-widest text-carvao-suave uppercase">
@@ -167,51 +177,72 @@ export default async function PaginaAdmin() {
           />
         ) : (
           <ul className="space-y-3">
-            {aguardando.map((pagamento) => (
-              <li
-                key={pagamento.id}
-                className="cartao flex flex-wrap items-start justify-between gap-4"
-              >
-                <div>
-                  <p className="font-display text-lg font-semibold text-carvao">
-                    {pagamento.usuario.nomeNegocio}
-                  </p>
-                  <p className="text-sm text-carvao-suave">
-                    {pagamento.usuario.nome} · {pagamento.usuario.email}
-                    {pagamento.usuario.telefone
-                      ? ` · ${telefoneBonito(pagamento.usuario.telefone)}`
-                      : ""}
-                  </p>
-                  <p className="mt-2 text-sm text-carvao">
-                    {emReais(pagamento.valorCentavos)} ·{" "}
-                    <strong>{planoPorCodigo(pagamento.plano).nome}</strong> (
-                    {planoPorCodigo(pagamento.plano).dias} dias) ·{" "}
-                    {competenciaPorExtenso(pagamento.competencia)} · avisado em{" "}
-                    {dataEHora(pagamento.criadoEm)}
-                  </p>
-                  {pagamento.observacao ? (
-                    <p className="mt-2 rounded-2xl bg-areia/40 px-3 py-2 text-sm text-carvao-suave">
-                      {pagamento.observacao}
+            {aguardando.map((pagamento) => {
+              const plano = planoPorCodigo(pagamento.plano);
+              // A mesma regra da confirmação, para o admin ver o que o clique vai fazer.
+              const efeito = aplicarPagamento(pagamento.usuario.assinatura, pagamento.plano, agora);
+              const anterior = efeito.conversao ? planoPorCodigo(efeito.conversao.de) : null;
+              return (
+                <li
+                  key={pagamento.id}
+                  className="cartao flex flex-wrap items-start justify-between gap-4"
+                >
+                  <div>
+                    <p className="font-display text-lg font-semibold text-carvao">
+                      {pagamento.usuario.nomeNegocio}
                     </p>
-                  ) : null}
-                </div>
+                    <p className="text-sm text-carvao-suave">
+                      {pagamento.usuario.nome} · {pagamento.usuario.email}
+                      {pagamento.usuario.telefone
+                        ? ` · ${telefoneBonito(pagamento.usuario.telefone)}`
+                        : ""}
+                    </p>
+                    <p className="mt-2 text-sm text-carvao">
+                      {emReais(pagamento.valorCentavos)} · <strong>{plano.nome}</strong> ({plano.dias}{" "}
+                      dias) · {competenciaPorExtenso(pagamento.competencia)} · avisado em{" "}
+                      {dataEHora(pagamento.criadoEm)}
+                    </p>
+                    <p className="mt-1 text-xs text-carvao-suave">
+                      Identificador no Pix: <span className="font-mono">{identificadorDoPix(pagamento.usuarioId)}</span>
+                    </p>
+                    <p className="mt-2 text-sm text-carvao-suave">
+                      {efeito.conversao && anterior ? (
+                        <>
+                          <strong className="text-carvao">Troca de plano:</strong> o que faltava do{" "}
+                          {anterior.nome} vira {emReais(efeito.conversao.creditoCentavos)} de crédito, ou{" "}
+                          {efeito.conversao.diasExtras} dias a mais no {plano.nome}.{" "}
+                        </>
+                      ) : null}
+                      Confirmando agora, fica no {plano.nome} até {dataCurta(efeito.validaAte)}.
+                    </p>
+                    {pagamento.observacao ? (
+                      <p className="mt-2 rounded-2xl bg-areia/40 px-3 py-2 text-sm text-carvao-suave">
+                        {pagamento.observacao}
+                      </p>
+                    ) : null}
+                  </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <form action={confirmarPagamento}>
-                    <input type="hidden" name="id" value={pagamento.id} />
-                    <BotaoEnviar>Confirmar e liberar 30 dias</BotaoEnviar>
-                  </form>
-                  <form action={recusarPagamento}>
-                    <input type="hidden" name="id" value={pagamento.id} />
-                    <BotaoConfirmar
-                      pergunta={`Marcar o Pix de ${pagamento.usuario.nome} como não localizado?`}
-                    >
-                      Não localizei
-                    </BotaoConfirmar>
-                  </form>
-                </div>
-              </li>
-            ))}
+                  <div className="flex flex-wrap gap-2">
+                    <form action={confirmarPagamento}>
+                      <input type="hidden" name="id" value={pagamento.id} />
+                      <BotaoEnviar>
+                        {efeito.conversao
+                          ? `Confirmar e trocar para o ${plano.nome}`
+                          : `Confirmar e liberar ${plano.dias} dias`}
+                      </BotaoEnviar>
+                    </form>
+                    <form action={recusarPagamento}>
+                      <input type="hidden" name="id" value={pagamento.id} />
+                      <BotaoConfirmar
+                        pergunta={`Marcar o Pix de ${pagamento.usuario.nome} como não localizado?`}
+                      >
+                        Não localizei
+                      </BotaoConfirmar>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -232,7 +263,7 @@ export default async function PaginaAdmin() {
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
             {assinantes.map((assinante) => {
-              const situacao = avaliarAssinatura(assinante.assinatura);
+              const situacao = avaliarAssinatura(assinante.assinatura, agora);
               return (
                 <li key={assinante.id} className="cartao">
                   <div className="flex items-start justify-between gap-3">
@@ -258,9 +289,15 @@ export default async function PaginaAdmin() {
                   </div>
 
                   <p className="mt-3 text-sm text-carvao-suave">
-                    {situacao.liberada ? "Acesso até" : "Venceu em"}{" "}
-                    {dataCurta(situacao.validaAte)} · na casa desde{" "}
-                    {dataCurta(assinante.criadoEm)}
+                    {situacao.demonstracao
+                      ? `Ainda não assinou · conta criada em ${dataCurta(assinante.criadoEm)}`
+                      : `${
+                          situacao.status === "ativa" && assinante.assinatura
+                            ? `${planoPorCodigo(assinante.assinatura.plano).nome} · `
+                            : ""
+                        }${situacao.emTeste ? "Teste até" : situacao.liberada ? "Acesso até" : "Venceu em"} ${dataCurta(
+                          situacao.validaAte,
+                        )} · na casa desde ${dataCurta(assinante.criadoEm)}`}
                   </p>
 
                   {assinante.assinatura ? (
