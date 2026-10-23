@@ -36,12 +36,17 @@ export function Janela({
     if (!aberta && janela.open) janela.close();
   }, [aberta]);
 
+  /*
+    `m-auto` não é enfeite: o preflight do Tailwind zera a margem de todo
+    elemento, e é a margem automática do navegador que centraliza o <dialog>.
+    Sem ela a janela gruda no canto de cima, à esquerda.
+  */
   return (
     <dialog
       ref={referencia}
       onClose={aoFechar}
       aria-labelledby="titulo-da-janela"
-      className="w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-areia-escura bg-superficie p-0 text-carvao backdrop:bg-carvao/40 backdrop:backdrop-blur-sm"
+      className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-areia-escura bg-superficie p-0 text-carvao backdrop:bg-carvao/40 backdrop:backdrop-blur-sm"
     >
       <div className="p-5 sm:p-6">
         <h2 id="titulo-da-janela" className="font-display text-lg font-semibold text-carvao">

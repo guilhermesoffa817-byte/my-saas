@@ -1,11 +1,22 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { Marca } from "@/componentes/marca";
 import { Cartao } from "@/componentes/ui/cartao";
+import { LinksDeContato } from "@/componentes/contato";
+import { canaisDeContato } from "@/lib/contato";
 import { FormularioDeRecuperacao } from "./formulario";
 
-export const metadata = { title: "Esqueci minha senha" };
+export const metadata = {
+  title: "Esqueci minha senha",
+  description: "Esqueceu a senha do Bossa? Diga o seu e-mail e receba pelo WhatsApp um link para escolher outra.",
+  alternates: { canonical: "/esqueci-senha" },
+};
 
-export default function PaginaEsqueciSenha() {
+export default async function PaginaEsqueciSenha() {
+  // Os canais de contato vêm do ambiente do servidor: lidos a cada visita, e
+  // não congelados no build, para trocar o contato sem publicar o site de novo.
+  await connection();
+
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
       <div className="mb-8">
@@ -22,7 +33,9 @@ export default function PaginaEsqueciSenha() {
 
       <div className="mt-6">
         <Cartao>
-          <FormularioDeRecuperacao />
+          <FormularioDeRecuperacao
+            contato={canaisDeContato().length ? <LinksDeContato /> : null}
+          />
         </Cartao>
       </div>
 

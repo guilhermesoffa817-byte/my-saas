@@ -19,7 +19,9 @@ model Usuario {
   /// CPF de quem trabalha sozinha, ou CNPJ de quem já abriu empresa.
   documento         String?
   /// Percentual usado para estimar o imposto do mês. É estimativa, não guia fiscal.
-  impostoPercentual Int       @default(6)
+  /// Aceita até duas casas (4,5 = 4,5%). Não é dinheiro: o imposto em reais
+  /// sai em centavos inteiros (impostoEstimado, em lib/relatorio/montar.ts).
+  impostoPercentual Float     @default(6)
   /// Código do link de indicação desta pessoa. Só quem indica tem um.
   codigoIndicacao   String?   @unique
   /// Código de quem trouxe esta conta, guardado no momento do cadastro.
@@ -41,8 +43,8 @@ model Usuario {
   ramo              String?
   /// Quando a dona leu e aceitou o aviso do assistente de IA. Vazio = ainda não.
   iaAceitaEm        DateTime?
-  /// Sobe a cada troca de senha. A sessão carrega esse número, então quem
-  /// entrou com a senha antiga perde o acesso quando a senha muda.
+  /// Sobe a cada troca de senha e a cada Sair. A sessão carrega esse número,
+  /// então todo cookie emitido antes perde o acesso, em qualquer aparelho.
   sessaoVersao      Int       @default(0)
   criadoEm          DateTime  @default(now())
 
@@ -92,6 +94,9 @@ model Pagamento {
   valorCentavos Int       @default(16900)
   plano         String    @default("mensal")
   competencia   String
+  /// "aguardando", "confirmado", "recusado" ou "repetido" (aviso duplicado de antes da regra).
+  /// Só um "aguardando" por conta: índice único parcial criado na migração
+  /// 20261019130000_um_pix_aguardando_por_conta (o Prisma 6 não descreve índice parcial).
   status        String    @default("aguardando")
   observacao    String?
   criadoEm      DateTime  @default(now())
@@ -159,6 +164,13 @@ model Agendamento {
   /// Quando a dona viu, no Início, o horário que chegou pelo link. Enquanto
   /// estiver vazio, o horário aparece em destaque como novidade.
   vistoEm       DateTime?
+  /// O preço deste atendimento, guardado quando ele é marcado. Mudar o preço
+  /// do serviço depois não mexe no que já foi marcado nem no que já entrou.
+  /// Cobrança do horário recebida com outro valor passa a valer o recebido.
+  /// Vazio só em gravação que esqueceu de mandar: um gatilho do banco preenche
+  /// com o preço do serviço (migração 20261019100000_preco_do_atendimento).
+  /// Para ler, use precoDoAtendimento() de lib/preco-do-atendimento.ts.
+  precoCentavos Int?
   criadoEm      DateTime  @default(now())
 
   usuario     Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -704,6 +716,24 @@ model TentativaDoContador {
   ipHash   String
   criadoEm DateTime @default(now())
 
+  @@index([ipHash, criadoEm])
+  @@index([criadoEm])
+}
+
+/// Cada senha errada na tela de entrada.
+///
+/// Segura quem tenta adivinhar senhas: muitas erradas para o mesmo e-mail, ou
+/// do mesmo IP, e a entrada passa a pedir uma espera que cresce a cada erro.
+/// E-mail e IP ficam embaralhados com o segredo do servidor, nunca em texto. A
+/// linha some depois de um dia, e as do e-mail somem quando a senha certa entra.
+/// Não tem estúdio porque o e-mail digitado pode nem ter conta.
+model TentativaDeEntrada {
+  id        String   @id @default(cuid())
+  emailHash String
+  ipHash    String
+  criadoEm  DateTime @default(now())
+
+  @@index([emailHash, criadoEm])
   @@index([ipHash, criadoEm])
   @@index([criadoEm])
 }

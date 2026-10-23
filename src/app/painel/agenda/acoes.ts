@@ -12,6 +12,7 @@ import {
   apagarHorario,
   horarioOcupado,
   mudarStatusDoHorario,
+  remarcarHorarioNoBanco,
   type StatusDoHorario,
 } from "@/lib/agenda-operacoes";
 import { ROTULO_DA_AUSENCIA, ehTipoDeAusencia } from "@/lib/equipe";
@@ -87,6 +88,7 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
         inicio,
         observacoes: observacoes || null,
         colaboradorId,
+        precoCentavos: servico.precoCentavos,
       },
     });
     return null;
@@ -100,6 +102,43 @@ export async function marcarHorario(_anterior: Resposta, dados: FormData): Promi
 
   atualizarTelas();
   return { recado: `Marcado! ${cliente.nome} em ${dataEHora(inicio)}.` };
+}
+
+/**
+ * Remarcar: novo dia e hora, e também serviço e quem atende, com a mesma
+ * conferência de choque de quem marca (lib/agenda-operacoes.ts). Dá certo e a
+ * tela vai para o dia novo, com o recado; dá errado e o recado fica no
+ * formulário, aberto, para a dona tentar outro horário.
+ */
+export async function remarcarHorario(_anterior: Resposta, dados: FormData): Promise<Resposta> {
+  const { usuario } = await exigirEscrita();
+
+  const id = texto(dados, "id");
+  const servicoId = texto(dados, "servicoId");
+  const inicio = deHorarioLocal(texto(dados, "inicio"));
+  // Sem o campo (conta sem equipe), fica quem já atendia; vazio é a própria dona.
+  const colaboradorId = dados.has("colaboradorId") ? texto(dados, "colaboradorId") || null : undefined;
+
+  if (!id) return { erro: "Não encontramos esse horário na sua agenda." };
+  if (!servicoId) return { erro: "Escolha o serviço desse atendimento." };
+  if (!inicio) return { erro: "Escolha o dia e a hora do atendimento." };
+
+  if (colaboradorId) {
+    const problema = await conferirQuemAtende(usuario, colaboradorId, inicio);
+    if (problema) return { erro: problema };
+  }
+
+  const feito = await remarcarHorarioNoBanco(prisma, usuario.id, {
+    id,
+    inicio,
+    servicoId,
+    colaboradorId,
+  });
+  if ("erro" in feito) return { erro: feito.erro };
+  if (!feito.mudou) return { recado: "Esse já é o horário marcado. Nada mudou." };
+
+  atualizarTelas();
+  redirect(`/painel/agenda?dia=${paraDataLocal(feito.inicio)}&aviso=remarcado`);
 }
 
 /**

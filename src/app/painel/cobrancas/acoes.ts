@@ -6,6 +6,7 @@ import { exigirEscrita } from "@/lib/guardas";
 import { podeUsar } from "@/lib/recursos";
 import { deDataPura, hojeNoEstudio, paraCentavos, paraDataPura } from "@/lib/formato";
 import { FORMAS_DE_PAGAMENTO, receberCobranca } from "@/lib/cobranca-operacoes";
+import { chaveParaGuardar, chavePorExtenso, ehTipoDeChave, lerChavePix } from "@/lib/pix";
 import {
   lembreteDeHoje,
   type CodigoDoMomento,
@@ -209,17 +210,47 @@ export async function cancelarCobranca(dados: FormData) {
 /* Ajustes do estúdio                                                  */
 /* ------------------------------------------------------------------ */
 
+export type CamposDosAjustes = { pixChave: string; pixCidade: string; pixTipo: string };
+
+export type RespostaDosAjustes =
+  | ({ erro?: string; recado?: string } & {
+      /** Depois de um erro, o formulário volta com o que a pessoa digitou. */
+      campos?: CamposDosAjustes;
+      /** A chave serve para mais de um tipo: a tela destaca a escolha do tipo. */
+      pedeTipo?: boolean;
+    })
+  | null;
+
 export async function salvarAjustesDeCobranca(
-  _anterior: Resposta,
+  _anterior: RespostaDosAjustes,
   dados: FormData,
-): Promise<Resposta> {
+): Promise<RespostaDosAjustes> {
   const { usuario } = await exigirEscrita();
 
   const pixChave = texto(dados, "pixChave");
   const pixCidade = texto(dados, "pixCidade");
+  const tipoEscolhido = texto(dados, "pixTipo");
+  const campos = { pixChave, pixCidade, pixTipo: tipoEscolhido };
 
   if (pixChave && !pixCidade) {
-    return { erro: "O código Pix também precisa da cidade de quem recebe." };
+    return { erro: "O código Pix também precisa da cidade de quem recebe.", campos };
+  }
+
+  /*
+    A chave é conferida aqui, ao salvar, e não só na hora de cobrar: um CPF
+    lido como celular mandava o Pix de todas as cobranças para o telefone de
+    outra pessoa, sem aviso. Ela fica guardada num formato que não deixa dúvida
+    (CPF com pontos e hífen, celular com +55), e o recado diz o que foi entendido.
+  */
+  let chaveGuardada: string | null = null;
+  let entendida = "";
+  if (pixChave) {
+    const lida = lerChavePix(pixChave, ehTipoDeChave(tipoEscolhido) ? tipoEscolhido : null);
+    if (!lida.certo) {
+      return { erro: lida.mensagem, campos, pedeTipo: lida.motivo === "ambigua" };
+    }
+    chaveGuardada = chaveParaGuardar(lida);
+    entendida = chavePorExtenso(lida);
   }
 
   /*
@@ -241,14 +272,17 @@ export async function salvarAjustesDeCobranca(
   await prisma.usuario.update({
     where: { id: usuario.id },
     data: {
-      pixChave: pixChave || null,
+      pixChave: chaveGuardada,
       pixCidade: pixCidade || null,
       ...preferencias,
     },
   });
 
   atualizarTelas();
-  return { recado: "Ajustes salvos." };
+  revalidatePath("/painel/cobrancas/ajustes");
+  return {
+    recado: entendida ? `Ajustes salvos. Sua chave Pix ficou assim: ${entendida}.` : "Ajustes salvos.",
+  };
 }
 
 export async function mudarLembretesDoCliente(dados: FormData) {

@@ -36,7 +36,8 @@ export default async function PaginaClientes({
         : {}),
     },
     orderBy: { nome: "asc" },
-    include: { _count: { select: { agendamentos: true } } },
+    // Visita é atendimento que aconteceu: marcado ou cancelado não conta.
+    include: { _count: { select: { agendamentos: { where: { status: "concluido" } } } } },
   });
 
   return (

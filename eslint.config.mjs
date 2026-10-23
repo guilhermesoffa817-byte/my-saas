@@ -8,6 +8,8 @@ const eslintConfig = defineConfig([
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
+    // Scripts soltos das artes de divulgação, fora do app.
+    "docs/**",
     ".next/**",
     "out/**",
     "build/**",

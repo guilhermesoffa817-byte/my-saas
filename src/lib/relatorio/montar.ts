@@ -209,7 +209,10 @@ export function referenciaDoMes(mes: string, agora: Date) {
 /** O imposto estimado, igual ao das Finanças: percentual inteiro sobre o que entrou. */
 export function impostoEstimado(entradasCentavos: number, percentual: number) {
   if (entradasCentavos <= 0 || percentual <= 0) return 0;
-  return Math.round((entradasCentavos * percentual) / 100);
+  // O percentual tem até duas casas (4,5%). A conta é em centésimos de ponto,
+  // inteiros, para o resultado em centavos não depender de número quebrado.
+  const centesimos = Math.round(percentual * 100);
+  return Math.round((entradasCentavos * centesimos) / 10_000);
 }
 
 export function montarRelatorio(dados: DadosDoMes): RelatorioDoMes {

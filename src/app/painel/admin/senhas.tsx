@@ -6,7 +6,7 @@ import { Cartao, Secao } from "@/componentes/ui/cartao";
 import { Aviso, Etiqueta } from "@/componentes/ui/etiqueta";
 import { BotaoCopiar } from "@/componentes/ui/botao";
 import { gerarLinkDeSenha } from "@/app/acoes/senha";
-import { linkDaNovaSenha, mensagemDaNovaSenha } from "@/lib/senha";
+import { MINUTOS_DE_VALIDADE, linkDaNovaSenha, mensagemDaNovaSenha } from "@/lib/senha";
 import { linkDoWhatsApp, telefoneParaWhatsApp } from "@/lib/telefone";
 
 export type ContaParaSenha = {
@@ -97,8 +97,8 @@ export function Senhas({
                 {link && mensagem ? (
                   <div className="mt-4 space-y-3 rounded-xl border border-terracota/30 bg-terracota/5 p-3">
                     <p className="text-xs leading-relaxed text-carvao-suave">
-                      Este link aparece uma vez só e vale por 30 minutos. Mande
-                      agora; depois de sair desta tela não dá para vê-lo de novo.
+                      Este link aparece uma vez só e vale por {MINUTOS_DE_VALIDADE} minutos.
+                      Mande agora; depois de sair desta tela não dá para vê-lo de novo.
                     </p>
                     <p className="font-mono text-xs break-all text-carvao-suave select-all">
                       {link}
@@ -140,6 +140,22 @@ export function Senhas({
           );
         })}
       </ul>
+
+      {/*
+        A administração não aparece nesta lista: se for ela quem esqueceu a
+        senha, não teria como abrir esta tela. O caminho é o comando de
+        terminal, que gera o link direto no banco.
+      */}
+      <div className="space-y-2 text-xs leading-relaxed text-carvao-suave">
+        <p>
+          Se você esquecer a sua própria senha, rode este comando no computador
+          com o projeto, com o endereço do banco de produção no{" "}
+          <code className="font-mono">.env</code>, e abra o link que aparecer:
+        </p>
+        <code className="block rounded-xl bg-areia/40 px-3 py-2 font-mono break-words text-carvao">
+          npm run senha:link -- seu@email.com.br
+        </code>
+      </div>
     </Secao>
   );
 }

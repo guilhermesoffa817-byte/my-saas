@@ -4,6 +4,7 @@ import { exigirLeituraDoRecurso } from "@/lib/guardas";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import { dataEHora, hojeNoEstudio, paraDataPura } from "@/lib/formato";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import { FormularioDeCobranca } from "./formulario";
 
 export const metadata = { title: "Nova cobrança" };
@@ -25,6 +26,7 @@ export default async function PaginaNovaCobranca({
         select: {
           id: true,
           inicio: true,
+          precoCentavos: true,
           cliente: { select: { id: true, nome: true } },
           servico: { select: { nome: true, precoCentavos: true } },
         },
@@ -50,8 +52,9 @@ export default async function PaginaNovaCobranca({
     if (!existe) notFound();
   }
 
+  // O preço guardado no horário, que é o do dia em que ele foi marcado.
   const valor = agendamento
-    ? (agendamento.servico.precoCentavos / 100).toFixed(2).replace(".", ",")
+    ? (precoDoAtendimento(agendamento) / 100).toFixed(2).replace(".", ",")
     : "";
 
   return (

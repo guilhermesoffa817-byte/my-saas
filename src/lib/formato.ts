@@ -7,16 +7,72 @@ export function emReais(centavos: number) {
   });
 }
 
-/** Converte "1.234,56" ou "1234.56" ou "1234" em centavos. */
+/**
+ * Converte o valor digitado em centavos, lendo do jeito brasileiro.
+ *
+ * Ponto é separador de milhar e vírgula é a dos centavos: "1.500" é mil e
+ * quinhentos, e não R$ 1,50 (o erro antigo, que gravava o preço errado em
+ * silêncio e levava esse valor ao Pix do cliente). Aceita:
+ *   "1.500" e "1500"           -> 150000
+ *   "1.500,50" e "1500,5"      -> 150050
+ *   "15,5" e ",50"             -> 1550 e 50
+ *   "1500.50" e "15.5"         -> ponto com uma ou duas casas é decimal
+ * Devolve null para o que não dá para ler sem adivinhar: "1,234.56" (vírgula
+ * antes do ponto não existe no jeito brasileiro), mais de duas casas depois
+ * da vírgula, número negativo ou texto sem número. A tela então pede de novo.
+ *
+ * A conta é feita em inteiros, reais e centavos separados, sem passar por
+ * número quebrado. Valor acima de VALOR_MAXIMO_EM_CENTAVOS também volta null:
+ * não cabe nas colunas de valor do banco e derrubaria a gravação.
+ */
 export function paraCentavos(valor: string): number | null {
   const limpo = valor.trim().replace(/[^\d,.-]/g, "");
-  if (!limpo) return null;
-  const normalizado = limpo.includes(",")
-    ? limpo.replace(/\./g, "").replace(",", ".")
-    : limpo;
-  const numero = Number(normalizado);
-  if (!Number.isFinite(numero) || numero < 0) return null;
-  return Math.round(numero * 100);
+  if (!/\d/.test(limpo) || limpo.includes("-")) return null;
+
+  let reais: string;
+  let centavos = "";
+  if (limpo.includes(",")) {
+    const encontrado = /^(\d{1,3}(?:\.\d{3})+|\d*),(\d{0,2})$/.exec(limpo);
+    if (!encontrado) return null;
+    reais = encontrado[1].replace(/\./g, "");
+    centavos = encontrado[2];
+  } else if (/^\d{1,3}(?:\.\d{3})+$/.test(limpo)) {
+    reais = limpo.replace(/\./g, "");
+  } else {
+    const encontrado = /^(\d*)(?:\.(\d{1,2}))?$/.exec(limpo);
+    if (!encontrado) return null;
+    reais = encontrado[1];
+    centavos = encontrado[2] ?? "";
+  }
+
+  const total = Number(reais || "0") * 100 + Number(centavos.padEnd(2, "0"));
+  return Number.isSafeInteger(total) && total <= VALOR_MAXIMO_EM_CENTAVOS ? total : null;
+}
+
+/**
+ * O maior valor que cabe nas colunas `*Centavos` (inteiro de 32 bits do
+ * Postgres): R$ 21.474.836,47. Nenhum preço, cobrança ou lançamento de um
+ * estúdio chega perto disso; acima daqui é engano de digitação.
+ */
+export const VALOR_MAXIMO_EM_CENTAVOS = 2_147_483_647;
+
+/**
+ * Lê o percentual digitado ("4,5", "4.5", "6", "6%") com até duas casas.
+ * Devolve null fora de 0 a 100 ou com mais casas: a tela pede de novo, em vez
+ * de arredondar sem avisar (4,5 virava 5).
+ */
+export function lerPercentual(valor: string): number | null {
+  const limpo = valor.trim().replace(/\s|%/g, "");
+  const encontrado = /^(\d{1,3})(?:[.,](\d{1,2}))?$/.exec(limpo);
+  if (!encontrado) return null;
+  const centesimos = Number(encontrado[1]) * 100 + Number((encontrado[2] ?? "").padEnd(2, "0"));
+  if (centesimos > 10_000) return null;
+  return centesimos / 100;
+}
+
+/** "4,5", "6", "4,53": o percentual do jeito brasileiro, sem casas sobrando. */
+export function percentualBonito(percentual: number) {
+  return percentual.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 }
 
 export function dataCurta(data: Date) {

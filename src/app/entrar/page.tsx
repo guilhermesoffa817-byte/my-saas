@@ -4,7 +4,11 @@ import { Marca } from "@/componentes/marca";
 import { usuarioAtual } from "@/lib/sessao";
 import { FormularioEntrar } from "./formulario";
 
-export const metadata = { title: "Entrar" };
+export const metadata = {
+  title: "Entrar",
+  description: "Entre no Bossa para ver a agenda de hoje, as cobranças e o dinheiro do seu estúdio.",
+  alternates: { canonical: "/entrar" },
+};
 
 export default async function PaginaEntrar() {
   const usuario = await usuarioAtual();

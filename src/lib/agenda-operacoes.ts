@@ -14,7 +14,7 @@
 import type { Prisma, PrismaClient } from "@/generated/prisma";
 import { travarAgendaDoEstudio } from "@/lib/agenda-trava";
 import { conferirMesesAbertos, mesDoInstante } from "@/lib/fechamento/trava";
-import { somarDias } from "@/lib/formato";
+import { emReais, hora, somarDias } from "@/lib/formato";
 
 type Banco = PrismaClient;
 
@@ -157,5 +157,101 @@ export async function apagarHorario(
 
     await tx.agendamento.deleteMany({ where: { id: agendamento.id, usuarioId } });
     return { resultado: "feito" as const, inicio: agendamento.inicio };
+  });
+}
+
+export type EntradaDaRemarcacao = {
+  id: string;
+  inicio: Date;
+  servicoId: string;
+  /** `undefined` mantém quem já atendia; `null` é a própria dona. */
+  colaboradorId?: string | null;
+};
+
+export type ResultadoDaRemarcacao =
+  | { ok: true; inicio: Date; mudou: boolean }
+  | { erro: string };
+
+/**
+ * Remarcar: muda o dia e a hora, o serviço e quem atende de um horário ainda
+ * agendado. Cliente, observação e a marca "Marcado pelo link" ficam como
+ * estavam, que é o que se perdia apagando e marcando de novo.
+ *
+ * A conferência de choque é a mesma de quem marca, dentro da mesma trava da
+ * agenda, ignorando o próprio horário (mudar 15 minutos para frente não pode
+ * esbarrar nele mesmo). Concluído e cancelado não se remarcam: o concluído já
+ * é dinheiro do mês, e o cancelado volta para agendado antes.
+ *
+ * Trocar o serviço de um horário que já tem cobrança deixaria o valor da
+ * cobrança diferente do serviço; nesse caso só o dia, a hora e quem atende
+ * podem mudar.
+ */
+export async function remarcarHorarioNoBanco(
+  db: Banco,
+  usuarioId: string,
+  entrada: EntradaDaRemarcacao,
+): Promise<ResultadoDaRemarcacao> {
+  return db.$transaction(async (tx) => {
+    // A trava vem antes da leitura: ninguém conclui nem marca por cima no meio.
+    await travarAgendaDoEstudio(tx, usuarioId);
+
+    const atual = await tx.agendamento.findFirst({
+      where: { id: entrada.id, usuarioId },
+      select: {
+        id: true,
+        status: true,
+        inicio: true,
+        servicoId: true,
+        colaboradorId: true,
+        cobrancas: { where: { situacao: { not: "cancelada" } }, select: { valorCentavos: true } },
+      },
+    });
+    if (!atual) return { erro: "Não encontramos esse horário na sua agenda." };
+    if (atual.status === "concluido") {
+      return { erro: "Esse atendimento já foi concluído. Para mudar o horário, volte para agendado antes." };
+    }
+    if (atual.status === "cancelado") {
+      return { erro: "Esse horário foi cancelado. Volte para agendado antes de remarcar." };
+    }
+
+    const servico = await tx.servico.findFirst({
+      where: { id: entrada.servicoId, usuarioId },
+      select: { id: true, duracaoMin: true },
+    });
+    if (!servico) return { erro: "Não encontramos esse serviço na sua lista." };
+
+    if (servico.id !== atual.servicoId && atual.cobrancas.length > 0) {
+      return {
+        erro: `Esse horário já tem cobrança de ${emReais(atual.cobrancas[0].valorCentavos)}. Para trocar o serviço, cancele a cobrança antes; o dia e a hora podem mudar à vontade.`,
+      };
+    }
+
+    const colaboradorId =
+      entrada.colaboradorId === undefined ? atual.colaboradorId : entrada.colaboradorId;
+
+    const mudou =
+      atual.inicio.getTime() !== entrada.inicio.getTime() ||
+      atual.servicoId !== servico.id ||
+      atual.colaboradorId !== colaboradorId;
+    if (!mudou) return { ok: true as const, inicio: atual.inicio, mudou: false };
+
+    const choque = await horarioOcupado(tx, {
+      usuarioId,
+      inicio: entrada.inicio,
+      duracaoMin: servico.duracaoMin,
+      ignorarId: atual.id,
+      colaboradorId,
+    });
+    if (choque) {
+      return {
+        erro: `Esse horário esbarra no atendimento de ${choque.cliente.nome}, às ${hora(choque.inicio)}. Que tal outro horário?`,
+      };
+    }
+
+    await tx.agendamento.updateMany({
+      where: { id: atual.id, usuarioId, status: "agendado" },
+      data: { inicio: entrada.inicio, servicoId: servico.id, colaboradorId },
+    });
+    return { ok: true as const, inicio: entrada.inicio, mudou: true };
   });
 }

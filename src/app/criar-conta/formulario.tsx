@@ -23,6 +23,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="nome"
             name="nome"
+            defaultValue={estado?.campos?.nome}
             required
             className="campo"
             placeholder="Ana Paula"
@@ -37,6 +38,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="nomeNegocio"
             name="nomeNegocio"
+            defaultValue={estado?.campos?.nomeNegocio}
             required
             className="campo"
             placeholder="Estúdio Bela Vista"
@@ -52,6 +54,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
         <input
           id="email"
           name="email"
+          defaultValue={estado?.campos?.email}
           type="email"
           required
           className="campo"
@@ -68,6 +71,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="telefone"
             name="telefone"
+            defaultValue={estado?.campos?.telefone}
             required
             className="campo"
             placeholder="(66) 99251-3501"
@@ -82,6 +86,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="documento"
             name="documento"
+            defaultValue={estado?.campos?.documento}
             required
             inputMode="numeric"
             className="campo"
@@ -98,6 +103,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="cep"
             name="cep"
+            defaultValue={estado?.campos?.cep}
             inputMode="numeric"
             className="campo"
             placeholder="78000-000"
@@ -112,6 +118,7 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
           <input
             id="endereco"
             name="endereco"
+            defaultValue={estado?.campos?.endereco}
             className="campo"
             placeholder="Rua das Flores, 120, Centro, Cuiabá/MT"
             autoComplete="street-address"
@@ -132,8 +139,12 @@ export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | nu
             minLength={8}
             className="campo"
             placeholder="pelo menos 8 caracteres"
+            aria-describedby="senha-dica"
             autoComplete="new-password"
           />
+          <p id="senha-dica" className="mt-1.5 text-xs leading-relaxed text-carvao-suave">
+            Evite sequências como 12345678, a palavra “senha” e o seu nome.
+          </p>
         </div>
       </div>
 

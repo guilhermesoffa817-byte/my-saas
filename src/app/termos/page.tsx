@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PaginaLegal, Revisar, Secao } from "@/componentes/pagina-legal";
+import { PaginaLegal, Secao, numerarSecoes, type ItemDoSumario } from "@/componentes/pagina-legal";
 import { PLANOS, economiaDoAnual } from "@/lib/assinatura";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
-import { RESPONSAVEL, emailDeContatoValido } from "@/lib/contato";
+import { canaisDeContato, dadosDoResponsavel } from "@/lib/contato";
 import { emReais } from "@/lib/formato";
 import {
   CLASSIFICACOES_POR_MES_NO_COMPLETO,
   LEITURAS_POR_MES_NO_COMPLETO,
   PERGUNTAS_POR_MES_NO_COMPLETO,
+  RECURSOS,
+  recursoLigado,
+  soNoCompleto,
+  type Recurso,
 } from "@/lib/recursos";
 import { NOME_DO_PRODUTO } from "@/lib/site";
 
@@ -23,31 +27,90 @@ export const metadata: Metadata = {
  * Os termos de uso, escritos a partir do que o produto faz hoje.
  *
  * A parte "O que o Bossa não faz" é a mais importante: ela segura a promessa
- * da página de vendas. Preços, teste e franquias vêm das mesmas constantes que
+ * da página de vendas. Preços, planos e franquias vêm das mesmas constantes que
  * o sistema usa, para nunca desencontrarem.
  *
- * Os trechos marcados [REVISAR COM ADVOGADO] e [EXEMPLO] precisam passar por
- * revisão jurídica antes de a página valer como versão final.
+ * O que depende de recurso desligado neste servidor (a inteligência artificial
+ * sem a chave da Anthropic, por exemplo) some do texto, como some da página de
+ * vendas: o contrato não promete o que não funciona. A página é montada no
+ * build, com as chaves da publicação.
+ *
+ * Os pontos que ainda pedem revisão jurídica estão em comentário, com
+ * "REVISAR COM ADVOGADO", e não aparecem na tela.
  */
 
-const SUMARIO = [
-  { id: "o-que-faz", titulo: "O que o Bossa faz" },
-  { id: "nao-faz", titulo: "O que o Bossa não faz" },
-  { id: "conta", titulo: "Sua conta" },
-  { id: "assinatura", titulo: "Demonstração, assinatura e garantia" },
-  { id: "ia", titulo: "Inteligência artificial" },
-  { id: "responsabilidades", titulo: "Suas responsabilidades" },
-  { id: "links", titulo: "Link de agendamento e link do contador" },
-  { id: "disponibilidade", titulo: "Disponibilidade e limites" },
-  { id: "mudancas", titulo: "Mudanças, lei e contato" },
-];
+/** Como cada recurso aparece no contrato. A ordem é a de lib/recursos.ts. */
+const NO_CONTRATO: Record<Recurso, string> = {
+  cobrar: "cobranças pelo WhatsApp com código Pix",
+  lembretes: "lembretes de cobrança",
+  vencimentos: "contas a pagar",
+  documentos: "leitura de documentos por IA",
+  financas: "finanças (entradas, saídas, resumo do mês e imposto estimado)",
+  relatorio: "relatório e fechamento do mês com link do contador",
+  equipe: "equipe",
+  custos: "custos",
+  assistente: "assistente",
+};
+
+/** "a, b e c". */
+function emLista(itens: string[]) {
+  if (itens.length <= 1) return itens.join("");
+  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
+}
+
+const POR_EXTENSO = ["nenhuma", "uma", "duas", "três"];
 
 export default function PaginaTermos() {
+  const leitura = recursoLigado("documentos");
+  const assistente = recursoLigado("assistente");
+  // A classificação de custos usa a mesma chave da IA que o assistente.
+  const classificacao = assistente;
+  const comIa = leitura || assistente || classificacao;
+
+  const funcoesDeIa = [
+    leitura && "leitura de documentos",
+    classificacao && "classificação de custos",
+    assistente && "assistente",
+  ].filter((funcao): funcao is string => Boolean(funcao));
+
+  const doSimples = [
+    "agenda",
+    "link de agendamento",
+    "ficha de clientes",
+    "serviços",
+    ...RECURSOS.filter((recurso) => !soNoCompleto(recurso) && recursoLigado(recurso)).map(
+      (recurso) => NO_CONTRATO[recurso],
+    ),
+  ];
+  const doCompleto = RECURSOS.filter((recurso) => soNoCompleto(recurso) && recursoLigado(recurso)).map(
+    (recurso) => NO_CONTRATO[recurso],
+  );
+
+  const responsavel = dadosDoResponsavel();
+  const temContato = canaisDeContato().length > 0;
+
+  const sumario: ItemDoSumario[] = [
+    { id: "o-que-faz", titulo: "O que o Bossa faz" },
+    { id: "nao-faz", titulo: "O que o Bossa não faz" },
+    { id: "conta", titulo: "Sua conta" },
+    { id: "assinatura", titulo: "Demonstração, assinatura e garantia" },
+    ...(comIa ? [{ id: "ia", titulo: "Inteligência artificial" }] : []),
+    { id: "responsabilidades", titulo: "Suas responsabilidades" },
+    { id: "links", titulo: "Link de agendamento e link do contador" },
+    { id: "disponibilidade", titulo: "Disponibilidade e limites" },
+    {
+      id: "mudancas",
+      titulo: responsavel.nome ? `Mudanças, lei e quem oferece o ${NOME_DO_PRODUTO}` : "Mudanças e lei",
+    },
+  ];
+  const titulo = numerarSecoes(sumario);
+
   return (
     <PaginaLegal
+      pagina="termos"
       titulo="Termos de uso"
-      atualizadaEm="16 de outubro de 2026"
-      sumario={SUMARIO}
+      atualizadaEm="19 de outubro de 2026"
+      sumario={sumario}
       resumo={
         <>
           <p className="font-semibold">Em poucas linhas</p>
@@ -64,33 +127,29 @@ export default function PaginaTermos() {
               Você tem {DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o
               dinheiro de volta.
             </li>
-            <li>
-              O que a IA sugere é informativo e pode ter erro. Confira antes de usar.
-            </li>
+            {comIa ? (
+              <li>O que a IA sugere é informativo e pode ter erro. Confira antes de usar.</li>
+            ) : null}
           </ul>
         </>
       }
     >
-      <Secao id="o-que-faz" titulo="1. O que o Bossa faz">
+      <Secao id="o-que-faz" titulo={titulo("o-que-faz")}>
         <p>
           O {NOME_DO_PRODUTO} é um sistema na internet para estúdios e profissionais que atendem com
           hora marcada. Ao aceitar estes termos, você pode usá-lo conforme o plano que escolher:
         </p>
         <ul>
           <li>
-            <strong>Simples:</strong> agenda, link de agendamento, ficha de clientes, serviços,
-            cobranças pelo WhatsApp com código Pix e finanças (entradas, saídas, resumo do mês e
-            imposto estimado).
+            <strong>Simples:</strong> {emLista(doSimples)}.
           </li>
           <li>
-            <strong>Completo:</strong> tudo do Simples, mais lembretes de cobrança, contas a pagar,
-            leitura de documentos por IA, custos, relatório e fechamento do mês, link do contador,
-            equipe e assistente.
+            <strong>Completo:</strong> tudo do Simples, mais {emLista(doCompleto)}.
           </li>
         </ul>
       </Secao>
 
-      <Secao id="nao-faz" titulo="2. O que o Bossa não faz">
+      <Secao id="nao-faz" titulo={titulo("nao-faz")}>
         <ul>
           <li>
             <strong>Não substitui o contador</strong> e não presta serviço de contabilidade,
@@ -116,27 +175,29 @@ export default function PaginaTermos() {
             Não recebe dinheiro pelos seus clientes: o Pix das cobranças cai direto na chave que você
             cadastrou.
           </li>
-          <li>
-            As sugestões da IA (leitura de documentos, classificação de custos e assistente) são
-            informativas, podem conter erros e não são consultoria.
-          </li>
+          {comIa ? (
+            <li>
+              As sugestões da IA ({emLista(funcoesDeIa)}) são informativas, podem conter erros e não
+              são consultoria.
+            </li>
+          ) : null}
         </ul>
       </Secao>
 
-      <Secao id="conta" titulo="3. Sua conta">
+      <Secao id="conta" titulo={titulo("conta")}>
         <ul>
           <li>Cada conta é de um estúdio. Use dados verdadeiros no cadastro.</li>
           <li>
             Guarde a sua senha. O que for feito com ela é responsabilidade de quem tem a conta.
           </li>
           <li>
-            Para criar a conta é preciso ter 18 anos ou mais e poder contratar em nome do negócio.{" "}
-            <Revisar />
+            Para criar a conta é preciso ter 18 anos ou mais e poder contratar em nome do negócio.
+            {/* REVISAR COM ADVOGADO: idade mínima e capacidade para contratar. */}
           </li>
         </ul>
       </Secao>
 
-      <Secao id="assinatura" titulo="4. Teste, assinatura e pagamento">
+      <Secao id="assinatura" titulo={titulo("assinatura")}>
         <ul>
           <li>
             Não há teste grátis com os seus dados. Ao criar a conta, você entra numa demonstração:
@@ -168,47 +229,71 @@ export default function PaginaTermos() {
             <strong>Garantia de {DIAS_PARA_DESISTIR} dias:</strong> você pode desistir em até{" "}
             {DIAS_PARA_DESISTIR} dias contados do pagamento e recebe de volta o valor pago, sem
             precisar explicar o motivo. É o direito de arrependimento do Código de Defesa do
-            Consumidor (Lei 8.078/1990, art. 49). Para pedir, fale com a gente pelo contato no fim
-            desta página; a devolução é feita por Pix para quem pagou.
+            Consumidor (Lei 8.078/1990, art. 49).{" "}
+            {temContato ? (
+              <>
+                Para pedir, fale com a gente pelo{" "}
+                <a
+                  href="#fale-com-a-gente"
+                  className="font-semibold text-terracota underline-offset-4 hover:underline"
+                >
+                  contato no fim desta página
+                </a>
+                ; a devolução é feita por Pix para quem pagou.
+              </>
+            ) : (
+              <>A devolução é feita por Pix para quem pagou.</>
+            )}
           </li>
           <li>
             Depois desses {DIAS_PARA_DESISTIR} dias, o valor do período já começado não é
-            devolvido: você usa até o fim do período pago e não renova.{" "}
-            <Revisar>REVISAR COM ADVOGADO: prazo e forma da devolução</Revisar>
+            devolvido: você usa até o fim do período pago e não renova.
+            {/* REVISAR COM ADVOGADO: prazo e forma da devolução. */}
           </li>
           <li>
             Mudança de preço vale a partir da renovação seguinte e é avisada com antecedência de{" "}
-            <strong>[EXEMPLO: 30 dias]</strong>. No plano anual, o preço fica travado durante os 12
-            meses pagos.
+            <strong>30 dias</strong>. No plano anual, o preço fica travado durante os 12 meses pagos.
           </li>
         </ul>
       </Secao>
 
-      <Secao id="ia" titulo="5. Inteligência artificial">
-        <p>
-          No plano Completo, três funções usam IA, cada uma com uma franquia por mês, que renova no primeiro dia
-          de cada mês e não acumula:
-        </p>
-        <ul>
-          <li>Leitura de documentos: até {LEITURAS_POR_MES_NO_COMPLETO} documentos por mês.</li>
-          <li>
-            Classificação de custos: até {CLASSIFICACOES_POR_MES_NO_COMPLETO} despesas por mês. As
-            regras automáticas não contam.
-          </li>
-          <li>Assistente: até {PERGUNTAS_POR_MES_NO_COMPLETO} perguntas por mês.</li>
-        </ul>
-        <p>
-          Quando a franquia acaba, só aquela função para até o mês seguinte; o resto do sistema
-          continua funcionando. O que a IA lê de um documento só entra nas contas a pagar depois que
-          você confere e aceita, item por item. Como os dados vão para a IA está na{" "}
-          <Link href="/privacidade#ia" className="font-semibold text-terracota hover:underline">
-            Política de privacidade
-          </Link>
-          .
-        </p>
-      </Secao>
+      {comIa ? (
+        <Secao id="ia" titulo={titulo("ia")}>
+          <p>
+            No plano Completo, {POR_EXTENSO[funcoesDeIa.length]}{" "}
+            {funcoesDeIa.length === 1 ? "função usa" : "funções usam"} IA, cada uma com uma
+            franquia por mês, que renova no primeiro dia de cada mês e não acumula:
+          </p>
+          <ul>
+            {leitura ? (
+              <li>Leitura de documentos: até {LEITURAS_POR_MES_NO_COMPLETO} documentos por mês.</li>
+            ) : null}
+            {classificacao ? (
+              <li>
+                Classificação de custos: até {CLASSIFICACOES_POR_MES_NO_COMPLETO} despesas por mês.
+                As regras automáticas não contam.
+              </li>
+            ) : null}
+            {assistente ? (
+              <li>Assistente: até {PERGUNTAS_POR_MES_NO_COMPLETO} perguntas por mês.</li>
+            ) : null}
+          </ul>
+          <p>
+            Quando a franquia acaba, só aquela função para até o mês seguinte; o resto do sistema
+            continua funcionando.{" "}
+            {leitura
+              ? "O que a IA lê de um documento só entra nas contas a pagar depois que você confere e aceita, item por item. "
+              : null}
+            Como os dados vão para a IA está na{" "}
+            <Link href="/privacidade#ia" className="font-semibold text-terracota hover:underline">
+              Política de privacidade
+            </Link>
+            .
+          </p>
+        </Secao>
+      ) : null}
 
-      <Secao id="responsabilidades" titulo="6. Suas responsabilidades">
+      <Secao id="responsabilidades" titulo={titulo("responsabilidades")}>
         <ul>
           <li>
             Você é o controlador dos dados dos seus clientes e da sua equipe: cadastre só o que
@@ -217,7 +302,7 @@ export default function PaginaTermos() {
           <li>
             Não registre dados de saúde, diagnóstico nem informação clínica nas observações.
           </li>
-          <li>Confira os números e o que a IA sugerir antes de tomar decisões.</li>
+          <li>Confira os números e as sugestões do sistema antes de tomar decisões.</li>
           <li>
             As mensagens que você manda pelo WhatsApp são suas. Respeite quem pediu para não receber.
           </li>
@@ -225,7 +310,7 @@ export default function PaginaTermos() {
         </ul>
       </Secao>
 
-      <Secao id="links" titulo="7. Link de agendamento e link do contador">
+      <Secao id="links" titulo={titulo("links")}>
         <ul>
           <li>
             O link de agendamento mostra os horários livres que você abriu e grava o horário na sua
@@ -239,42 +324,42 @@ export default function PaginaTermos() {
         </ul>
       </Secao>
 
-      <Secao id="disponibilidade" titulo="8. Disponibilidade e limites">
+      <Secao id="disponibilidade" titulo={titulo("disponibilidade")}>
         <p>
           Trabalhamos para o {NOME_DO_PRODUTO} ficar no ar o tempo todo, mas podem acontecer
           paradas para manutenção ou por falha de fornecedores. Não respondemos por decisões
-          tomadas só com base nas estimativas e sugestões do sistema. <Revisar />
+          tomadas só com base nas estimativas e sugestões do sistema.
+          {/* REVISAR COM ADVOGADO: limite de responsabilidade. */}
         </p>
         <p>
           Podemos suspender a conta que usar o sistema para fins ilegais ou que tente atrapalhar o
-          funcionamento dele. <Revisar />
+          funcionamento dele.
+          {/* REVISAR COM ADVOGADO: hipóteses e aviso de suspensão. */}
         </p>
       </Secao>
 
-      <Secao id="mudancas" titulo="9. Mudanças, lei e contato">
+      <Secao id="mudancas" titulo={titulo("mudancas")}>
         <p>
-          Quando estes termos mudarem, a data no topo muda junto.{" "}
-          <Revisar>REVISAR COM ADVOGADO: forma e prazo de aviso de mudanças</Revisar>
+          Quando estes termos mudarem, a data no topo muda junto.
+          {/* REVISAR COM ADVOGADO: forma e prazo de aviso de mudanças. */}
         </p>
         <p>
           Valem as leis do Brasil, incluindo o Código de Defesa do Consumidor quando ele se aplicar.
-          Foro: <strong>[EXEMPLO: o do domicílio de quem contrata]</strong>. <Revisar />
+          Foro: o do domicílio de quem contrata.
         </p>
-        <p>
-          O {NOME_DO_PRODUTO} é oferecido por <strong>{RESPONSAVEL.nome}</strong>, CPF ou CNPJ{" "}
-          <strong>{RESPONSAVEL.documento}</strong>. Contato:{" "}
-          {emailDeContatoValido() ? (
-            <a
-              href={`mailto:${RESPONSAVEL.email}`}
-              className="font-semibold text-terracota underline-offset-4 hover:underline"
-            >
-              {RESPONSAVEL.email}
-            </a>
-          ) : (
-            <strong>{RESPONSAVEL.email}</strong>
-          )}
-          .
-        </p>
+        {/* RESPONSAVEL_NOME e RESPONSAVEL_DOCUMENTO vêm do ambiente (Decreto 7.962/2013, art. 2º). */}
+        {responsavel.nome ? (
+          <p>
+            O {NOME_DO_PRODUTO} é oferecido por <strong>{responsavel.nome}</strong>
+            {responsavel.documento ? (
+              <>
+                , CPF ou CNPJ <strong>{responsavel.documento}</strong>
+              </>
+            ) : null}
+            .
+          </p>
+        ) : null}
+        {/* O contato fica logo abaixo, no fim da página (PaginaLegal), e no rodapé. */}
       </Secao>
     </PaginaLegal>
   );

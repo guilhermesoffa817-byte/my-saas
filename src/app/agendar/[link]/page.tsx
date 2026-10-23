@@ -14,7 +14,8 @@ import {
 } from "@/lib/agendamento-online/operacoes";
 import { deHorarioLocal, diaDaSemanaCurto, emReais, hora } from "@/lib/formato";
 import { linkDoWhatsApp, telefoneParaWhatsApp } from "@/lib/telefone";
-import { ConfirmarHorario } from "./confirmar";
+import { usuarioAtual } from "@/lib/sessao";
+import { ConfirmarHorario, ConfirmarNaDemonstracao, FluxoDoAgendamento } from "./confirmar";
 import { DESTINO_DA_DEMONSTRACAO } from "@/lib/demonstracao/conta";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,9 @@ export async function generateMetadata({
   const pagina = await carregar(link);
   return {
     title:
-      pagina.situacao === "aberta" ? `Agendar em ${pagina.agenda.nomeNegocio}` : "Agendamento online",
+      pagina.situacao === "aberta" || pagina.situacao === "demonstracao"
+        ? `Agendar em ${pagina.agenda.nomeNegocio}`
+        : "Agendamento online",
     // Página de cada estúdio, feita para o cliente dele: não é para o Google.
     robots: { index: false, follow: false },
   };
@@ -75,24 +78,6 @@ export default async function PaginaDeAgendamento({
 
   if (pagina.situacao === "nao_encontrada") notFound();
 
-  if (pagina.situacao === "demonstracao") {
-    // O link do estúdio de exemplo: explica, sem formulário e sem gravar nada.
-    return (
-      <Moldura>
-        <h1 className="font-display text-2xl font-semibold text-carvao">
-          Esta é a página de exemplo do {NOME_DO_PRODUTO}
-        </h1>
-        <p className="mt-2 leading-relaxed text-carvao-suave">
-          Na sua conta, é aqui que o seu cliente escolhe o serviço, o dia e o horário, e o
-          horário cai direto na sua agenda. Nesta página de exemplo nenhum horário é marcado.
-        </p>
-        <Link href={DESTINO_DA_DEMONSTRACAO} className="botao mt-5 inline-flex">
-          Ver os planos
-        </Link>
-      </Moldura>
-    );
-  }
-
   if (pagina.situacao === "indisponivel") {
     return (
       <Moldura>
@@ -109,6 +94,19 @@ export default async function PaginaDeAgendamento({
 
   const agenda = pagina.agenda;
   const agora = agoraDoPedido();
+  /*
+    O link do estúdio de exemplo mostra os mesmos passos, com os dados de
+    exemplo; só o último troca o envio por uma explicação. Quem está na
+    demonstração vai para os planos dentro do painel; quem chegou sem conta (um
+    link repassado) vai para os planos da página de vendas, porque o painel
+    pediria login.
+  */
+  const demonstracao = pagina.situacao === "demonstracao";
+  const destinoDosPlanos = demonstracao
+    ? (await usuarioAtual())
+      ? DESTINO_DA_DEMONSTRACAO
+      : "/#planos"
+    : null;
 
   const servico = agenda.servicos.find((item) => item.id === escolhas.servico) ?? null;
   const pedido = servico ? lerPedidoDePessoa(agenda, escolhas.quem) : null;
@@ -132,189 +130,205 @@ export default async function PaginaDeAgendamento({
 
   return (
     <Moldura agenda={agenda}>
-      <ol className="space-y-4">
-        {/* 1. Serviço */}
-        <Passo numero={1} titulo="Escolha o serviço" feito={Boolean(servico)}>
-          {servico ? (
-            <Escolhido
-              texto={`${servico.nome} · ${servico.duracaoMin} min · ${emReais(servico.precoCentavos)}`}
-              trocar={enderecoDoPasso(agenda.link, {})}
-            />
-          ) : agenda.servicos.length === 0 ? (
-            <p className="text-sm text-carvao-suave">
-              Nenhum serviço disponível pelo link agora. Fale direto com o estúdio.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {agenda.servicos.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    prefetch={false}
-                    href={enderecoDoPasso(
-                      agenda.link,
-                      { servico: item.id },
-                      agenda.escolhe ? "passo-2" : "passo-dia",
-                    )}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-areia-escura bg-superficie px-4 py-3 transition hover:border-terracota"
-                  >
-                    <span className="min-w-0">
-                      <span className="block font-semibold text-carvao">{item.nome}</span>
-                      <span className="block text-sm text-carvao-suave">
-                        {item.duracaoMin} min
-                        {item.descricao ? ` · ${item.descricao}` : ""}
-                      </span>
-                    </span>
-                    <span className="shrink-0 font-semibold tabular-nums text-terracota">
-                      {emReais(item.precoCentavos)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Passo>
-
-        {/* 2. Com quem (só com equipe) */}
-        {agenda.escolhe && servico ? (
-          <Passo numero={2} titulo="Com quem" feito={Boolean(pedido)} id="passo-2">
-            {pedido ? (
+      {demonstracao ? (
+        <div className="animar-entrada mb-4 rounded-2xl border border-terracota/30 bg-rose px-4 py-3 text-sm leading-relaxed text-carvao">
+          <strong className="font-semibold">Página de exemplo do {NOME_DO_PRODUTO}.</strong> Escolha
+          um serviço, um dia e um horário para ver o que a sua cliente vê. Aqui nada é marcado.
+        </div>
+      ) : null}
+      {/*
+        A `key` é o endereço: trocar de passo começa limpo, e uma montagem nova
+        do mesmo endereço não apaga a confirmação que já está na tela.
+      */}
+      <FluxoDoAgendamento key={enderecoDoPasso(agenda.link, escolhas)} link={agenda.link}>
+        <ol className="space-y-4">
+          {/* 1. Serviço */}
+          <Passo numero={1} titulo="Escolha o serviço" feito={Boolean(servico)}>
+            {servico ? (
               <Escolhido
-                texto={pessoaEscolhida ? pessoaEscolhida.nome : "Tanto faz"}
-                trocar={enderecoDoPasso(agenda.link, { servico: servico.id }, "passo-2")}
+                texto={`${servico.nome} · ${servico.duracaoMin} min · ${emReais(servico.precoCentavos)}`}
+                trocar={enderecoDoPasso(agenda.link, {})}
               />
+            ) : agenda.servicos.length === 0 ? (
+              <p className="text-sm text-carvao-suave">
+                Nenhum serviço disponível pelo link agora. Fale direto com o estúdio.
+              </p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {[{ chave: "qualquer", nome: "Tanto faz" }, ...agenda.pessoas].map((pessoa) => (
-                  <Link
-                    key={pessoa.chave}
-                    prefetch={false}
-                    href={enderecoDoPasso(
-                      agenda.link,
-                      { servico: servico.id, quem: pessoa.chave },
-                      "passo-dia",
-                    )}
-                    className="botao-suave"
-                  >
-                    {pessoa.nome}
-                  </Link>
+              <ul className="space-y-2">
+                {agenda.servicos.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      prefetch={false}
+                      href={enderecoDoPasso(
+                        agenda.link,
+                        { servico: item.id },
+                        agenda.escolhe ? "passo-2" : "passo-dia",
+                      )}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-areia-escura bg-superficie px-4 py-3 transition hover:border-terracota"
+                    >
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-carvao">{item.nome}</span>
+                        <span className="block text-sm text-carvao-suave">
+                          {item.duracaoMin} min
+                          {item.descricao ? ` · ${item.descricao}` : ""}
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums text-terracota">
+                        {emReais(item.precoCentavos)}
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </Passo>
-        ) : null}
 
-        {/* 3. Dia */}
-        {servico && pedido ? (
-          <Passo
-            numero={agenda.escolhe ? 3 : 2}
-            titulo="Escolha o dia"
-            feito={Boolean(diaEscolhido)}
-            id="passo-dia"
-          >
-            {diasComHorario.length === 0 ? (
-              <div className="space-y-3">
-                <p className="text-sm leading-relaxed text-carvao-suave">
-                  Sem horário livre nos próximos {agenda.diasAFrente} dias para esse
-                  serviço. Fale com o estúdio, que ele encaixa você.
+          {/* 2. Com quem (só com equipe) */}
+          {agenda.escolhe && servico ? (
+            <Passo numero={2} titulo="Com quem" feito={Boolean(pedido)} id="passo-2">
+              {pedido ? (
+                <Escolhido
+                  texto={pessoaEscolhida ? pessoaEscolhida.nome : "Tanto faz"}
+                  trocar={enderecoDoPasso(agenda.link, { servico: servico.id }, "passo-2")}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {[{ chave: "qualquer", nome: "Tanto faz" }, ...agenda.pessoas].map((pessoa) => (
+                    <Link
+                      key={pessoa.chave}
+                      prefetch={false}
+                      href={enderecoDoPasso(
+                        agenda.link,
+                        { servico: servico.id, quem: pessoa.chave },
+                        "passo-dia",
+                      )}
+                      className="botao-suave"
+                    >
+                      {pessoa.nome}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </Passo>
+          ) : null}
+
+          {/* 3. Dia */}
+          {servico && pedido ? (
+            <Passo
+              numero={agenda.escolhe ? 3 : 2}
+              titulo="Escolha o dia"
+              feito={Boolean(diaEscolhido)}
+              id="passo-dia"
+            >
+              {diasComHorario.length === 0 ? (
+                <div className="space-y-3">
+                  <p className="text-sm leading-relaxed text-carvao-suave">
+                    Sem horário livre nos próximos {agenda.diasAFrente} dias para esse
+                    serviço. Fale com o estúdio, que ele encaixa você.
+                  </p>
+                  {falarComEstudio ? (
+                    <a href={falarComEstudio} target="_blank" rel="noopener noreferrer" className="botao-suave">
+                      Falar no WhatsApp
+                    </a>
+                  ) : null}
+                </div>
+              ) : (
+                <div
+                  className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1"
+                  role="list"
+                  aria-label="Dias com horário livre"
+                >
+                  {diasComHorario.map((item) => {
+                    const rotulo = rotuloDoDia(item.dia);
+                    const ativo = item.dia === diaEscolhido?.dia;
+                    return (
+                      <Link
+                        key={item.dia}
+                        role="listitem"
+                        prefetch={false}
+                        aria-current={ativo ? "date" : undefined}
+                        href={enderecoDoPasso(agenda.link, { ...base, dia: item.dia }, "passo-horario")}
+                        className={`flex min-w-16 shrink-0 snap-start flex-col items-center rounded-xl border px-3 py-2.5 text-sm transition ${
+                          ativo
+                            ? "border-terracota bg-terracota text-acento-texto"
+                            : "border-areia-escura bg-superficie text-carvao hover:border-terracota"
+                        }`}
+                      >
+                        <span className="text-xs font-semibold uppercase">{rotulo.semana}</span>
+                        <span className="font-display text-base font-semibold tabular-nums">{rotulo.data}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </Passo>
+          ) : null}
+
+          {/* 4. Horário */}
+          {diaEscolhido ? (
+            <Passo
+              numero={agenda.escolhe ? 4 : 3}
+              titulo="Escolha o horário"
+              feito={Boolean(horarioEscolhido)}
+              id="passo-horario"
+            >
+              {escolhas.hora && !horarioEscolhido ? (
+                <p className="mb-3 text-sm text-carvao-suave">
+                  Esse horário não está mais livre. Escolha outro, por favor.
                 </p>
-                {falarComEstudio ? (
-                  <a href={falarComEstudio} target="_blank" rel="noopener noreferrer" className="botao-suave">
-                    Falar no WhatsApp
-                  </a>
-                ) : null}
-              </div>
-            ) : (
-              <div
-                className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1"
-                role="list"
-                aria-label="Dias com horário livre"
-              >
-                {diasComHorario.map((item) => {
-                  const rotulo = rotuloDoDia(item.dia);
-                  const ativo = item.dia === diaEscolhido?.dia;
+              ) : null}
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {diaEscolhido.horarios.map((item) => {
+                  const texto = hora(item.inicio);
+                  const ativo = horarioEscolhido?.inicio.getTime() === item.inicio.getTime();
                   return (
                     <Link
-                      key={item.dia}
-                      role="listitem"
+                      key={item.inicio.getTime()}
                       prefetch={false}
-                      aria-current={ativo ? "date" : undefined}
-                      href={enderecoDoPasso(agenda.link, { ...base, dia: item.dia }, "passo-horario")}
-                      className={`flex min-w-16 shrink-0 snap-start flex-col items-center rounded-xl border px-3 py-2.5 text-sm transition ${
+                      aria-current={ativo ? "time" : undefined}
+                      href={enderecoDoPasso(
+                        agenda.link,
+                        { ...base, dia: diaEscolhido.dia, hora: texto },
+                        "passo-dados",
+                      )}
+                      className={`rounded-xl border px-2 py-2.5 text-center text-sm font-semibold tabular-nums transition ${
                         ativo
                           ? "border-terracota bg-terracota text-acento-texto"
                           : "border-areia-escura bg-superficie text-carvao hover:border-terracota"
                       }`}
                     >
-                      <span className="text-xs font-semibold uppercase">{rotulo.semana}</span>
-                      <span className="font-display text-base font-semibold tabular-nums">{rotulo.data}</span>
+                      {texto}
                     </Link>
                   );
                 })}
               </div>
-            )}
-          </Passo>
-        ) : null}
+            </Passo>
+          ) : null}
 
-        {/* 4. Horário */}
-        {diaEscolhido ? (
-          <Passo
-            numero={agenda.escolhe ? 4 : 3}
-            titulo="Escolha o horário"
-            feito={Boolean(horarioEscolhido)}
-            id="passo-horario"
-          >
-            {escolhas.hora && !horarioEscolhido ? (
-              <p className="mb-3 text-sm text-carvao-suave">
-                Esse horário não está mais livre. Escolha outro, por favor.
-              </p>
-            ) : null}
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {diaEscolhido.horarios.map((item) => {
-                const texto = hora(item.inicio);
-                const ativo = horarioEscolhido?.inicio.getTime() === item.inicio.getTime();
-                return (
-                  <Link
-                    key={item.inicio.getTime()}
-                    prefetch={false}
-                    aria-current={ativo ? "time" : undefined}
-                    href={enderecoDoPasso(
-                      agenda.link,
-                      { ...base, dia: diaEscolhido.dia, hora: texto },
-                      "passo-dados",
-                    )}
-                    className={`rounded-xl border px-2 py-2.5 text-center text-sm font-semibold tabular-nums transition ${
-                      ativo
-                        ? "border-terracota bg-terracota text-acento-texto"
-                        : "border-areia-escura bg-superficie text-carvao hover:border-terracota"
-                    }`}
-                  >
-                    {texto}
-                  </Link>
-                );
-              })}
-            </div>
-          </Passo>
-        ) : null}
-
-        {/* 5. Dados e confirmação */}
-        {servico && diaEscolhido && horarioEscolhido ? (
-          <Passo numero={agenda.escolhe ? 5 : 4} titulo="Seus dados" feito={false} id="passo-dados">
-            <ConfirmarHorario
-              link={agenda.link}
-              servico={servico.id}
-              quem={agenda.escolhe ? (escolhas.quem ?? "") : ""}
-              dia={diaEscolhido.dia}
-              hora={hora(horarioEscolhido.inicio)}
-              nomeNegocio={agenda.nomeNegocio}
-              voltarParaHorarios={enderecoDoPasso(
-                agenda.link,
-                { ...base, dia: diaEscolhido.dia },
-                "passo-horario",
+          {/* 5. Dados e confirmação */}
+          {servico && diaEscolhido && horarioEscolhido ? (
+            <Passo numero={agenda.escolhe ? 5 : 4} titulo="Seus dados" feito={false} id="passo-dados">
+              {destinoDosPlanos ? (
+                <ConfirmarNaDemonstracao nomeNegocio={agenda.nomeNegocio} destino={destinoDosPlanos} />
+              ) : (
+                <ConfirmarHorario
+                  link={agenda.link}
+                  servico={servico.id}
+                  quem={agenda.escolhe ? (escolhas.quem ?? "") : ""}
+                  dia={diaEscolhido.dia}
+                  hora={hora(horarioEscolhido.inicio)}
+                  nomeNegocio={agenda.nomeNegocio}
+                  voltarParaHorarios={enderecoDoPasso(
+                    agenda.link,
+                    { ...base, dia: diaEscolhido.dia },
+                    "passo-horario",
+                  )}
+                />
               )}
-            />
-          </Passo>
-        ) : null}
-      </ol>
+            </Passo>
+          ) : null}
+        </ol>
+      </FluxoDoAgendamento>
     </Moldura>
   );
 }

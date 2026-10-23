@@ -6,7 +6,12 @@
  */
 import type { PrismaClient } from "@/generated/prisma";
 import { instanteDoDiaPuro } from "@/lib/formato";
-import { conferirMesesAbertos, mesDoDiaPuro } from "@/lib/fechamento/trava";
+import {
+  conferirMesesAbertos,
+  mesDoDiaPuro,
+  mesDoInstante,
+  mesFechadoEntre,
+} from "@/lib/fechamento/trava";
 
 type Banco = PrismaClient;
 
@@ -62,14 +67,37 @@ export async function receberCobranca(
       Onde este dinheiro aparece no faturamento depende de onde ele nasceu.
 
       Cobrança que veio de um horário da agenda NÃO vira lançamento: o
-      faturamento do mês já soma o preço do serviço de todo atendimento
-      concluído. Criar um lançamento aqui contaria o mesmo dinheiro duas vezes
-      e mudaria o sentido de um número que a pessoa já conhece.
+      faturamento do mês já soma o preço de todo atendimento concluído. Criar
+      um lançamento aqui contaria o mesmo dinheiro duas vezes. O que ela faz é
+      passar o valor recebido para o preço do atendimento: quem cobrou R$ 40,00
+      por um serviço de R$ 45,00 vê R$ 40,00 nas Finanças, no Relatório e na
+      base da comissão, e não o preço da tabela.
+
+      A exceção é o atendimento concluído num mês já fechado: o resumo daquele
+      mês está congelado com o preço antigo, e mudar o atendimento por trás
+      deixaria o mês com dois números.
 
       Cobrança solta, criada pela ficha do cliente, não tem atendimento por
       trás, então ela precisa virar entrada para aparecer no mês.
     */
-    if (cobranca.agendamentoId) return { resultado: "paga" as const };
+    if (cobranca.agendamentoId) {
+      const atendimento = await tx.agendamento.findFirst({
+        where: { id: cobranca.agendamentoId, usuarioId },
+        select: { id: true, inicio: true, status: true, precoCentavos: true },
+      });
+      if (atendimento && atendimento.precoCentavos !== cobranca.valorCentavos) {
+        const mesCongelado =
+          atendimento.status === "concluido" &&
+          (await mesFechadoEntre(tx, usuarioId, [mesDoInstante(atendimento.inicio)]));
+        if (!mesCongelado) {
+          await tx.agendamento.updateMany({
+            where: { id: atendimento.id, usuarioId },
+            data: { precoCentavos: cobranca.valorCentavos },
+          });
+        }
+      }
+      return { resultado: "paga" as const };
+    }
 
     const lancamento = await tx.lancamento.create({
       data: {

@@ -8,6 +8,7 @@
  */
 import type { PrismaClient } from "@/generated/prisma";
 import { competenciaAtual, inicioDaCompetencia, paraDataLocal } from "@/lib/formato";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import {
   deslocarMes,
   ehNatureza,
@@ -45,7 +46,7 @@ export async function carregarMovimento(
   const [atendimentos, lancamentos] = await Promise.all([
     db.agendamento.findMany({
       where: { usuarioId, status: "concluido", inicio: { gte: de, lt: ate } },
-      select: { inicio: true, servico: { select: { precoCentavos: true } } },
+      select: { inicio: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
     }),
     db.lancamento.findMany({
       where: { usuarioId, data: { gte: de, lt: ate } },
@@ -67,7 +68,7 @@ export async function carregarMovimento(
 
   const receitas: ReceitaParaCusto[] = atendimentos.map((atendimento) => ({
     mes: competenciaAtual(atendimento.inicio),
-    valorCentavos: atendimento.servico.precoCentavos,
+    valorCentavos: precoDoAtendimento(atendimento),
     atendimento: true,
   }));
 
