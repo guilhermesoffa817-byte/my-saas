@@ -49,37 +49,20 @@ O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (s
   - A lista com a correção proposta está em `docs/achados-pre-lancamento.json`, agrupada por área.
   - Os ids são os mesmos usados nos ramos abaixo.
 
-## Ramos de correção (todos no GitHub)
-Todos saem de `claude/pronto-pra-vender`, que é a main mais `canaisDeContato()` e `<LinksDeContato/>`.
-
-| Ramo | Situação |
-|---|---|
-| `claude/fix-vitrine` | Corrigido (22 itens): botão "Testar grátis", IA e marcas de rascunho nos termos e na privacidade, contato no rodapé, canonical, ícones, hidratação #418. O último commit é um WIP de um revisor interrompido: revisar e completar. |
-| `claude/fix-assinatura` | Corrigido (20): renovação que rebaixava o plano, troca de plano com crédito em dias, aviso de Pix único (índice parcial `Pagamento_um_aguardando_por_conta` só na migração), admin, faixa da demonstração. |
-| `claude/fix-financas` | Corrigido (13): chave Pix CPF ou telefone (pergunta o tipo quando há 11 dígitos), "1.500" lido em formato brasileiro, preço guardado no atendimento (`precoCentavos`, com backfill), valor recebido, gráfico no celular, textos sem IA. |
-| `claude/fix-agenda` | Corrigido (7): confirmação do agendamento pelo link, remarcar horário, Início, janelas, contagens, saudação. |
-| `claude/fix-acesso` | Corrigido (7): formulários guardam o que foi digitado, senha fraca recusada, WhatsApp inválido, limite de tentativas no login (`src/lib/limite-de-entrada.ts`), "sair" encerra a sessão no servidor, pedidos de senha no admin. |
-| `claude/fix-demonstracao` | Incompleto: só um WIP. Faltam os itens 13, 14, 23, 25 e 35 (dados de exemplo sem origem "ia", cobrança atrasada sem lembrete "antes", estúdio de exemplo com lucro realista de 20 a 35%). |
-
-**Prefixos das migrações**, para não colidir: financas `20261019100000_`, acesso `20261019110000_`, agenda `20261019120000_`, assinatura `20261019130000_`, demonstracao `20261019140000_`.
-
-### Sobras entre grupos (resolver na junção)
-- `remarcarHorarioNoBanco` (agenda) precisa gravar `precoCentavos` (financas) quando o serviço muda.
-- O rodapé de `src/app/painel/layout.tsx` (~linha 98) diz "qualquer dúvida, estamos aqui para ajudar." mesmo sem canal: usar `canaisDeContato()`.
-- Item 32: "libera seu acesso por mais 30 dias" em `painel/assinatura/formulario.tsx` e `acoes.ts`. Na primeira assinatura não é "mais" 30, e no anual são 365.
-- Item 50: com `PIX_CHAVE` ambígua (11 dígitos), `pixCopiaECola` devolve `''`, e `/painel/assinatura` precisa avisar em vez de mostrar Pix vazio.
-- Item 59: `clientes/page.tsx` (~linha 39) conta visitas de qualquer status; deveria contar só as concluídas.
+## Correções pré-lançamento (concluídas em 24/10/2026)
+- Os 6 ramos `claude/fix-*` foram terminados, revisados (só o diff) e juntados em `claude/pronto-pra-vender`, com as sobras entre grupos resolvidas. PR para a main aberto a partir dele.
+- Da revisão saíram mais duas correções: o admin só confirma o Pix com o plano e o valor que viu na tela, e o freio de senhas erradas reserva a tentativa numa transação com trava (pedidos em paralelo não furam o limite).
+- Verificado: migrações num banco vazio, lint, tipos, 636 testes, build e conferência no navegador a 390px.
+- **Riscos conhecidos, deixados como estão (decisão do dono se quiser mudar):**
+  - Receber a cobrança com valor menor (um sinal, por exemplo) troca o preço do atendimento pelo valor recebido.
+  - Chave Pix antiga com 11 dígitos que vale como CPF e como celular deixa de gerar código até a dona salvar de novo o tipo em Ajustes.
+  - Quem sabe o e-mail de uma dona pode segurar a entrada dela com senhas erradas (o freio por e-mail vale até para a senha certa).
+  - Remarcar sem o campo de quem atende não confere férias ou saída da profissional no dia novo.
+  - O link público `/agendar/demonstracao-bossa` só existe depois que alguém abre a demonstração pela primeira vez.
 
 ## Próximos passos, em ordem
-1. Terminar `claude/fix-demonstracao`.
-2. Revisar cada ramo, de preferência com um revisor cético e só o diff (`git diff claude/pronto-pra-vender...claude/fix-X`).
-3. Juntar em `claude/pronto-pra-vender`, na ordem vitrine, acesso, agenda, financas, assinatura, demonstracao. Depois resolver as sobras acima e:
-   - rodar `prisma migrate deploy` num banco vazio;
-   - rodar lint, tipos, vitest e build.
-4. Reconferir no navegador só os itens corrigidos, sem refazer o teste inteiro.
-5. Abrir o PR para a main e fazer o merge.
-6. Publicar: depende do dono, ver Infraestrutura.
-7. Depois de publicar:
+1. Publicar: depende do dono, ver Infraestrutura.
+2. Depois de publicar:
    - testar a compra no site no ar;
    - conferir em `/painel/admin` os avisos de Pix "repetidos" que a migração marcou.
 
