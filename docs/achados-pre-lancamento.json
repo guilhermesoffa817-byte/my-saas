@@ -1,0 +1,532 @@
+{
+ "vitrine": [
+  {
+   "id": 1,
+   "severity": "bloqueia-venda",
+   "title": "Botão do topo diz \"Testar grátis\" em todas as páginas públicas, mas não existe teste grátis",
+   "arquivo": "src/componentes/site.tsx:26",
+   "correcao": "site.tsx:25-27: trocar \"Testar grátis\" por um texto curto que não quebre no celular, por exemplo `<Link href=\"/criar-conta\" className=\"botao whitespace-nowrap px-4 sm:px-6\">Conhecer<span className=\"hidden sm:inline\"> o sistema</span></Link>`. Isso também resolve o achado dos 360px."
+  },
+  {
+   "id": 2,
+   "severity": "bloqueia-venda",
+   "title": "Termos de uso prometem recursos de IA (leitura de documentos por IA, assistente, franquias) que estão desligados",
+   "arquivo": "src/app/termos/page.tsx:68",
+   "correcao": "Em termos/page.tsx, criar `const temIa = recursoLigado(\"assistente\") || recursoLigado(\"documentos\");`. Só com temIa: mostrar o li do resumo (67-69), o li da linha 119-122, a Secao \"ia\" (187-209) e o item \"ia\" do SUMARIO, e renumerar as seções seguintes a partir do índice. Montar a linha do Completo (86-88) a partir de textosDoPlano(\"completo\") ou tirar dela \"leitura de documentos por IA\" e \"assistente\" quando desligados. Na linha 220, trocar \"o que a IA sugerir\" por \"o que o sistema sugerir\"."
+  },
+  {
+   "id": 3,
+   "severity": "bloqueia-venda",
+   "title": "Política de privacidade descreve três funções de IA do Completo (Claude/Anthropic) que estão desligadas",
+   "arquivo": "src/app/privacidade/page.tsx:62",
+   "correcao": "Mesmo padrão dos termos: `const temIa = recursoLigado(\"assistente\") || recursoLigado(\"documentos\")`. Só com temIa: mostrar o li do resumo (61-65), os itens Documentos e Assistente da seção 2 (114-119 e 125-128), a Secao \"ia\" (159-200), o item Anthropic (218-221), os itens de conversas e de uso da IA (288-295) e \"Documentos, Assistente\" na linha 334. Tirar \"ia\" do SUMARIO e renumerar. Trocar a description (linha 13) por um texto sem IA."
+  },
+  {
+   "id": 4,
+   "severity": "alto",
+   "title": "Termos e Privacidade publicados com marcações de rascunho: [REVISAR COM ADVOGADO], [EXEMPLO], [PREENCHER] e \"Versão em revisão jurídica\"",
+   "arquivo": "src/componentes/pagina-legal.tsx:36",
+   "correcao": "(1) pagina-legal.tsx:36: tirar \"· Versão em revisão jurídica\". (2) pagina-legal.tsx:99: fazer Revisar retornar null em produção (`if (process.env.NODE_ENV === \"production\") return null;`) ou remover as chamadas. (3) Trocar os [EXEMPLO] e os [PREENCHER] fixos pelos valores decididos, por exemplo 30 dias de aviso de preço, foro do domicílio do consumidor, 15 dias de resposta, 30 dias para apagar e a região real do Supabase. (4) Preencher RESPONSAVEL_NOME, RESPONSAVEL_DOCUMENTO, CONTATO_EMAIL e ENCARREGADO_DE_DADOS na Netlify. De preferência, fazer o build falhar em produção se alguma delas falta"
+  },
+  {
+   "id": 5,
+   "severity": "alto",
+   "title": "Nenhum canal de contato no site, mas a garantia de 7 dias manda \"nos chamar\"",
+   "arquivo": "src/componentes/site.tsx:33",
+   "correcao": "Configurar CONTATO_EMAIL e, em site.tsx, acrescentar ao rodapé um item `{ href: `mailto:${RESPONSAVEL.email}`, rotulo: \"Fale com a gente\" }` quando emailDeContatoValido() for verdadeiro. Em page.tsx:150-151, trocar \"É só nos chamar.\" por um link mailto para o mesmo e-mail (ou WhatsApp de suporte, se houver)."
+  },
+  {
+   "id": 6,
+   "severity": "medio",
+   "title": "\"O que muda no seu dia\" promete recursos só do Completo sem avisar",
+   "arquivo": "src/app/page.tsx:41",
+   "correcao": "Acrescentar `completo: true` aos itens das linhas 40-43 e 49-52 e, na linha 311, mostrar a mesma etiqueta de FUNCOES: `{item.completo ? <span className=\"ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave\">Completo</span> : null}`. Outra opção é reescrever o item 5 com o que o Simples entrega: \"Entrou, saiu e sobrou numa tela, com o resumo do mês.\""
+  },
+  {
+   "id": 8,
+   "severity": "baixo",
+   "title": "Botão final \"Conhecer o sistema\" quase some no tema escuro",
+   "arquivo": "src/app/page.tsx:508",
+   "correcao": "page.tsx:508: trocar `bg-superficie ... text-carvao ... hover:bg-areia` por `bg-inverso-texto ... text-inverso ... hover:bg-inverso-texto/90`. Fica igual no claro e vira um botão claro com texto escuro no escuro."
+  },
+  {
+   "id": 9,
+   "severity": "baixo",
+   "title": "Página 404 com título da home, canonical da home e robots contraditório",
+   "arquivo": "src/app/not-found.tsx:4",
+   "correcao": "Tirar `robots` de layout.tsx:42-46 (o padrão já é indexável) e mover o canonical para a home (ver o achado do canonical). Dar título ao 404: `export const metadata = { title: \"Página não encontrada\" }` em not-found.tsx, conferindo no build se essa versão do Next aceita metadata em not-found. Se não aceitar, usar app/global-not-found.tsx, que a documentação do Next 16 diz aceitar metadata."
+  },
+  {
+   "id": 10,
+   "severity": "baixo",
+   "title": "Ícones: apple-icon.svg é ignorado (sem apple-touch-icon), /favicon.ico dá 404 e restos do modelo Next estão públicos",
+   "arquivo": "src/app/apple-icon.svg",
+   "correcao": "Trocar src/app/apple-icon.svg por src/app/apple-icon.png (180x180, exportado do mesmo desenho). Apagar public/{vercel,next,globe,window,file}.svg. Opcional: pôr src/app/favicon.ico."
+  },
+  {
+   "id": 11,
+   "severity": "baixo",
+   "title": "Em 360px o botão do topo quebra em duas linhas",
+   "arquivo": "src/componentes/site.tsx:25",
+   "correcao": "Junto com o achado 1: `className=\"botao whitespace-nowrap px-4 sm:px-6\"` com o texto curto \"Conhecer\" no celular (`Conhecer<span className=\"hidden sm:inline\"> o sistema</span>`). \"Conhecer o sistema\" inteiro quebraria ainda mais em 360px."
+  },
+  {
+   "id": 12,
+   "severity": "baixo",
+   "title": "Termos: sumário e título da seção 4 não batem, e o título ainda fala em \"Teste\"",
+   "arquivo": "src/app/termos/page.tsx:139",
+   "correcao": "termos/page.tsx:139: `titulo=\"4. Demonstração, assinatura e garantia\"`. Em pagina-legal.tsx, receber uma prop `atual: \"termos\" | \"privacidade\"` e mostrar no \"Veja também\" só o link da outra página."
+  },
+  {
+   "id": 16,
+   "severity": "bloqueia-venda",
+   "title": "Botão 'Testar grátis' no topo do site, mas não existe teste grátis",
+   "arquivo": "src/componentes/site.tsx:26",
+   "correcao": "Trocar o texto para 'Conhecer o sistema' (mesmo termo do botão do cadastro 'Criar conta e conhecer o sistema') ou 'Ver demonstração'."
+  },
+  {
+   "id": 17,
+   "severity": "bloqueia-venda",
+   "title": "Termos de uso e Privacidade prometem funções de IA no Completo (leitura de documentos, assistente, franquias)",
+   "arquivo": "src/app/termos/page.tsx:87",
+   "correcao": "Condicionar a seção e os itens com recursoLigado('documentos')/recursoLigado('assistente') (as páginas são server components): tirar 'leitura de documentos por IA' e 'assistente' da lista do Completo, esconder a seção 'Inteligência artificial' e o item do sumário quando nenhum recurso de IA estiver ligado, e tirar a Anthropic da lista de operadores nesse caso. Renumerar as seções."
+  },
+  {
+   "id": 21,
+   "severity": "alto",
+   "title": "Termos e Privacidade públicos com marcas de rascunho [PREENCHER] e [REVISAR COM ADVOGADO]",
+   "arquivo": "src/app/privacidade/page.tsx:194",
+   "correcao": "Fazer Revisar renderizar null em produção (ex.: if (process.env.NODE_ENV === 'production') return null) e trocar os [EXEMPLO]/[PREENCHER] fixos pelo texto final (prazos e região). Em contato.ts manter o aviso só fora de produção ou falhar o build se as variáveis do responsável faltarem, porque o Decreto 7.962/2013 exige nome e CPF/CNPJ do fornecedor."
+  },
+  {
+   "id": 32,
+   "severity": "baixo",
+   "title": "Termos: sumário diz '4. Demonstração, assinatura e garantia' e a seção se chama '4. Teste, assinatura e pagamento'; textos de compra falam em 'mais 30 dias' na primeira assinatura",
+   "arquivo": "src/app/termos/page.tsx:139",
+   "correcao": "termos/page.tsx:139 → titulo=\"4. Demonstração, assinatura e garantia\". Em formulario.tsx:46 e acoes.ts:50 usar 'mais ' só quando a conta já está ativa ou já teve pagamento confirmado (ex.: prop renovacao={situacao.status !== 'demonstracao'}); senão 'libera seu acesso por 30 dias'."
+  },
+  {
+   "id": 36,
+   "severity": "bloqueia-venda",
+   "title": "Termos de uso aceitos no cadastro prometem IA no Completo e têm marcadores de rascunho ([EXEMPLO], [REVISAR COM ADVOGADO], [PREENCHER])",
+   "arquivo": "src/app/termos/page.tsx:87",
+   "correcao": "Na descrição do Completo, usar textosDoPlano('completo'). Mostrar a seção 5 e o item do índice só quando iaConfigurada() for verdadeiro e renumerar as seções. Trocar cada [EXEMPLO]/[REVISAR] pelo valor final revisado (por exemplo 30 dias, foro do domicílio do consumidor, devolução em até 7 dias pelo mesmo Pix). Configurar RESPONSAVEL_NOME, RESPONSAVEL_DOCUMENTO, CONTATO_EMAIL e ENCARREGADO_DE_DADOS em produção, com um teste que falhe se o texto renderizado tiver '[PREENCHER', '[EXEMPLO' ou '[REVISAR'."
+  },
+  {
+   "id": 52,
+   "severity": "bloqueia-venda",
+   "title": "IA desligada, mas o painel do Completo e os Termos ainda prometem e citam IA (leitura de documentos, assistente)",
+   "arquivo": "src/app/painel/assinatura/page.tsx:146",
+   "correcao": "1) assinatura/page.tsx:146-147: montar a frase com os recursos de recursosLigados() e tirar 'leitura de documentos' e 'o assistente' quando estiverem desligados. 2) financas/page.tsx:220: tirar 'A IA ajuda a classificar.' quando ANTHROPIC_API_KEY faltar. 3) custos/page.tsx:162 e sugestao.ts:97: texto neutro, sem citar IA ('O botão aplica as regras automáticas (aluguel, comissão, juros...). O que elas não resolverem, classifique abaixo.' e 'N despesas ficaram para você classificar.'). 4) termos e privacidade: mostrar as cláusulas de IA só com recursoLigado('assistente') (as páginas são montadas"
+  },
+  {
+   "id": 61,
+   "severity": "bloqueia-venda",
+   "title": "Termos de uso e Política de privacidade (aceitos no cadastro) descrevem IA como parte do Completo, com franquias, com a IA desligada",
+   "arquivo": "src/app/termos/page.tsx:87",
+   "correcao": "Nas duas páginas: const comIa = recursoLigado(\"documentos\") || recursoLigado(\"assistente\"). Renderizar a seção de IA, a entrada do sumário, o item do resumo, o bullet de 'não faz' e a Anthropic como operadora só quando comIa for true, renumerando as seções. Montar a frase do Completo na seção 1 dos termos a partir de textosDoPlano('completo') ou de uma lista filtrada por recursoLigado (sem 'leitura de documentos por IA' nem 'assistente' quando desligados). Na privacidade, os itens 'Documentos enviados para leitura' e 'Assistente' (115-127) seguem a mesma condição."
+  },
+  {
+   "id": 66,
+   "severity": "baixo",
+   "title": "Erro de hidratação React #418 na home (e em /termos e /privacidade) ao abrir a página logo depois de /entrar ou /criar-conta",
+   "arquivo": "src/componentes/site.tsx:13",
+   "correcao": "Mitigação provável e barata: prefetch={false} nos <Link> de /entrar e /criar-conta (logo em Marca e os links 'Criar a minha agora' e 'Esqueci a senha'), que remove os prefetches em andamento que disparam o erro. Depois, confirmar com 'next dev' numa porta separada qual nó diverge, ou reportar ao Next com o caso mínimo /entrar → goto('/')."
+  },
+  {
+   "id": 67,
+   "severity": "alto",
+   "title": "[novo] Botão do topo 'Testar grátis' na home, em /termos e em /privacidade, sendo que não existe teste grátis",
+   "arquivo": "src/componentes/site.tsx:26",
+   "correcao": "Trocar o rótulo por 'Conhecer o Bossa' ou 'Ver a demonstração', alinhado ao texto do botão do formulário ('Criar conta e conhecer o sistema')."
+  },
+  {
+   "id": 68,
+   "severity": "medio",
+   "title": "[novo] Termos e Privacidade públicos mostram marcadores de rascunho ([EXEMPLO: ...], [REVISAR COM ADVOGADO], [PREENCHER: ...])",
+   "arquivo": "src/app/termos/page.tsx:181",
+   "correcao": "Definir os valores finais (prazo de aviso de mudança de preço, foro, prazo de devolução) com o advogado e remover os <Revisar/> e [EXEMPLO]. Enquanto isso, fazer <Revisar> devolver null quando NODE_ENV==='production' e garantir RESPONSAVEL_NOME, RESPONSAVEL_DOCUMENTO e CONTATO_EMAIL no ambiente de produção."
+  },
+  {
+   "id": 7,
+   "severity": "medio",
+   "title": "/criar-conta, /entrar e /esqueci-senha têm canonical apontando para a página inicial",
+   "arquivo": "src/app/layout.tsx:39",
+   "correcao": "Tirar `alternates` de layout.tsx:39 e pôr `export const metadata = { alternates: { canonical: \"/\" } }` em src/app/page.tsx. Em criar-conta, entrar e esqueci-senha, acrescentar `alternates: { canonical: \"/criar-conta\" }` (e equivalentes). Tirar `url` e `title` do openGraph do layout, ou dar a termos e privacidade um `openGraph: { title, url: \"/termos\", images: [\"/capa.png\"] }` próprio."
+  }
+ ],
+ "assinatura": [
+  {
+   "id": 15,
+   "severity": "bloqueia-venda",
+   "title": "Tela de planos promete 'leitura de documentos' e 'assistente' no Completo",
+   "arquivo": "src/app/painel/assinatura/page.tsx:146",
+   "correcao": "Montar a frase a partir dos recursos ligados: ex. RECURSOS.filter(r => soNoCompleto(r) && recursoLigado(r)) mapeados para rótulos, ou remover 'leitura de documentos' e 'o assistente' do texto. Em guardas.ts:106 (e :130), se !recursoLigado(recurso) fazer redirect('/painel') (ou notFound()) em vez de '/painel/assinatura?completo=1'."
+  },
+  {
+   "id": 29,
+   "severity": "baixo",
+   "title": "Identidade misturada na demonstração: 'Oi, Juliana' / 'Espaço Juliana Estética' com 'Bom dia, Carolina' / Studio Ipê Beleza",
+   "arquivo": "src/app/painel/layout.tsx:29",
+   "correcao": "Na demonstração, mostrar no topo e no rodapé o nome do estúdio de exemplo (ex.: 'Estúdio de exemplo · Studio Ipê Beleza') ou, ao contrário, trocar a saudação de painel/page.tsx por 'Bom dia' sem nome quando demonstracao=true."
+  },
+  {
+   "id": 30,
+   "severity": "baixo",
+   "title": "Botão 'Escolher um plano' da faixa abre a assinatura com 'Para fazer isso com os seus clientes...'",
+   "arquivo": "src/app/painel/layout.tsx:61",
+   "correcao": "Na faixa (layout.tsx ~linha 58) usar href=\"/painel/assinatura\" (a página já mostra 'Escolha seu plano' para quem está na demonstração), deixando ?demonstracao=1 só para os redirecionamentos de ações."
+  },
+  {
+   "id": 33,
+   "severity": "bloqueia-venda",
+   "title": "Renovar pelo plano que já vem marcado (Simples mensal) rebaixa quem pagou o Completo anual: perde o Completo na hora",
+   "arquivo": "src/app/painel/admin/acoes.ts:55",
+   "correcao": "1) page.tsx: passar planoInicial = assinatura ativa e valendo ? usuario.assinatura.plano : (pagamento aguardando?.plano), e mostrar 'Seu plano: <nome> · vale até <data>' no cartão 'Como está hoje'. 2) escolha.tsx:31: useState(planoInicial ?? opcoes[0].codigo). 3) avisarPagamento (assinatura/acoes.ts): se temPlanoCompleto(usuario.assinatura) e o plano escolhido não for Completo, devolver erro: 'Você está no Completo até dd/mm. Para renovar, escolha o Completo; para trocar para o Simples, faça o Pix perto do vencimento.' Outra saída é confirmarPagamento manter o plano Completo enquanto ele estiv"
+  },
+  {
+   "id": 34,
+   "severity": "bloqueia-venda",
+   "title": "Faixa 'Essa parte é do plano Completo' promete leitura de documentos e assistente (IA desligada) e aparece também para quem paga o Completo",
+   "arquivo": "src/app/painel/assinatura/page.tsx:146",
+   "correcao": "page.tsx:145-148: montar a lista a partir de textosDoPlano('completo') (que já filtra o que está desligado), ou de RECURSOS.filter(r => soNoCompleto(r) && recursoLigado(r)), sem citar documentos e assistente. guardas.ts:399 e 423: `if (!recursoLigado(recurso)) redirect('/painel');` antes do teste de plano, para não mandar quem já é Completo para o convite."
+  },
+  {
+   "id": 37,
+   "severity": "alto",
+   "title": "Trocar de plano com um aviso pendente é ignorado em silêncio: ficam o plano e o valor antigos e o recado se perde",
+   "arquivo": "src/app/painel/assinatura/acoes.ts:27",
+   "correcao": "Em acoes.ts:27-32, quando houver jaAvisado: `await prisma.pagamento.update({ where: { id: jaAvisado.id }, data: { plano: plano.codigo, valorCentavos: plano.valorCentavos, observacao: observacao ?? jaAvisado.observacao } })`, revalidar as páginas e responder `Atualizamos seu aviso para ${plano.nome} (${emReais(plano.valorCentavos)}).`"
+  },
+  {
+   "id": 38,
+   "severity": "alto",
+   "title": "Subir de plano estende o Completo pelo saldo do Simples: R$ 189 + R$ 329 = 60 dias de Completo",
+   "arquivo": "src/app/painel/admin/acoes.ts:30",
+   "correcao": "Em confirmarPagamento, quando a família muda e ainda há dias valendo, converter o saldo pelo preço por dia: `const atual = planoPorCodigo(assinatura.plano); const restante = max(0, validaAte - agora) em dias; const convertidos = Math.floor(restante * (atual.valorCentavos/atual.dias) / (plano.valorCentavos/plano.dias)); validaAte = somarDias(agora, plano.dias + convertidos)`. Na mesma família, manter novaValidade como está."
+  },
+  {
+   "id": 39,
+   "severity": "alto",
+   "title": "A tela de pagamento diz 'É só nos chamar', mas não mostra nenhum contato",
+   "arquivo": "src/app/painel/assinatura/page.tsx:256",
+   "correcao": "Trocar 'É só nos chamar' por um link de verdade: `{emailDeContatoValido() ? <a href={`mailto:${RESPONSAVEL.email}`}>{RESPONSAVEL.email}</a> : null}`, mais um WhatsApp de suporte (variável nova, por exemplo SUPORTE_WHATSAPP, com link wa.me), em page.tsx:256, no recado de acoes.ts:50 e no rodapé de painel/layout.tsx:98. Configurar CONTATO_EMAIL em produção."
+  },
+  {
+   "id": 40,
+   "severity": "medio",
+   "title": "Depois de avisar o Pix, recarregar a página volta ao Pix do Simples mensal (R$ 189), e a tela não mostra o plano",
+   "arquivo": "src/app/painel/assinatura/escolha.tsx:31",
+   "correcao": "page.tsx: `const pendente = pagamentos.find(p => p.status === 'aguardando'); planoInicial = pendente?.plano ?? (situacao.liberada ? usuario.assinatura?.plano : undefined)`, repassado a PagamentoPix. escolha.tsx:31: `useState(planoInicial ?? opcoes[0].codigo)`. Mostrar `planoPorCodigo(pagamento.plano).nome` em cada linha do histórico (página, perto da linha 302) e 'Plano: <nome>' no cartão (perto das linhas 235-242)."
+  },
+  {
+   "id": 41,
+   "severity": "medio",
+   "title": "Avisos de Pix duplicados com mais de uma aba: cada confirmação soma mais dias",
+   "arquivo": "src/app/painel/assinatura/acoes.ts:23",
+   "correcao": "Migração com índice único parcial: `CREATE UNIQUE INDEX pagamento_um_aguardando ON \"Pagamento\"(\"usuarioId\") WHERE status = 'aguardando';` No create, capturar o P2002 e responder com o recado de 'já está conosco'. Em page.tsx:109, usar um identificador por conta, por exemplo `('BOSSA' + usuario.id.replace(/[^A-Za-z0-9]/g,'').slice(-12)).toUpperCase()`, e mostrá-lo no admin."
+  },
+  {
+   "id": 42,
+   "severity": "baixo",
+   "title": "No admin, o botão diz 'Confirmar e liberar 30 dias' também nos planos anuais",
+   "arquivo": "src/app/painel/admin/page.tsx:205",
+   "correcao": "`<BotaoEnviar>Confirmar e liberar {planoPorCodigo(pagamento.plano).dias} dias</BotaoEnviar>`"
+  },
+  {
+   "id": 43,
+   "severity": "medio",
+   "title": "'Receita recorrente' do admin conta toda assinatura ativa como Simples mensal",
+   "arquivo": "src/app/painel/admin/page.tsx:139",
+   "correcao": "Somar por assinatura: `assinantes.filter(a => avaliarAssinatura(a.assinatura).status === 'ativa').reduce((s, a) => { const p = planoPorCodigo(a.assinatura!.plano); return s + (p.dias >= 365 ? Math.round(p.valorCentavos / 12) : p.valorCentavos); }, 0)`"
+  },
+  {
+   "id": 44,
+   "severity": "medio",
+   "title": "O botão 'Copiar código Pix' diz 'Copiado' mesmo quando a cópia falha",
+   "arquivo": "src/componentes/ui/botao.tsx:108",
+   "correcao": "Mover setCopiado(true) para dentro do try, depois do await. No catch, tentar copiar por um textarea com select() e document.execCommand('copy'). Se também falhar, mostrar 'Não deu para copiar: segure o dedo no código e copie'."
+  },
+  {
+   "id": 45,
+   "severity": "medio",
+   "title": "'Renova em N dias' sugere renovação automática, não bate com o 'Vale até' e o painel não avisa que está para vencer",
+   "arquivo": "src/lib/assinatura.ts:246",
+   "correcao": "Texto: `Sua assinatura vence em ${dataCurta(validaAte)} (${n === 1 ? 'amanhã' : `faltam ${n} dias`}). Faça o Pix para continuar.`, com n contado em dias de calendário no fuso da empresa. Em layout.tsx, acrescentar o caso `situacao.status === 'ativa' && situacao.diasRestantes <= 5` com a faixa e o link 'Ver como pagar'."
+  },
+  {
+   "id": 46,
+   "severity": "medio",
+   "title": "Pix marcado como 'Não localizado' some sem explicação e a cliente volta para a demonstração",
+   "arquivo": "src/app/painel/assinatura/page.tsx:229",
+   "correcao": "page.tsx: `const recusado = pagamentos[0]?.status === 'recusado' ? pagamentos[0] : null;` e mostrar `<Aviso tom=\"erro\">Não localizamos o seu Pix de {emReais(recusado.valorCentavos)} avisado em {dataEHora(recusado.criadoEm)}. Confira o comprovante e avise de novo, ou fale com a gente em <contato>.</Aviso>` acima do cartão."
+  },
+  {
+   "id": 47,
+   "severity": "baixo",
+   "title": "No celular, a faixa fixa da demonstração com o Pix avisado ocupa ~1/4 da tela",
+   "arquivo": "src/app/painel/layout.tsx:49",
+   "correcao": "No celular, mostrar só uma linha curta ('Estúdio de exemplo · Pix em conferência'), por exemplo com `<span className=\"hidden sm:inline\">{RECADO_DA_DEMONSTRACAO}</span>`, ou tirar a faixa do header sticky abaixo de md. Esconder o link 'Escolher um plano' quando a rota for /painel/assinatura."
+  },
+  {
+   "id": 48,
+   "severity": "baixo",
+   "title": "No admin, contas que nunca pagaram aparecem como 'Venceu em …'",
+   "arquivo": "src/app/painel/admin/page.tsx:264",
+   "correcao": "`{situacao.demonstracao ? `Conta criada em ${dataCurta(assinante.criadoEm)}` : `${situacao.liberada ? 'Acesso até' : 'Venceu em'} ${dataCurta(situacao.validaAte)} · na casa desde ${dataCurta(assinante.criadoEm)}`}` e, quando ativa, acrescentar ` · ${planoPorCodigo(assinante.assinatura!.plano).nome}`."
+  },
+  {
+   "id": 52,
+   "severity": "bloqueia-venda",
+   "title": "IA desligada, mas o painel do Completo e os Termos ainda prometem e citam IA (leitura de documentos, assistente)",
+   "arquivo": "src/app/painel/assinatura/page.tsx:146",
+   "correcao": "1) assinatura/page.tsx:146-147: montar a frase com os recursos de recursosLigados() e tirar 'leitura de documentos' e 'o assistente' quando estiverem desligados. 2) financas/page.tsx:220: tirar 'A IA ajuda a classificar.' quando ANTHROPIC_API_KEY faltar. 3) custos/page.tsx:162 e sugestao.ts:97: texto neutro, sem citar IA ('O botão aplica as regras automáticas (aluguel, comissão, juros...). O que elas não resolverem, classifique abaixo.' e 'N despesas ficaram para você classificar.'). 4) termos e privacidade: mostrar as cláusulas de IA só com recursoLigado('assistente') (as páginas são montadas"
+  },
+  {
+   "id": 55,
+   "severity": "bloqueia-venda",
+   "title": "Assinante do Completo vê o Simples mensal (R$ 189,00) já escolhido para renovar e a tela não diz qual é o plano atual",
+   "arquivo": "src/app/painel/assinatura/page.tsx:97",
+   "correcao": "Em page.tsx:97: `const atual = usuario.assinatura?.status === \"ativa\" ? planoPorCodigo(usuario.assinatura.plano) : null; const base = pediuCompleto || atual?.completo ? [\"vip_mensal\",\"vip_anual\",\"mensal\",\"anual\"] : [\"mensal\",\"anual\",\"vip_mensal\",\"vip_anual\"]; const ordem = atual ? [atual.codigo, ...base.filter(c => c !== atual.codigo)] : base;`. Somar ao <dl> da linha 235 uma linha 'Plano: {atual.nome}'. Em admin/acoes.ts:54, se o plano atual é Completo e ainda vale e o pago é Simples, não rebaixar antes de validaAte, ou ao menos mostrar ao admin 'rebaixa de Completo para Simples'."
+  },
+  {
+   "id": 60,
+   "severity": "bloqueia-venda",
+   "title": "Banner 'Essa parte é do plano Completo' promete leitura de documentos e assistente (IA desligada), inclusive para quem já paga o Completo",
+   "arquivo": "src/app/painel/assinatura/page.tsx:146",
+   "correcao": "1) Em assinatura/page.tsx, montar a frase só com o que está ligado. Exemplo: const LIBERA: [Recurso,string][] = [[\"lembretes\",\"lembretes de cobrança\"],[\"vencimentos\",\"contas a pagar\"],[\"documentos\",\"leitura de documentos\"],[\"custos\",\"custos\"],[\"relatorio\",\"relatório para o contador\"],[\"equipe\",\"equipe\"],[\"assistente\",\"o assistente\"]]; const itens = LIBERA.filter(([r]) => recursoLigado(r)).map(([,t]) => t); e juntar em pt-BR com 'e' no último. 2) Mostrar o banner só se !temPlanoCompleto(usuario.assinatura). 3) Em guardas.ts:106/130, antes de podeUsar: if (!recursoLigado(recurso)) notFound() (ou"
+  }
+ ],
+ "financas": [
+  {
+   "id": 13,
+   "severity": "alto",
+   "title": "NOVO (fora da lista, achado na verificação): painel da demonstração fala de IA desligada em Finanças e Custos",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220: mostrar \" A IA ajuda a classificar.\" só se recursoLigado(\"assistente\") for verdadeiro. custos/page.tsx:162: trocar por \"O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.\" Na semente da demonstração, não usar a origem \"ia\" quando a IA estiver desligada, ou exibir esse rótulo como \"Sugestão automática\"."
+  },
+  {
+   "id": 14,
+   "severity": "bloqueia-venda",
+   "title": "Painel fala de IA, que está desligada: card de Finanças, tela de Custos e despesa com 'Origem: Sugestão da IA'",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220 → 'Fixos, variáveis e quanto faturar para empatar.' (ou acrescentar ' A IA ajuda a classificar.' só quando iaConfigurada()). custos/page.tsx:162 → 'O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.'. dados.ts:448 → origem: \"regra\" (ou \"voce\") na despesa do contador. Opcional: em calculo.ts mostrar 'Sugestão automática' para origem 'ia' quando a IA estiver desligada."
+  },
+  {
+   "id": 19,
+   "severity": "alto",
+   "title": "Celular: Finanças estoura a largura (gráfico 'Seus dias mais fortes') e a barra de baixo perde o 'Mais'",
+   "arquivo": "src/app/painel/financas/grafico.tsx:45",
+   "correcao": "grafico.tsx:45 → className=\"flex h-full min-w-0 flex-1 flex-col justify-end gap-2\" e renderizar o valor só na barra em destaque ({destaque ? emReais(dia.centavos) : null}, com whitespace-nowrap), deixando as outras sem texto; opcionalmente mostrar o valor do melhor dia na frase de cima em vez de sobre a barra."
+  },
+  {
+   "id": 20,
+   "severity": "alto",
+   "title": "'Ver as já resolvidas' mostra cobranças PAGAS e CANCELADAS em 'Para lembrar hoje'",
+   "arquivo": "src/app/painel/cobrancas/page.tsx:67",
+   "correcao": "Na linha 67: const paraLembrar = temLembretes && !mostrarPagas ? comSituacao.filter((cobranca) => cobranca.situacao === 'aberta' && !cobranca.cliente.semLembretes && lembreteDeHoje({...}) !== null) : [];"
+  },
+  {
+   "id": 23,
+   "severity": "medio",
+   "title": "Cobrança atrasada há 16 dias sugere a mensagem 'Gentil — Para o primeiro aviso, antes de vencer'",
+   "arquivo": "src/lib/demonstracao/dados.ts:516",
+   "correcao": "Em momentosPendentes, descartar momentos anteriores ao último já enviado: const ultimo = Math.max(-Infinity, ...MOMENTOS.filter(m => jaEnviados.includes(m.codigo)).map(m => m.dias)); e no filter: if (momento.dias <= ultimo) return false. Nos dados de exemplo, incluir 'antes' nas listas de atraso-8 e atraso-16."
+  },
+  {
+   "id": 31,
+   "severity": "baixo",
+   "title": "'Copiar mensagem' funciona na demonstração, mas 'Enviar pelo WhatsApp' e 'Copiar código Pix' levam à assinatura",
+   "arquivo": "src/app/painel/cobrancas/[id]/mensagem.tsx:111",
+   "correcao": "Em mensagem.tsx:111, quando demonstracao, renderizar <Link href={DESTINO_DA_DEMONSTRACAO} className=\"botao-suave w-full\">Copiar mensagem</Link> como os outros botões."
+  },
+  {
+   "id": 35,
+   "severity": "bloqueia-venda",
+   "title": "O painel fala de IA com a IA desligada: Finanças 'A IA ajuda a classificar' e Custos 'A IA não está ligada nesta conta'",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220: mostrar ' A IA ajuda a classificar.' só quando iaConfigurada() (de src/lib/ia/cliente.ts). custos/page.tsx:162: trocar por 'O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.', sem mencionar IA."
+  },
+  {
+   "id": 50,
+   "severity": "bloqueia-venda",
+   "title": "Chave Pix CPF vira chave de TELEFONE no código Pix das cobranças",
+   "arquivo": "src/lib/pix.ts:47",
+   "correcao": "Em src/lib/pix.ts, antes do ramo de telefone (linha 45): `if (/^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$/.test(limpa) && cpfValido(digitos)) return { chave: digitos, tipo: \"cpf\" };` e `if (digitos.length === 11 && digitos[2] !== \"9\" && cpfValido(digitos)) return { chave: digitos, tipo: \"cpf\" };` (celular brasileiro sempre tem 9 na 3ª posição). Em salvarAjustesDeCobranca (src/app/painel/cobrancas/acoes.ts:218-252), validar com normalizarChavePix e dizer no recado o tipo reconhecido ('Reconheci como CPF 529.982.247-25' ou 'como celular +55 52 99822-4725'). No caso ambíguo de 11 dígitos sem pontuação, o certo "
+  },
+  {
+   "id": 51,
+   "severity": "alto",
+   "title": "Preço digitado '1.500' (mil e quinhentos) é gravado como R$ 1,50 em serviços, cobranças e finanças",
+   "arquivo": "src/lib/formato.ts:14",
+   "correcao": "Em paraCentavos, trocar a normalização por: `const normalizado = limpo.includes(\",\") ? limpo.replace(/\\./g, \"\").replace(\",\", \".\") : /^\\d{1,3}(\\.\\d{3})+$/.test(limpo) ? limpo.replace(/\\./g, \"\") : limpo;`. Assim '1.500' vira 150000, '1.234.567' vira 123456700, e '1.50' e '1.5' continuam decimais. Trocar emCentavos de financas/acoes.ts por paraCentavos, mantendo a checagem > 0. Somar esses casos em src/lib/formato.teste.ts."
+  },
+  {
+   "id": 53,
+   "severity": "alto",
+   "title": "Mudar o preço de um serviço muda o faturamento de atendimentos já concluídos (retroativo)",
+   "arquivo": "src/app/painel/financas/page.tsx:92",
+   "correcao": "Migração que soma `precoCentavos Int?` em Agendamento, com backfill: `UPDATE \"Agendamento\" a SET \"precoCentavos\" = s.\"precoCentavos\" FROM \"Servico\" s WHERE s.id = a.\"servicoId\"`. Gravar o preço ao criar o horário (agenda/acoes.ts:81-89 e o create de lib/agendamento-online/operacoes.ts) e trocar as leituras listadas para `item.precoCentavos ?? item.servico.precoCentavos`."
+  },
+  {
+   "id": 54,
+   "severity": "alto",
+   "title": "Cobrança da agenda com valor ajustado: as finanças contam o preço do serviço, não o valor recebido",
+   "arquivo": "src/lib/cobranca-operacoes.ts:72",
+   "correcao": "Junto com a cópia do preço do achado anterior (Agendamento.precoCentavos), em receberCobranca, quando houver agendamentoId, gravar `tx.agendamento.update({ where: { id: cobranca.agendamentoId }, data: { precoCentavos: cobranca.valorCentavos } })`, para valer o valor efetivamente cobrado. Ajustar a dica de nova/formulario.tsx:64 para dizer que esse é o valor que entra nas Finanças. Para o Pix pago de horário não concluído, avisar na agenda ('cobrança paga, conclua o horário') ou concluir o horário ao receber."
+  },
+  {
+   "id": 56,
+   "severity": "medio",
+   "title": "Gráfico 'Seus dias mais fortes' no celular: a barra de sábado fica em cima de 'DOM' e a página rola para o lado",
+   "arquivo": "src/app/painel/financas/grafico.tsx:46",
+   "correcao": "grafico.tsx:46 → `className=\"flex h-full min-w-0 flex-1 basis-0 flex-col justify-end gap-2\"`, e o mesmo `min-w-0 basis-0` nos rótulos da linha 77. No valor destacado (linhas 47-54), deixar quebrar em duas linhas (`whitespace-normal break-words`, trocando o NBSP por espaço) ou mostrar o valor no texto acima do gráfico em vez de dentro da coluna."
+  },
+  {
+   "id": 58,
+   "severity": "medio",
+   "title": "Percentual do imposto com casa decimal é arredondado sem avisar (4,5% vira 5%)",
+   "arquivo": "src/app/painel/financas/acoes.ts:96",
+   "correcao": "Correção mínima: em salvarImposto, `if (!Number.isInteger(percentual)) return { erro: \"Use um número inteiro, como 6. Casas decimais ainda não são aceitas.\" }`. Correção completa: migrar para `impostoCentesimos Int` (450 = 4,5%) e calcular com `Math.round(entradas * impostoCentesimos / 10000)` em financas/page.tsx:103 e no relatório."
+  }
+ ],
+ "agenda": [
+  {
+   "id": 22,
+   "severity": "medio",
+   "title": "Início diz '1 atendimento hoje · O primeiro é às 09:00, de Renata Carvalho', mas esse já foi concluído",
+   "arquivo": "src/app/painel/page.tsx:262",
+   "correcao": "Depois da linha 175: const proximo = hojeLista.find((item) => item.status === 'agendado'); e nas linhas 262-263 usar proximo!.inicio / proximo!.cliente.nome (texto 'O próximo é às ...')."
+  },
+  {
+   "id": 24,
+   "severity": "medio",
+   "title": "Janelas de confirmação aparecem grudadas no canto superior esquerdo (desktop e celular)",
+   "arquivo": "src/componentes/ui/janela.tsx:44",
+   "correcao": "Acrescentar 'm-auto' (ou 'mx-auto my-auto') na className do <dialog> em janela.tsx:44."
+  },
+  {
+   "id": 26,
+   "severity": "medio",
+   "title": "A página de agendamento da demonstração não mostra o fluxo do cliente",
+   "arquivo": "src/app/agendar/[link]/page.tsx:78",
+   "correcao": "No ramo da demonstração, renderizar as mesmas etapas (serviço, profissional, dia, horário) com os dados do estúdio de exemplo e trocar só o último passo (formulário) por um aviso 'Na sua conta, aqui o horário cai na agenda' + 'Ver os planos'. O link de 'Ver os planos' para visitante sem sessão deve ir para /criar-conta (ou /#planos)."
+  },
+  {
+   "id": 29,
+   "severity": "baixo",
+   "title": "Identidade misturada na demonstração: 'Oi, Juliana' / 'Espaço Juliana Estética' com 'Bom dia, Carolina' / Studio Ipê Beleza",
+   "arquivo": "src/app/painel/layout.tsx:29",
+   "correcao": "Na demonstração, mostrar no topo e no rodapé o nome do estúdio de exemplo (ex.: 'Estúdio de exemplo · Studio Ipê Beleza') ou, ao contrário, trocar a saudação de painel/page.tsx por 'Bom dia' sem nome quando demonstracao=true."
+  },
+  {
+   "id": 49,
+   "severity": "bloqueia-venda",
+   "title": "Agendamento pelo link: o horário é gravado, mas a cliente vê 'Esse horário não está mais livre' em vez da confirmação",
+   "arquivo": "src/app/agendar/[link]/acoes.ts:52",
+   "correcao": "Em src/app/agendar/[link]/acoes.ts, apagar o bloco `if (\"ok\" in resposta) { revalidatePath(\"/painel\"); revalidatePath(\"/painel/agenda\"); }` (linhas 50-54) e o import de revalidatePath (linha 4). Assim a action devolve só o resultado, sem renderizar a página de novo, e o resumo 'Pronto, X! Horário marcado.' com o botão de WhatsApp aparece. Somar um teste e2e que confirme 'Horário marcado' depois do POST."
+  },
+  {
+   "id": 57,
+   "severity": "medio",
+   "title": "Não dá para remarcar ou editar um horário da agenda",
+   "arquivo": "src/app/painel/agenda/acoes.ts:41",
+   "correcao": "Criar `remarcarHorario` em agenda/acoes.ts reaproveitando travarAgendaDoEstudio + horarioOcupado (ignorando o próprio id) e conferirQuemAtende. O update muda só inicio, servicoId e colaboradorId e preserva observacoes e origem. Pôr um <details> 'Remarcar' em agenda/page.tsx, junto às ações do cartão (por volta da linha 255), com o mesmo FormularioAgendamento preenchido."
+  },
+  {
+   "id": 59,
+   "severity": "baixo",
+   "title": "Contagens confusas: cancelados entram em 'atendimentos' e 'visitas'; '1 atendimentos concluídos'",
+   "arquivo": "src/app/painel/agenda/page.tsx:167",
+   "correcao": "agenda/page.tsx:167: contar `agendamentosDoDia.filter(i => i.status !== \"cancelado\").length`. clientes/page.tsx:39: `_count: { select: { agendamentos: { where: { status: \"concluido\" } } } }`. relatorio-do-mes.tsx:179 e financas/page.tsx:159: usar singular quando a quantidade for 1. Opcional: agenda/page.tsx:258 trocar para `item.status === \"agendado\"`."
+  }
+ ],
+ "demonstracao": [
+  {
+   "id": 13,
+   "severity": "alto",
+   "title": "NOVO (fora da lista, achado na verificação): painel da demonstração fala de IA desligada em Finanças e Custos",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220: mostrar \" A IA ajuda a classificar.\" só se recursoLigado(\"assistente\") for verdadeiro. custos/page.tsx:162: trocar por \"O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.\" Na semente da demonstração, não usar a origem \"ia\" quando a IA estiver desligada, ou exibir esse rótulo como \"Sugestão automática\"."
+  },
+  {
+   "id": 14,
+   "severity": "bloqueia-venda",
+   "title": "Painel fala de IA, que está desligada: card de Finanças, tela de Custos e despesa com 'Origem: Sugestão da IA'",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220 → 'Fixos, variáveis e quanto faturar para empatar.' (ou acrescentar ' A IA ajuda a classificar.' só quando iaConfigurada()). custos/page.tsx:162 → 'O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.'. dados.ts:448 → origem: \"regra\" (ou \"voce\") na despesa do contador. Opcional: em calculo.ts mostrar 'Sugestão automática' para origem 'ia' quando a IA estiver desligada."
+  },
+  {
+   "id": 23,
+   "severity": "medio",
+   "title": "Cobrança atrasada há 16 dias sugere a mensagem 'Gentil — Para o primeiro aviso, antes de vencer'",
+   "arquivo": "src/lib/demonstracao/dados.ts:516",
+   "correcao": "Em momentosPendentes, descartar momentos anteriores ao último já enviado: const ultimo = Math.max(-Infinity, ...MOMENTOS.filter(m => jaEnviados.includes(m.codigo)).map(m => m.dias)); e no filter: if (momento.dias <= ultimo) return false. Nos dados de exemplo, incluir 'antes' nas listas de atraso-8 e atraso-16."
+  },
+  {
+   "id": 25,
+   "severity": "medio",
+   "title": "Estúdio de exemplo dá prejuízo todo mês e tem números pouco realistas",
+   "arquivo": "src/lib/demonstracao/dados.ts:436",
+   "correcao": "Ajustar os dados de exemplo para fechar positivo (ex.: mais clientes e menos visitas por cliente, ou despesas fixas/repasses menores) e incluir em dados.teste.ts uma verificação de resultado do mês > 0 para cada um dos 6 meses. Para luz e internet do mês atual, gerar o lançamento OU o vencimento em aberto, não os dois."
+  },
+  {
+   "id": 35,
+   "severity": "bloqueia-venda",
+   "title": "O painel fala de IA com a IA desligada: Finanças 'A IA ajuda a classificar' e Custos 'A IA não está ligada nesta conta'",
+   "arquivo": "src/app/painel/financas/page.tsx:220",
+   "correcao": "financas/page.tsx:220: mostrar ' A IA ajuda a classificar.' só quando iaConfigurada() (de src/lib/ia/cliente.ts). custos/page.tsx:162: trocar por 'O botão aplica as regras automáticas (aluguel, comissão, juros e outras). O que elas não resolverem, classifique abaixo.', sem mencionar IA."
+  }
+ ],
+ "acesso": [
+  {
+   "id": 18,
+   "severity": "alto",
+   "title": "Formulário de cadastro (e de login) apaga tudo o que foi digitado quando dá erro",
+   "arquivo": "src/app/criar-conta/formulario.tsx:13",
+   "correcao": "Em autenticacao.ts devolver também os valores digitados (menos a senha): EstadoFormulario = { erro?: string; valores?: Record<string,string> } e em cada return de erro incluir { nome, nomeNegocio, email, telefone, documento, cep, endereco }. Nos formulários usar defaultValue={estado?.valores?.nome} etc. (em /entrar, defaultValue={estado?.valores?.email})."
+  },
+  {
+   "id": 27,
+   "severity": "medio",
+   "title": "Senha fraca é aceita no cadastro ('12345678')",
+   "arquivo": "src/app/acoes/autenticacao.ts:50",
+   "correcao": "Criar em src/lib/senha.ts uma função senhaFraca(senha, email) que recusa só dígitos, um caractere repetido, sequências (12345678, abcdefgh), uma pequena lista das mais comuns e senha contendo a parte local do e-mail; usar em autenticacao.ts:50 e em acoes/senha.ts:151 com a mensagem 'Essa senha é fácil de adivinhar. Misture letras e números.'"
+  },
+  {
+   "id": 28,
+   "severity": "baixo",
+   "title": "Validação do WhatsApp aceita '0000000000'",
+   "arquivo": "src/app/acoes/autenticacao.ts:42",
+   "correcao": "Trocar a condição por uma regex nos dígitos: /^(?:[1-9][1-9])(?:9\\d{8}|[2-8]\\d{7})$/ (DDD válido + celular com 9 ou fixo 2-8), mantendo a mesma mensagem de erro."
+  },
+  {
+   "id": 62,
+   "severity": "medio",
+   "title": "Login sem limite de tentativas, sem bloqueio e sem espera",
+   "arquivo": "src/app/acoes/autenticacao.ts:107",
+   "correcao": "Seguir o padrão de TentativaDoContador: criar a tabela TentativaDeEntrada (emailHash, ipHash via embaralhar(), criadoEm). Em entrar(), antes do bcrypt, contar as falhas dos últimos 15 min para o e-mail ou o IP. Com 10 ou mais, devolver { erro: 'Muitas tentativas. Espere 15 minutos ou peça uma senha nova.' }. Registrar uma linha a cada falha, apagar as do e-mail no sucesso e limpar as antigas (mais de 24 h) como já se faz no contador."
+  },
+  {
+   "id": 63,
+   "severity": "baixo",
+   "title": "'Sair' só apaga o cookie: um token copiado antes continua válido por 30 dias",
+   "arquivo": "src/app/acoes/autenticacao.ts:133",
+   "correcao": "Em sair(): const u = await usuarioAtual(); if (u) await prisma.usuario.update({ where: { id: u.id }, data: { sessaoVersao: { increment: 1 } } }); e depois encerrarSessao(). Isso derruba as sessões de todos os aparelhos da conta. Se precisar derrubar só o aparelho atual, guardar um jti por sessão numa tabela e conferir em usuarioAtual()."
+  },
+  {
+   "id": 64,
+   "severity": "medio",
+   "title": "Pedido de senha nova some da administração depois de 30 min sem link, e o novo pedido feito depois de um link gerado não aparece",
+   "arquivo": "src/app/painel/admin/page.tsx:52",
+   "correcao": "admin/page.tsx:52: where: { usadoEm: null, entregueEm: null, criadoEm: { gt: seteDiasAtras } }, sem o expiraEm. senha.ts:62: incluir entregueEm: null no findFirst, assim o novo pedido feito depois de um link entregue volta para a fila. O gerarLinkDeSenha já marca todos os pendentes como usados, então a fila continua limpando sozinha."
+  },
+  {
+   "id": 65,
+   "severity": "medio",
+   "title": "Criar conta (e Entrar) apagam tudo o que foi digitado quando o servidor devolve erro",
+   "arquivo": "src/app/criar-conta/formulario.tsx:13",
+   "correcao": "Em autenticacao.ts, mudar EstadoFormulario para { erro?: string; campos?: Record<string,string> } e, em cada return de erro de criarConta, mandar campos: { nome, nomeNegocio, email, telefone, documento, cep, endereco }, sem a senha. No formulario.tsx, usar defaultValue={estado?.campos?.nome} em cada input, como o painel já faz. Em entrar, devolver campos: { email } e pôr defaultValue no e-mail de src/app/entrar/formulario.tsx."
+  }
+ ]
+}

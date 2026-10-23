@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=block");
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--azul:#1d4ed8;--azul2:#2563eb;--creme:#f6f8fb;--areia:#eaf0f8;--borda:#d4dfee;--carvao:#0b1220;--suave:#4b5873;--rose:#dce8fd;--verde:#047857;--vermelho:#b42318}
+body{font-family:Inter,system-ui,sans-serif;color:var(--carvao);background:var(--creme)}
+.tela{position:relative;overflow:hidden;display:flex;flex-direction:column;padding:84px 80px 72px}
+.marca{display:flex;align-items:center;gap:18px;font-family:"Plus Jakarta Sans";font-weight:700;font-size:40px}
+.marca svg{width:64px;height:64px}
+.titulo{font-family:"Plus Jakarta Sans";font-weight:800;letter-spacing:-2px;line-height:1.02}
+.sub{color:var(--suave);line-height:1.4}
+.cartao{background:#fff;border:2px solid var(--borda);border-radius:44px;box-shadow:0 40px 90px -50px rgba(11,18,32,.55);padding:36px}
+.linha{display:flex;align-items:center;gap:22px;border:2px solid var(--areia);border-radius:24px;padding:22px 26px;margin-top:16px}
+.hora{font-family:"Plus Jakarta Sans";font-weight:700;color:var(--azul);font-size:30px;min-width:96px}
+.nome{font-weight:600;font-size:30px}
+.det{color:var(--suave);font-size:24px;margin-top:2px}
+.selo{margin-left:auto;background:var(--rose);color:var(--azul);font-weight:600;font-size:22px;padding:8px 18px;border-radius:999px}
+.cobrar{background:var(--areia);border-radius:24px;padding:24px 26px;margin-top:16px;display:flex;align-items:center;gap:18px}
+.botao{margin-left:auto;background:var(--azul);color:#fff;font-weight:700;font-size:24px;padding:14px 22px;border-radius:16px;white-space:nowrap}
+.rodape{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.cta{white-space:nowrap;flex-shrink:0;background:var(--azul);color:#fff;font-family:"Plus Jakarta Sans";font-weight:700;font-size:36px;padding:26px 40px;border-radius:22px}
+.nota{color:var(--suave);font-size:26px}
