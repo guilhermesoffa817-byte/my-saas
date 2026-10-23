@@ -41,6 +41,8 @@ vi.mock("next/navigation", () => ({
     throw new Error("notFound");
   },
 }));
+// A entrada lê o IP de quem tenta, para o limite de senhas erradas.
+vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("next/cache", () => ({
   revalidatePath: () => undefined,
   revalidateTag: () => undefined,

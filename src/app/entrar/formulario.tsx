@@ -20,6 +20,7 @@ export function FormularioEntrar() {
           id="email"
           name="email"
           type="email"
+          defaultValue={estado?.campos?.email}
           autoComplete="email"
           required
           className="campo"

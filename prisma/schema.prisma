@@ -41,8 +41,8 @@ model Usuario {
   ramo              String?
   /// Quando a dona leu e aceitou o aviso do assistente de IA. Vazio = ainda não.
   iaAceitaEm        DateTime?
-  /// Sobe a cada troca de senha. A sessão carrega esse número, então quem
-  /// entrou com a senha antiga perde o acesso quando a senha muda.
+  /// Sobe a cada troca de senha e a cada Sair. A sessão carrega esse número,
+  /// então todo cookie emitido antes perde o acesso, em qualquer aparelho.
   sessaoVersao      Int       @default(0)
   criadoEm          DateTime  @default(now())
 
@@ -704,6 +704,24 @@ model TentativaDoContador {
   ipHash   String
   criadoEm DateTime @default(now())
 
+  @@index([ipHash, criadoEm])
+  @@index([criadoEm])
+}
+
+/// Cada senha errada na tela de entrada.
+///
+/// Segura quem tenta adivinhar senhas: muitas erradas para o mesmo e-mail, ou
+/// do mesmo IP, e a entrada passa a pedir uma espera que cresce a cada erro.
+/// E-mail e IP ficam embaralhados com o segredo do servidor, nunca em texto. A
+/// linha some depois de um dia, e as do e-mail somem quando a senha certa entra.
+/// Não tem estúdio porque o e-mail digitado pode nem ter conta.
+model TentativaDeEntrada {
+  id        String   @id @default(cuid())
+  emailHash String
+  ipHash    String
+  criadoEm  DateTime @default(now())
+
+  @@index([emailHash, criadoEm])
   @@index([ipHash, criadoEm])
   @@index([criadoEm])
 }

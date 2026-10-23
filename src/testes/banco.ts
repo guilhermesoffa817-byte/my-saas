@@ -32,8 +32,9 @@ export async function banco(): Promise<PrismaClient> {
 export async function limpar() {
   const db = await banco();
   // O pagamento da equipe vem antes: ele segura o lançamento e o colaborador.
-  // A tentativa do contador não tem estúdio: não sai em cascata com a conta.
+  // As tentativas do contador e da entrada não têm estúdio: não saem em cascata com a conta.
   await db.tentativaDoContador.deleteMany();
+  await db.tentativaDeEntrada.deleteMany();
   await db.acessoDoContador.deleteMany();
   await db.registroDeFechamento.deleteMany();
   await db.fechamentoDoMes.deleteMany();

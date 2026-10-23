@@ -5,6 +5,7 @@ import {
   gerarCodigo,
   linkDaNovaSenha,
   mensagemDaNovaSenha,
+  problemaDaSenha,
   pedidoValido,
   resumoDoCodigo,
   validadeAPartirDe,
@@ -111,5 +112,65 @@ describe("link e mensagem", () => {
     expect(texto).toContain("https://bossa.com.br/nova-senha/abc");
     expect(texto).toContain(`${MINUTOS_DE_VALIDADE} minutos`);
     expect(texto).toContain("pode ignorar");
+  });
+});
+
+describe("senha fácil de adivinhar", () => {
+  const conta = { email: "marina.albuquerque@estudiobela.com.br", nome: "Marina Albuquerque" };
+
+  it("recusa as óbvias, com uma mensagem que diz o porquê", () => {
+    const obvias = [
+      "12345678",
+      "123456789",
+      "87654321",
+      "11111111",
+      "aaaaaaaa",
+      "12121212",
+      "abcdefgh",
+      "abcd1234",
+      "qwertyui",
+      "qwerty123",
+      "asdfghjk",
+      "senha123",
+      "Senha@2026",
+      "123senha",
+      "password1",
+      "brasil2026",
+      "flamengo10",
+      "bossa2026",
+      "minhasenha",
+    ];
+    for (const senha of obvias) {
+      const problema = problemaDaSenha(senha, conta);
+      expect(problema, senha).toBeTruthy();
+      expect(problema).toMatch(/[A-Za-zÀ-ú]/);
+    }
+  });
+
+  it("recusa senha curta", () => {
+    expect(problemaDaSenha("Ab3$xy7", conta)).toContain("pelo menos 8");
+    expect(problemaDaSenha("", conta)).toContain("pelo menos 8");
+  });
+
+  it("recusa senha só com números", () => {
+    expect(problemaDaSenha("83749261", conta)).toContain("só com números");
+  });
+
+  it("recusa senha com o e-mail ou o nome da pessoa", () => {
+    expect(problemaDaSenha("marina.albuquerque@estudiobela.com.br", conta)).toContain("e-mail");
+    expect(problemaDaSenha("marina.albuquerque", conta)).toContain("e-mail");
+    expect(problemaDaSenha("Marina2026", conta)).toContain("nome");
+    expect(problemaDaSenha("albuquerque77", conta)).toContain("nome");
+  });
+
+  it("aceita senha razoável", () => {
+    for (const senha of ["tulipa-azul-42", "Cafe com leite 7", "m3sa.de.p1nho", "8 gatos pretos", "Ventania2026"]) {
+      expect(problemaDaSenha(senha, conta), senha).toBeNull();
+    }
+  });
+
+  it("não quebra sem e-mail nem nome", () => {
+    expect(problemaDaSenha("tulipa-azul-42")).toBeNull();
+    expect(problemaDaSenha("12345678")).toBeTruthy();
   });
 });

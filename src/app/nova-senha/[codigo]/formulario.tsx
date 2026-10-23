@@ -21,7 +21,7 @@ export function FormularioDeNovaSenha({ codigo }: { codigo: string }) {
         tipo="password"
         autoComplete="new-password"
         minLength={8}
-        dica="Pelo menos 8 caracteres."
+        dica="Pelo menos 8 caracteres. Evite sequências como 12345678, a palavra “senha” e o seu nome."
       />
       <Campo
         nome="repetida"
