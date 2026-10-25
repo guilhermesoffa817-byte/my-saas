@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { usuarioAtual, type UsuarioLogado } from "@/lib/sessao";
 import { avaliarAssinatura, type SituacaoAssinatura } from "@/lib/assinatura";
-import { podeUsar, type Recurso } from "@/lib/recursos";
+import { podeUsar, recursoLigado, type Recurso } from "@/lib/recursos";
 import { DESTINO_DA_DEMONSTRACAO, ehContaDeExemplo } from "@/lib/demonstracao/conta";
 import { estudioDeExemplo } from "@/lib/demonstracao/estudio";
+import { dataCurta } from "@/lib/formato";
 
 /*
   Dois tipos de porta, e a diferença entre elas é a regra mais importante da
@@ -49,8 +50,25 @@ const pixAvisado = cache(async (usuarioId: string) =>
   }),
 );
 
+/** O último Pix avisado, para saber se ele foi marcado como não localizado. */
+const ultimoPix = cache(async (usuarioId: string) =>
+  prisma.pagamento.findFirst({
+    where: { usuarioId },
+    orderBy: [{ criadoEm: "desc" }, { id: "desc" }],
+    select: { status: true },
+  }),
+);
+
 /** Uma vez por pedido: o contorno e a página pedem o estúdio de exemplo juntos. */
 const estudioDoPedido = cache(() => estudioDeExemplo(prisma));
+
+/**
+ * O estúdio de exemplo, para o contorno do painel mostrar de quem são os dados
+ * durante a demonstração. É o mesmo pedido em cache das portas de leitura.
+ */
+export async function estudioDaDemonstracao() {
+  return estudioDoPedido();
+}
 
 export async function exigirUsuario(): Promise<UsuarioLogado> {
   const usuario = await usuarioAtual();
@@ -67,17 +85,32 @@ export async function situacaoDoUsuario(
   usuario: UsuarioLogado,
 ): Promise<SituacaoAssinatura> {
   const situacao = avaliarAssinatura(usuario.assinatura);
-  if (situacao.liberada) return situacao;
+  // Em dia e longe do fim: nada a perguntar ao banco.
+  if (situacao.liberada && !situacao.venceLogo) return situacao;
 
   const pendente = await pixAvisado(usuario.id);
-  if (!pendente) return situacao;
+  if (pendente && situacao.liberada) {
+    // Perto de vencer, mas o Pix do próximo período já foi avisado: sem cobrança na faixa.
+    return {
+      ...situacao,
+      venceLogo: false,
+      recado: `Sua assinatura vale até ${dataCurta(situacao.validaAte)}. Recebemos o aviso do seu Pix e já estamos conferindo.`,
+    };
+  }
+  if (pendente) {
+    return {
+      ...situacao,
+      status: "aguardando",
+      recado:
+        "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir. Costuma ser rápido.",
+    };
+  }
+  if (situacao.liberada) return situacao;
 
-  return {
-    ...situacao,
-    status: "aguardando",
-    recado:
-      "Recebemos o aviso do seu Pix. Assim que confirmarmos o pagamento, seu painel volta a abrir. Costuma ser rápido.",
-  };
+  // Sem acesso e com o último Pix não localizado: a pessoa precisa saber o porquê.
+  const ultimo = await ultimoPix(usuario.id);
+  if (ultimo?.status === "recusado") return { ...situacao, pixNaoLocalizado: true };
+  return situacao;
 }
 
 /* ------------------------------------------------------------- leitura */
@@ -100,9 +133,16 @@ export async function exigirLeitura(): Promise<Leitura> {
  * Porta das telas que dependem de plano. A regra de quem pode o quê está em
  * lib/recursos.ts; aqui só se aplica o resultado. Quem não tem o plano vai para
  * a tela de assinatura. Na demonstração tudo abre (o exemplo é Completo).
+ *
+ * Recurso desligado neste servidor (a IA sem chave, por exemplo) é outra
+ * coisa: não falta plano, falta o recurso. Quem chega por um link antigo vai
+ * para o início do painel, e nunca para a oferta do Completo: quem já paga o
+ * Completo não pode ouvir "compre o Completo", e a oferta não pode vender o
+ * que não está funcionando.
  */
 export async function exigirLeituraDoRecurso(recurso: Recurso): Promise<Leitura> {
   const leitura = await exigirLeitura();
+  if (!recursoLigado(recurso)) redirect("/painel");
   if (!podeUsar(leitura.usuario, recurso)) redirect("/painel/assinatura?completo=1");
   return leitura;
 }
@@ -127,6 +167,8 @@ export async function exigirEscrita(): Promise<Escrita> {
 
 export async function exigirEscritaDoRecurso(recurso: Recurso): Promise<Escrita> {
   const escrita = await exigirEscrita();
+  // Como na leitura: recurso desligado não é falta de plano.
+  if (!recursoLigado(recurso)) redirect("/painel");
   if (!podeUsar(escrita.usuario, recurso)) redirect("/painel/assinatura?completo=1");
   return escrita;
 }
@@ -172,6 +214,10 @@ export async function exigirEscritaNaApi(
   }
   if (!situacao.liberada) {
     return recusar(403, "Sua assinatura venceu. Renove para continuar.", "assinatura", "/painel/assinatura");
+  }
+  if (!recursoLigado(recurso)) {
+    // Não é falta de plano: o recurso não está ligado neste servidor.
+    return recusar(403, "Esta parte não está disponível no momento.", "indisponivel", "/painel");
   }
   if (!podeUsar(usuario, recurso)) {
     return recusar(403, "Isso faz parte do plano Completo.", "plano", "/painel/assinatura?completo=1");

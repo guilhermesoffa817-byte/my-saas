@@ -106,7 +106,7 @@ export function FormularioLancamento({ hoje }: { hoje: string }) {
   );
 }
 
-export function FormularioImposto({ percentual }: { percentual: number }) {
+export function FormularioImposto({ percentual }: { percentual: string }) {
   const [estado, acao] = useActionState(salvarImposto, null);
 
   return (

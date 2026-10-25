@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { linkDoWhatsApp, telefoneParaWhatsApp } from "@/lib/telefone";
+import { linkDoWhatsApp, telefoneBrasileiroValido, telefoneParaWhatsApp } from "@/lib/telefone";
 
 describe("telefone para o WhatsApp", () => {
   it("acrescenta o país em celular de onze dígitos", () => {
@@ -58,5 +58,42 @@ describe("link do WhatsApp", () => {
     expect(link.startsWith("https://wa.me/5566992513501?text=")).toBe(true);
     expect(link).toContain("%26");
     expect(link).not.toContain(" ");
+  });
+});
+
+describe("telefone brasileiro que pode existir", () => {
+  it("aceita celular, fixo e quem já escreveu o país", () => {
+    for (const bom of [
+      "(66) 99251-3501",
+      "66992513501",
+      "(11) 3025-1234",
+      "+55 66 99251-3501",
+      "55 11 98765-4321",
+      "(55) 99999-8888",
+      "(55) 3221-1234",
+      "(98) 98111-2233",
+    ]) {
+      expect(telefoneBrasileiroValido(bom), bom).toBe(true);
+    }
+  });
+
+  it("recusa números impossíveis", () => {
+    for (const ruim of [
+      "0000000000",
+      "00000000000",
+      "(00) 99251-3501",
+      "(10) 99251-3501",
+      "(20) 99251-3501",
+      "(23) 99251-3501",
+      "(66) 89251-3501",
+      "(66) 1025-1234",
+      "(66) 99999-9999",
+      "(11) 2222-2222",
+      "",
+      "99251-3501",
+      "4466992513501",
+    ]) {
+      expect(telefoneBrasileiroValido(ruim), ruim).toBe(false);
+    }
   });
 });

@@ -1,0 +1,2334 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kit de divulgação Bossa</title>
+<meta name="description" content="Calendário de 30 dias para o Instagram, mensagens de abordagem, respostas a objeções, status do WhatsApp, posts para grupos e bio do Bossa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --azul: #1d4ed8;
+    --azul-forte: #1e40af;
+    --azul-suave: #eff6ff;
+    --azul-borda: #bfdbfe;
+    --fundo: #f5f7fb;
+    --superficie: #ffffff;
+    --texto: #0f172a;
+    --texto-suave: #475569;
+    --texto-fraco: #64748b;
+    --linha: #e2e8f0;
+    --linha-forte: #cbd5e1;
+    --reels-bg: #dbeafe; --reels-tx: #1e40af; --reels-pt: #1d4ed8;
+    --carrossel-bg: #ccfbf1; --carrossel-tx: #115e59; --carrossel-pt: #0f766e;
+    --foto-bg: #fef3c7; --foto-tx: #92400e; --foto-pt: #d97706;
+    --stories-bg: #fce7f3; --stories-tx: #9d174d; --stories-pt: #db2777;
+    --nota-bg: #fffbeb; --nota-borda: #fde68a; --nota-tx: #78350f;
+    --ok: #15803d;
+    --raio: 16px;
+    --sombra: 0 1px 2px rgba(15, 23, 42, .05), 0 4px 16px rgba(15, 23, 42, .04);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+  h1, h2, h3, .marca, .post-dia { font-family: "Plus Jakarta Sans", "Inter", system-ui, sans-serif; }
+  a { color: var(--azul); }
+  .pagina { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+
+  /* Topo */
+  .topo { background: var(--superficie); border-bottom: 1px solid var(--linha); }
+  .topo-dentro { max-width: 760px; margin: 0 auto; padding: 28px 16px 24px; }
+  .marca { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.05rem; color: var(--azul); letter-spacing: -.01em; }
+  .marca-icone { width: 30px; height: 30px; border-radius: 9px; background: var(--azul); color: #fff; display: grid; place-items: center; font-size: .95rem; }
+  .topo h1 { margin: 14px 0 8px; font-size: clamp(1.7rem, 6vw, 2.35rem); line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+  .topo p.sub { margin: 0; color: var(--texto-suave); max-width: 60ch; }
+  .fatos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 20px 0 0; padding: 0; list-style: none; }
+  .fatos li { background: var(--azul-suave); border: 1px solid var(--azul-borda); border-radius: 12px; padding: 10px 12px; font-size: .9rem; }
+  .fatos strong { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--azul-forte); }
+
+  /* Atalhos */
+  .atalhos { position: sticky; top: 0; z-index: 10; background: rgba(245, 247, 251, .94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--linha); }
+  .atalhos ul { max-width: 760px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 8px; list-style: none; overflow-x: auto; scrollbar-width: none; }
+  .atalhos ul::-webkit-scrollbar { display: none; }
+  .atalhos a { display: inline-block; white-space: nowrap; padding: 7px 13px; border-radius: 999px; background: var(--superficie); border: 1px solid var(--linha); color: var(--texto); text-decoration: none; font-size: .88rem; font-weight: 600; }
+  .atalhos a:hover { border-color: var(--azul); color: var(--azul); }
+
+  /* Seções */
+  section { scroll-margin-top: 64px; padding-top: 40px; }
+  section > h2 { font-size: clamp(1.35rem, 4.6vw, 1.7rem); margin: 0 0 6px; letter-spacing: -.015em; line-height: 1.25; }
+  section > p.intro { margin: 0 0 18px; color: var(--texto-suave); }
+  .numero-secao { display: inline-block; font-size: .8rem; font-weight: 700; color: var(--azul); background: var(--azul-suave); border-radius: 999px; padding: 2px 10px; margin-bottom: 8px; }
+
+  .painel { background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); }
+  .painel + .painel { margin-top: 12px; }
+  .painel h3 { margin: 0 0 10px; font-size: 1.02rem; }
+  .lista-regras { margin: 0; padding-left: 20px; }
+  .lista-regras li { margin-bottom: 8px; }
+  .lista-regras li:last-child { margin-bottom: 0; }
+
+  /* Visão geral */
+  details.visao { margin-bottom: 16px; }
+  details.visao > summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; }
+  details.visao > summary::-webkit-details-marker { display: none; }
+  details.visao > summary::after { content: "+"; color: var(--azul); font-size: 1.4rem; line-height: 1; transition: transform .2s; }
+  details.visao[open] > summary::after { transform: rotate(45deg); }
+  .vg-semana { margin-top: 14px; }
+  .vg-titulo { margin: 0 0 6px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-fraco); }
+  .vg-semana ol { list-style: none; margin: 0; padding: 0; border: 1px solid var(--linha); border-radius: 12px; overflow: hidden; }
+  .vg-semana li + li { border-top: 1px solid var(--linha); }
+  .vg-semana a { display: grid; grid-template-columns: 74px 10px 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; text-decoration: none; color: var(--texto); font-size: .9rem; }
+  .vg-semana a:hover { background: var(--azul-suave); }
+  .vg-data { color: var(--texto-fraco); font-variant-numeric: tabular-nums; font-size: .84rem; }
+  .vg-formato { font-size: .78rem; color: var(--texto-fraco); }
+
+  /* Filtros */
+  .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+  .filtro { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--linha-forte); background: var(--superficie); color: var(--texto); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .filtro[aria-pressed="true"] { background: var(--azul); border-color: var(--azul); color: #fff; }
+  .filtro .qtd { font-size: .78rem; opacity: .75; font-variant-numeric: tabular-nums; }
+  .ponto { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .ponto-reels { background: var(--reels-pt); }
+  .ponto-carrossel { background: var(--carrossel-pt); }
+  .ponto-foto { background: var(--foto-pt); }
+  .ponto-stories { background: var(--stories-pt); }
+  .filtro[aria-pressed="true"] .ponto { box-shadow: 0 0 0 2px #fff; }
+
+  /* Cartão de post */
+  .posts { display: grid; gap: 16px; }
+  .post, .msg { background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio); padding: 18px; box-shadow: var(--sombra); scroll-margin-top: 70px; }
+  .post[hidden] { display: none; }
+  .post-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .post-dia { margin: 0; font-weight: 800; color: var(--azul); font-size: .95rem; }
+  .post-dia span { color: var(--texto-fraco); font-weight: 600; font-family: "Inter", system-ui, sans-serif; }
+  .tema { margin: 2px 0 0; font-size: 1.12rem; line-height: 1.3; }
+  .selo { flex: none; font-size: .78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+  .selo-reels { background: var(--reels-bg); color: var(--reels-tx); }
+  .selo-carrossel { background: var(--carrossel-bg); color: var(--carrossel-tx); }
+  .selo-foto { background: var(--foto-bg); color: var(--foto-tx); }
+  .selo-stories { background: var(--stories-bg); color: var(--stories-tx); }
+
+  .campo { margin-top: 14px; }
+  .campo p { margin: 2px 0 0; }
+  .rotulo { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--texto-fraco); }
+  .gancho { font-family: "Plus Jakarta Sans", "Inter", sans-serif; font-weight: 700; font-size: 1.12rem; line-height: 1.35; }
+  .cta { font-weight: 600; color: var(--azul-forte); }
+  .nota { margin: 14px 0 0; background: var(--nota-bg); border: 1px solid var(--nota-borda); color: var(--nota-tx); border-radius: 10px; padding: 9px 12px; font-size: .9rem; }
+
+  details.direcao { margin-top: 14px; border: 1px solid var(--linha); border-radius: 12px; padding: 0 14px; }
+  details.direcao > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: .92rem; list-style: none; }
+  details.direcao > summary::-webkit-details-marker { display: none; }
+  details.direcao > summary::after { content: "+"; color: var(--azul); font-size: 1.3rem; line-height: 1; transition: transform .2s; }
+  details.direcao[open] > summary::after { transform: rotate(45deg); }
+  details.direcao[open] { padding-bottom: 14px; }
+  ol.cenas, ol.laminas { margin: 0; padding-left: 22px; }
+  ol.cenas li, ol.laminas li { margin-bottom: 10px; padding-left: 2px; }
+  ol.cenas li:last-child, ol.laminas li:last-child { margin-bottom: 0; }
+  .tempo { display: inline-block; font-size: .75rem; font-weight: 700; color: var(--azul-forte); background: var(--azul-suave); border-radius: 6px; padding: 0 6px; margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .cena-visual { color: var(--texto); }
+  .cena-texto, .figurinha { display: block; color: var(--texto-suave); font-size: .92rem; }
+  .figurinha::before { content: "Figurinha: "; font-weight: 600; }
+  .audio { margin: 12px 0 0; font-size: .92rem; color: var(--texto-suave); }
+  .oculto { display: none; white-space: pre-wrap; }
+
+  .copiavel { margin-top: 14px; border: 1px solid var(--azul-borda); background: var(--azul-suave); border-radius: 12px; overflow: hidden; }
+  .copiavel-topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--azul-borda); }
+  .copiavel .rotulo { color: var(--azul-forte); }
+  .copiavel .texto { white-space: pre-wrap; padding: 12px 14px 14px; font-size: .95rem; background: var(--superficie); }
+  .copiar { min-height: 40px; min-width: 92px; padding: 8px 16px; border-radius: 10px; border: 0; background: var(--azul); color: #fff; font: inherit; font-weight: 700; font-size: .9rem; cursor: pointer; transition: background-color .15s; }
+  .copiar:hover { background: var(--azul-forte); }
+  .copiar.copiado { background: var(--ok); }
+  .copiar-secundario { margin-top: 12px; background: var(--superficie); color: var(--azul); border: 1px solid var(--azul-borda); }
+  .copiar-secundario:hover { background: var(--azul-suave); }
+  .copiar-secundario.copiado { color: #fff; border-color: var(--ok); }
+  button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--azul); outline-offset: 2px; }
+
+  ul.tags { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  ul.tags li { font-size: .85rem; background: var(--fundo); border: 1px solid var(--linha); color: var(--texto-suave); border-radius: 8px; padding: 2px 8px; }
+
+  .msgs { display: grid; gap: 14px; }
+  .msg h3 { margin: 0; font-size: 1.02rem; line-height: 1.35; }
+  .quando { margin: 4px 0 0; color: var(--texto-suave); font-size: .9rem; }
+
+  .bio-perfil { display: flex; gap: 14px; align-items: center; margin-bottom: 4px; }
+  .bio-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--azul); color: #fff; display: grid; place-items: center; font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.6rem; flex: none; }
+  .bio-nome { font-weight: 700; margin: 0; }
+  .bio-arroba { margin: 0; color: var(--texto-fraco); font-size: .9rem; }
+  .destaques { display: grid; gap: 12px; margin-top: 12px; }
+  .destaque { display: flex; gap: 14px; background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio); padding: 16px; box-shadow: var(--sombra); }
+  .destaque-capa { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--azul); color: var(--azul); display: grid; place-items: center; font-family: "Plus Jakarta Sans", sans-serif; font-weight: 800; font-size: 1.3rem; flex: none; background: var(--superficie); }
+  .destaque h3 { margin: 0; font-size: 1.02rem; }
+  .destaque ul { margin: 8px 0 0; padding-left: 18px; font-size: .94rem; }
+
+  .rodape { margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--linha); color: var(--texto-fraco); font-size: .85rem; }
+
+  .aviso { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); background: var(--texto); color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: .9rem; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; max-width: calc(100% - 32px); text-align: center; }
+  .aviso.visivel { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (min-width: 640px) {
+    .post, .msg, .painel { padding: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+  }
+  @media print {
+    .atalhos, .filtros, .copiar, .aviso { display: none !important; }
+    details.direcao > * { display: block; }
+    .post, .msg { break-inside: avoid; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-dentro">
+    <span class="marca"><span class="marca-icone" aria-hidden="true">B</span>Bossa</span>
+    <h1>Kit de divulgação orgânica</h1>
+    <p class="sub">Tudo pronto para postar sozinho, sem anúncio pago: 30 dias de Instagram, mensagens de abordagem, respostas a objeções, status do WhatsApp, posts para grupos e a bio. Cada texto tem o botão “Copiar”.</p>
+    <ul class="fatos">
+      <li><strong>Calendário</strong>seg, 19/10 a ter, 17/11 de 2026</li>
+      <li><strong>Simples</strong>R$ 189,00/mês · R$ 1.890,00/ano</li>
+      <li><strong>Completo</strong>R$ 329,00/mês · R$ 2.569,00/ano</li>
+      <li><strong>Site</strong><a href="https://agendaonlinecontabilidade.netlify.app">agendaonlinecontabilidade.netlify.app</a></li>
+    </ul>
+  </div>
+</header>
+
+<nav class="atalhos" aria-label="Seções do kit">
+  <ul>
+    <li><a href="#antes">Antes de começar</a></li>
+    <li><a href="#calendario">Calendário</a></li>
+    <li><a href="#abordagem">Abordagem</a></li>
+    <li><a href="#objecoes">Objeções</a></li>
+    <li><a href="#status">Status</a></li>
+    <li><a href="#grupos">Grupos</a></li>
+    <li><a href="#bio">Bio e destaques</a></li>
+  </ul>
+</nav>
+
+<main class="pagina">
+  <section id="antes" aria-labelledby="t-antes">
+    <span class="numero-secao">Leia primeiro</span>
+    <h2 id="t-antes">Antes de começar</h2>
+    <p class="intro">Seis combinados que mantêm a divulgação honesta e evitam problema.</p>
+    <div class="painel">
+      <ol class="lista-regras"><li><strong>Diga sempre “demonstração” ou “estúdio de exemplo”.</strong> É o que existe: quem cria a conta entra num estúdio de exemplo, só para ver. Para usar com as próprias clientes, escolhe um plano e paga por Pix. Não prometa nenhum período de uso liberado sem pagamento.</li><li><strong>Não invente nada.</strong> Sem depoimento, sem número de clientes, sem prêmio, sem desconto e sem promessa de faturamento. Depoimento, só de cliente real que autorizou por escrito.</li><li><strong>Só funções que existem e estão ligadas.</strong> Agenda, link de agendamento, clientes, serviços, cobrança com Pix e finanças (Simples); lembretes, contas a pagar, custos, relatório e equipe (Completo). Se não está nesta lista, não entra no post.</li><li><strong>Prints só com dados de exemplo.</strong> Use a demonstração (nomes fictícios). Nunca mostre dados de clientes reais: é questão de LGPD e de confiança.</li><li><strong>Gravar ações? Use a sua conta.</strong> Na demonstração qualquer ação (marcar, cadastrar, cobrar) leva para a tela de planos. Para filmar o aviso de horário batendo ou o WhatsApp abrindo com o Pix, use a sua conta ativa com clientes de exemplo.</li><li><strong>Confirme os Pix rápido.</strong> Quem assina só fica ativo depois que você confirma o pagamento na área de administração, aba Pagamentos. Demora ali vira desistência.</li></ol>
+    </div>
+    <div class="painel">
+      <h3>Rotina de 20 a 30 minutos por dia</h3>
+      <ul class="lista-regras"><li>Poste no horário em que o seu público está livre (experimente o fim da manhã e o começo da noite) e responda os comentários na primeira hora.</li><li>Mande de 10 a 15 abordagens por dia, todas personalizadas. Nada de mensagem em massa: o WhatsApp bloqueia, e a pessoa percebe.</li><li>Faça só um retorno por pessoa (mensagem 10). Um “não” encerra a conversa.</li><li>Toda semana, leia as respostas das caixinhas e transforme as melhores em posts.</li></ul>
+    </div>
+  </section>
+
+  <section id="calendario" aria-labelledby="t-cal">
+    <span class="numero-secao">Parte 1</span>
+    <h2 id="t-cal">Calendário de 30 dias no Instagram</h2>
+    <p class="intro">Um post por dia, de seg, 19/10 a ter, 17/11. 9 reels, 9 carrosséis, 6 fotos e 6 sequências de stories. O botão “Copiar” leva a legenda inteira, com CTA e hashtags.</p>
+
+    <details class="visao painel">
+      <summary>Ver o mês inteiro numa lista</summary>
+      <div class="vg-semana"><p class="vg-titulo">Semana 1 · 19/10 a 25/10</p><ol><li><a href="#dia-1"><span class="vg-data">seg, 19/10</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Horário batendo</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-2"><span class="vg-data">ter, 20/10</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">5 sinais de agenda que custa dinheiro</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-3"><span class="vg-data">qua, 21/10</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Cliente que esquece de pagar</span><span class="vg-formato">Foto</span></a></li><li><a href="#dia-4"><span class="vg-data">qui, 22/10</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Enquete: cliente que não paga</span><span class="vg-formato">Stories</span></a></li><li><a href="#dia-5"><span class="vg-data">sex, 23/10</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Cliente pedindo horário tarde da noite</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-6"><span class="vg-data">sáb, 24/10</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">3 mensagens de cobrança para copiar</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-7"><span class="vg-data">dom, 25/10</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Descanso com o link aberto</span><span class="vg-formato">Foto</span></a></li></ol></div><div class="vg-semana"><p class="vg-titulo">Semana 2 · 26/10 a 01/11</p><ol><li><a href="#dia-8"><span class="vg-data">seg, 26/10</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Não saber quanto sobrou</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-9"><span class="vg-data">ter, 27/10</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Caderno x Bossa</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-10"><span class="vg-data">qua, 28/10</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Tour pela demonstração</span><span class="vg-formato">Stories</span></a></li><li><a href="#dia-11"><span class="vg-data">qui, 29/10</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Cobrar com Pix sem digitar nada</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-12"><span class="vg-data">sex, 30/10</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Ficha da cliente</span><span class="vg-formato">Foto</span></a></li><li><a href="#dia-13"><span class="vg-data">sáb, 31/10</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Quanto faturar para empatar</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-14"><span class="vg-data">dom, 01/11</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Caixinha: maior dor de cabeça</span><span class="vg-formato">Stories</span></a></li></ol></div><div class="vg-semana"><p class="vg-titulo">Semana 3 · 02/11 a 08/11</p><ol><li><a href="#dia-15"><span class="vg-data">seg, 02/11</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Por que o Bossa existe</span><span class="vg-formato">Foto</span></a></li><li><a href="#dia-16"><span class="vg-data">ter, 03/11</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">3 coisas para organizar o estúdio</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-17"><span class="vg-data">qua, 04/11</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Contas que vencem</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-18"><span class="vg-data">qui, 05/11</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Quiz: Simples ou Completo?</span><span class="vg-formato">Stories</span></a></li><li><a href="#dia-19"><span class="vg-data">sex, 06/11</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Relatório para o contador</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-20"><span class="vg-data">sáb, 07/11</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Preços sem letra miúda</span><span class="vg-formato">Foto</span></a></li><li><a href="#dia-21"><span class="vg-data">dom, 08/11</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Link de agendamento em 4 passos</span><span class="vg-formato">Carrossel</span></a></li></ol></div><div class="vg-semana"><p class="vg-titulo">Semana 4 · 09/11 a 15/11</p><ol><li><a href="#dia-22"><span class="vg-data">seg, 09/11</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Quem atende sozinha</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-23"><span class="vg-data">ter, 10/11</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Como assinar, passo a passo</span><span class="vg-formato">Stories</span></a></li><li><a href="#dia-24"><span class="vg-data">qua, 11/11</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Estúdio com equipe</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-25"><span class="vg-data">qui, 12/11</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Barbearia: “depois eu te passo”</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-26"><span class="vg-data">sex, 13/11</span><span class="ponto ponto-foto" aria-hidden="true"></span><span class="vg-tema">Sem instalar nada</span><span class="vg-formato">Foto</span></a></li><li><a href="#dia-27"><span class="vg-data">sáb, 14/11</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">Dúvidas sobre o Bossa</span><span class="vg-formato">Carrossel</span></a></li><li><a href="#dia-28"><span class="vg-data">dom, 15/11</span><span class="ponto ponto-stories" aria-hidden="true"></span><span class="vg-tema">Feriado: abre ou folga?</span><span class="vg-formato">Stories</span></a></li></ol></div><div class="vg-semana"><p class="vg-titulo">Semana 5 · 16/11 a 17/11</p><ol><li><a href="#dia-29"><span class="vg-data">seg, 16/11</span><span class="ponto ponto-reels" aria-hidden="true"></span><span class="vg-tema">Dezembro lotado</span><span class="vg-formato">Reels</span></a></li><li><a href="#dia-30"><span class="vg-data">ter, 17/11</span><span class="ponto ponto-carrossel" aria-hidden="true"></span><span class="vg-tema">O que faz e o que não faz</span><span class="vg-formato">Carrossel</span></a></li></ol></div>
+    </details>
+
+    <div class="filtros" role="group" aria-label="Filtrar por formato">
+      <button type="button" class="filtro" data-filtro="todos" aria-pressed="true">Todos <span class="qtd">30</span></button>
+      <button type="button" class="filtro" data-filtro="reels" aria-pressed="false"><span class="ponto ponto-reels" aria-hidden="true"></span>Reels <span class="qtd">9</span></button><button type="button" class="filtro" data-filtro="carrossel" aria-pressed="false"><span class="ponto ponto-carrossel" aria-hidden="true"></span>Carrossel <span class="qtd">9</span></button><button type="button" class="filtro" data-filtro="foto" aria-pressed="false"><span class="ponto ponto-foto" aria-hidden="true"></span>Foto <span class="qtd">6</span></button><button type="button" class="filtro" data-filtro="stories" aria-pressed="false"><span class="ponto ponto-stories" aria-hidden="true"></span>Stories <span class="qtd">6</span></button>
+    </div>
+    <p class="intro" id="contador-filtro" aria-live="polite" style="margin-top:-6px;font-size:.88rem">Mostrando os 30 posts.</p>
+
+    <div class="posts">
+    <article class="post" id="dia-1" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 1 <span>· seg, 19/10</span></p>
+          <h3 class="tema">Horário batendo</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Duas clientes chegaram no mesmo horário. E agora? 😬</p>
+      </div>
+      <p class="nota">Para gravar ações (marcar, cobrar), use a sua conta ativa com clientes de exemplo. A demonstração é só para ver: qualquer ação nela leva para a tela de planos.</p>
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Duas pessoas chegando juntas na porta do estúdio (encene com amigas).</span><span class="cena-texto">Texto na tela: “Duas clientes. Mesmo horário. 😬”</span></li><li><span class="tempo">3–7s</span><span class="cena-visual">Close no caderno de agenda com rasura e seta.</span><span class="cena-texto">Texto na tela: “Mas eu tinha anotado…”</span></li><li><span class="tempo">7–14s</span><span class="cena-visual">Gravação da tela: tentar marcar um horário em cima de outro e o aviso aparecendo.</span><span class="cena-texto">Texto na tela: “No Bossa a agenda avisa na hora e não deixa bater.”</span></li><li><span class="tempo">14–18s</span><span class="cena-visual">A agenda da semana rolando no celular (pode ser a da demonstração).</span><span class="cena-texto">Texto na tela: “A semana inteira numa tela.”</span></li><li><span class="tempo">18–22s</span><span class="cena-visual">Você para a câmera: “Quer ver funcionando? Link na bio.”</span><span class="cena-texto">Texto na tela: “Conhecer o sistema → link na bio”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Um som calmo que esteja em alta, com volume baixo, ou só a sua voz.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-1" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-1">Duas clientes chegaram no mesmo horário. E agora? 😬
+
+Quem tem estúdio já passou por isso: a cliente remarca pelo WhatsApp, você anota correndo entre um atendimento e outro e, no dia, tem duas pessoas na sua porta às 14h.
+
+No Bossa, a semana inteira fica numa tela só, no celular. Se você tenta marcar um horário em cima de outro, a agenda avisa na hora e não deixa bater.
+
+E não precisa instalar nada: abre no navegador do celular ou do computador.
+
+👉 Toque no link da bio e vá em “Conhecer o sistema”: você entra num estúdio de exemplo e vê tudo funcionando antes de assinar.
+
+#salaodebeleza #donadesalao #agendaonline #studiodebeleza #manicure #esteticista #empreendedorismofeminino</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Toque no link da bio e vá em “Conhecer o sistema”: você entra num estúdio de exemplo e vê tudo funcionando antes de assinar.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#salaodebeleza</li><li>#donadesalao</li><li>#agendaonline</li><li>#studiodebeleza</li><li>#manicure</li><li>#esteticista</li><li>#empreendedorismofeminino</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-2" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 2 <span>· ter, 20/10</span></p>
+          <h3 class="tema">5 sinais de agenda que custa dinheiro</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">5 sinais de que a sua agenda está te fazendo perder dinheiro 👇</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: 5 sinais de que a sua agenda está te fazendo perder dinheiro</li><li>1. Você não sabe dizer agora, de cabeça, quem ainda não te pagou.</li><li>2. Já teve duas clientes no mesmo horário, ou um buraco na agenda que ninguém viu.</li><li>3. Você responde pedido de horário às 23h, deitada na cama.</li><li>4. No fim do mês, não sabe quanto entrou, quanto saiu e quanto sobrou.</li><li>5. A conta do fornecedor só aparece quando já venceu.</li><li>Marcou dois ou mais? A sua agenda precisa trabalhar por você.</li><li>Bossa: agenda, link de agendamento, cobrança no WhatsApp com Pix e finanças. Link na bio.</li></ol>
+        <div class="oculto" id="lam-2">Lâmina 1: Capa: 5 sinais de que a sua agenda está te fazendo perder dinheiro
+
+Lâmina 2: 1. Você não sabe dizer agora, de cabeça, quem ainda não te pagou.
+
+Lâmina 3: 2. Já teve duas clientes no mesmo horário, ou um buraco na agenda que ninguém viu.
+
+Lâmina 4: 3. Você responde pedido de horário às 23h, deitada na cama.
+
+Lâmina 5: 4. No fim do mês, não sabe quanto entrou, quanto saiu e quanto sobrou.
+
+Lâmina 6: 5. A conta do fornecedor só aparece quando já venceu.
+
+Lâmina 7: Marcou dois ou mais? A sua agenda precisa trabalhar por você.
+
+Lâmina 8: Bossa: agenda, link de agendamento, cobrança no WhatsApp com Pix e finanças. Link na bio.</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-2" aria-label="Copiar o texto das lâminas do dia 2">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-2" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-2">5 sinais de que a sua agenda está te fazendo perder dinheiro 👇
+
+Quantos desses você marcou? Me conta nos comentários só com o número 👇
+
+Nenhum deles é falta de capricho. É falta de ferramenta. Caderno, bloco de notas e conversa de WhatsApp não avisam quando um horário bate, não mostram quem está devendo e não somam o mês para você.
+
+O Bossa junta a agenda da semana, o link para a cliente marcar sozinha, a ficha de cada cliente, a cobrança com o Pix pronto no WhatsApp e as finanças do mês. Tudo no celular.
+
+Salva esse post para revisar no fim do mês. 📌
+
+👉 Quer ver como fica organizado? Link da bio → “Conhecer o sistema”.
+
+#gestaodesalao #donadesalao #studiodebeleza #empreendedoradabeleza #profissionaldabeleza #dicasparasalao</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Quer ver como fica organizado? Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#gestaodesalao</li><li>#donadesalao</li><li>#studiodebeleza</li><li>#empreendedoradabeleza</li><li>#profissionaldabeleza</li><li>#dicasparasalao</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-3" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 3 <span>· qua, 21/10</span></p>
+          <h3 class="tema">Cliente que esquece de pagar</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">A cobrança mais difícil é a da cliente que você gosta.</p>
+      </div>
+      
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Print da tela de Cobranças da demonstração (estúdio de exemplo, nomes fictícios) dentro de um celular, ou uma foto sua segurando o celular com essa tela. Fundo claro, sem filtro pesado.</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-3" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-3">A cobrança mais difícil é a da cliente que você gosta.
+
+Ela é querida, vem há anos, pediu para pagar depois… e você fica sem graça de lembrar. 😅
+
+Cobrar não é falta de educação. É o seu trabalho sendo pago.
+
+No Bossa, a cobrança sai pronta para o WhatsApp: nome, valor, data e o código Pix copia e cola. Você escolhe o tom (gentil, direto ou firme, todos educados), confere e aperta enviar. O dinheiro cai direto na sua chave Pix.
+
+Nada é enviado sozinho: quem decide é você.
+
+👉 Veja a tela de cobranças funcionando: link da bio → “Conhecer o sistema”.
+
+#manicure #cabeleireira #esteticista #donadesalao #empreendedorismofeminino #profissionaldabeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja a tela de cobranças funcionando: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#manicure</li><li>#cabeleireira</li><li>#esteticista</li><li>#donadesalao</li><li>#empreendedorismofeminino</li><li>#profissionaldabeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-4" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 4 <span>· qui, 22/10</span></p>
+          <h3 class="tema">Enquete: cliente que não paga</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Pergunta sincera: já teve cliente que esqueceu de pagar? 👀</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 5</summary>
+        <ol class="cenas"><li><span class="cena-visual">Fundo azul liso ou uma selfie sua.</span><span class="figurinha">Enquete: “Já, várias 🙋‍♀️” / “Nunca”</span></li><li><span class="cena-visual">Mesmo fundo.</span><span class="figurinha">Controle deslizante com 😅</span></li><li><span class="cena-visual">Print da mensagem de cobrança (tom gentil) na demonstração.</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Caixinha de perguntas</span></li><li><span class="cena-visual">Print da página inicial do site.</span><span class="figurinha">Link: “Conhecer o sistema”</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-4" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-4">Tela 1: Pergunta sincera 👀 Já teve cliente que esqueceu de pagar?
+
+Tela 2: Quanto você fica sem graça na hora de cobrar?
+
+Tela 3: No Bossa a mensagem sai pronta, com o Pix copia e cola. Você confere e envia.
+
+Tela 4: Como você cobra hoje? Me conta aqui 👇
+
+Tela 5: Quer ver por dentro? Toca aqui.
+
+Link: https://agendaonlinecontabilidade.netlify.app
+
+#donadesalao #manicure #salaodebeleza #studiodebeleza #esteticista</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Figurinha de link “Conhecer o sistema” → https://agendaonlinecontabilidade.netlify.app</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#donadesalao</li><li>#manicure</li><li>#salaodebeleza</li><li>#studiodebeleza</li><li>#esteticista</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-5" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 5 <span>· sex, 23/10</span></p>
+          <h3 class="tema">Cliente pedindo horário tarde da noite</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">23h47: “oi, tem horário amanhã?” 📱</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Quarto escuro, o celular acende na cabeceira com som de notificação.</span><span class="cena-texto">Texto na tela: “23h47 · “Oi, tem horário amanhã?””</span></li><li><span class="tempo">3–6s</span><span class="cena-visual">Mão pegando o celular, cara de sono.</span><span class="cena-texto">Texto na tela: “Você ia responder agora?”</span></li><li><span class="tempo">6–12s</span><span class="cena-visual">Tela: copiar o seu link de agendamento e colar na conversa.</span><span class="cena-texto">Texto na tela: “Manda o link.”</span></li><li><span class="tempo">12–18s</span><span class="cena-visual">Tela do link (na sua conta): escolher serviço, dia e horário livre.</span><span class="cena-texto">Texto na tela: “Ela escolhe o serviço, o dia e um horário livre.”</span></li><li><span class="tempo">18–22s</span><span class="cena-visual">Celular virado para baixo, luz apagando.</span><span class="cena-texto">Texto na tela: “O horário cai na sua agenda. Você dorme. 😴”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Som de notificação no começo e depois uma música calma.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-5" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-5">23h47: “oi, tem horário amanhã?” 📱
+
+Cliente que pede horário tarde da noite não está errada: é a hora que ela lembrou. Mas você não precisa estar acordada para responder.
+
+Com o link de agendamento do Bossa, a cliente escolhe o serviço, o dia e um horário livre sozinha, e o horário cai direto na sua agenda.
+
+Você decide tudo antes: os dias e horários em que atende, a antecedência mínima para marcar e até quantos dias para frente o link aceita.
+
+Coloque o link na bio e no WhatsApp e deixe ele trabalhar.
+
+👉 Veja como funciona: link da bio → “Conhecer o sistema”.
+
+#agendaonline #agendamentoonline #designdesobrancelhas #lashdesigner #manicure #studiodebeleza #empreendedoradabeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja como funciona: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#agendaonline</li><li>#agendamentoonline</li><li>#designdesobrancelhas</li><li>#lashdesigner</li><li>#manicure</li><li>#studiodebeleza</li><li>#empreendedoradabeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-6" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 6 <span>· sáb, 24/10</span></p>
+          <h3 class="tema">3 mensagens de cobrança para copiar</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Como cobrar cliente sem ser chata: 3 mensagens prontas para copiar 💬</p>
+      </div>
+      <p class="nota">Nomes e valores das lâminas são exemplos. Os textos são os mesmos que o Bossa monta em cada tom.</p>
+      
+      <details class="direcao">
+        <summary>Lâminas · 7</summary>
+        <ol class="laminas"><li>Capa: Como cobrar cliente sem ser chata (3 mensagens para copiar)</li><li>Antes de vencer · tom gentil: “Oi, Mariana! Aqui é do Studio Bela. Passando para lembrar do seu atendimento: R$ 120,00, com vencimento em 24/10. Qualquer dúvida, é só chamar.”</li><li>Venceu · tom direto: “Oi, Mariana! Aqui é do Studio Bela. O seu atendimento de R$ 120,00 venceu em 24/10 e ainda consta em aberto por aqui. Consegue acertar hoje? Qualquer dúvida, é só chamar.”</li><li>Atraso grande · tom firme (e educado do mesmo jeito): “Oi, Mariana! Aqui é do Studio Bela. O seu atendimento de R$ 120,00, com vencimento em 24/10, segue em aberto. Pode me dizer qual a melhor data para você acertar? Assim eu já me organizo por aqui. Qualquer dúvida, é só chamar.”</li><li>O que nunca fazer: ameaçar, expor a cliente em story ou em grupo, cobrar na frente de outras pessoas. Além de feio, o Código de Defesa do Consumidor proíbe (art. 42).</li><li>No Bossa essas mensagens saem prontas, com nome, valor, data e o Pix copia e cola. Você confere e envia pelo WhatsApp.</li><li>Salva para usar na próxima cobrança 📌 · Link na bio</li></ol>
+        <div class="oculto" id="lam-6">Lâmina 1: Capa: Como cobrar cliente sem ser chata (3 mensagens para copiar)
+
+Lâmina 2: Antes de vencer · tom gentil: “Oi, Mariana! Aqui é do Studio Bela. Passando para lembrar do seu atendimento: R$ 120,00, com vencimento em 24/10. Qualquer dúvida, é só chamar.”
+
+Lâmina 3: Venceu · tom direto: “Oi, Mariana! Aqui é do Studio Bela. O seu atendimento de R$ 120,00 venceu em 24/10 e ainda consta em aberto por aqui. Consegue acertar hoje? Qualquer dúvida, é só chamar.”
+
+Lâmina 4: Atraso grande · tom firme (e educado do mesmo jeito): “Oi, Mariana! Aqui é do Studio Bela. O seu atendimento de R$ 120,00, com vencimento em 24/10, segue em aberto. Pode me dizer qual a melhor data para você acertar? Assim eu já me organizo por aqui. Qualquer dúvida, é só chamar.”
+
+Lâmina 5: O que nunca fazer: ameaçar, expor a cliente em story ou em grupo, cobrar na frente de outras pessoas. Além de feio, o Código de Defesa do Consumidor proíbe (art. 42).
+
+Lâmina 6: No Bossa essas mensagens saem prontas, com nome, valor, data e o Pix copia e cola. Você confere e envia pelo WhatsApp.
+
+Lâmina 7: Salva para usar na próxima cobrança 📌 · Link na bio</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-6" aria-label="Copiar o texto das lâminas do dia 6">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-6" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-6">Como cobrar cliente sem ser chata: 3 mensagens prontas para copiar 💬
+
+Salva esse post antes de precisar dele. 📌
+
+Cobrar dá frio na barriga porque a gente tem medo de perder a cliente. Mas mensagem clara e educada não afasta ninguém: o que afasta é cobrança atravessada, na frente dos outros ou em indireta no story.
+
+Deslize para ver as 3 mensagens, uma para cada momento. Pode copiar e usar, com ou sem sistema.
+
+No Bossa elas já saem prontas, com o nome da cliente, o valor, a data e o código Pix. Você só confere e aperta enviar no WhatsApp.
+
+👉 Quer ver a tela de cobranças? Link da bio → “Conhecer o sistema”.
+
+#dicasparasalao #donadesalao #manicureepedicure #cabeleireira #esteticista #profissionaldabeleza #empreendedorismofeminino</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Quer ver a tela de cobranças? Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#dicasparasalao</li><li>#donadesalao</li><li>#manicureepedicure</li><li>#cabeleireira</li><li>#esteticista</li><li>#profissionaldabeleza</li><li>#empreendedorismofeminino</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-7" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 7 <span>· dom, 25/10</span></p>
+          <h3 class="tema">Descanso com o link aberto</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Domingo. Estúdio fechado. O seu link continua aberto. ☕</p>
+      </div>
+      
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Foto real de um estúdio arrumado e vazio (o de uma parceira, com autorização), com luz natural. Ou o celular sobre a bancada mostrando uma página de agendamento.</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-7" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-7">Domingo. Estúdio fechado. O seu link continua aberto. ☕
+
+Dá para descansar sem perder cliente.
+
+Enquanto você aproveita o domingo, quem lembrar de marcar pode abrir o seu link, escolher o serviço e um horário livre da semana. O horário entra direto na sua agenda, sem você responder mensagem nenhuma.
+
+E só aparece o que você liberou: os dias e horários de atendimento, a antecedência mínima e até quantos dias para frente dá para marcar.
+
+Bom domingo! 💙
+
+👉 Monte o seu link: toque no link da bio e vá em “Conhecer o sistema”.
+
+#agendamentoonline #salaodebeleza #studiodeunhas #barbearia #esteticafacial #autonoma</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Monte o seu link: toque no link da bio e vá em “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#agendamentoonline</li><li>#salaodebeleza</li><li>#studiodeunhas</li><li>#barbearia</li><li>#esteticafacial</li><li>#autonoma</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-8" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 8 <span>· seg, 26/10</span></p>
+          <h3 class="tema">Não saber quanto sobrou</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Quanto sobrou no mês? Se você precisou pensar, esse vídeo é para você.</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Mesa com notinhas, calculadora e caderno.</span><span class="cena-texto">Texto na tela: “Fim do mês. Quanto sobrou? 🤔”</span></li><li><span class="tempo">3–6s</span><span class="cena-visual">Dedo rolando um extrato de banco (sem mostrar valores reais).</span><span class="cena-texto">Texto na tela: “Pix daqui, maquininha dali…”</span></li><li><span class="tempo">6–13s</span><span class="cena-visual">Tela de Finanças da demonstração.</span><span class="cena-texto">Texto na tela: “Entrou, saiu e o resumo do mês. Numa tela.”</span></li><li><span class="tempo">13–17s</span><span class="cena-visual">Na sua conta: um horário marcado como concluído e o valor aparecendo nas finanças.</span><span class="cena-texto">Texto na tela: “O horário concluído já entra nas finanças.”</span></li><li><span class="tempo">17–21s</span><span class="cena-visual">Você para a câmera: “Agora você responde sem calculadora.”</span><span class="cena-texto">Texto na tela: “Link na bio”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Som em alta de “conta difícil” no começo e uma batida leve no final.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-8" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-8">Quanto sobrou no mês? Se você precisou pensar, esse vídeo é para você.
+
+Pix de um lado, maquininha do outro, dinheiro na gaveta… e no fim do mês a pergunta que ninguém consegue responder: quanto sobrou?
+
+No Bossa você vê o que entrou, o que saiu e o resumo do mês numa tela. O horário concluído já entra nas finanças, sem você lançar de novo.
+
+Ainda aparece uma estimativa do imposto, feita com o percentual que você informa. O imposto de verdade, as guias e a folha continuam com o seu contador.
+
+Finanças já vem no plano Simples.
+
+👉 Veja a tela de finanças: link da bio → “Conhecer o sistema”.
+
+#controlefinanceiro #financasparaempreendedores #donadesalao #gestaodesalao #studiodebeleza #empreendedorismofeminino #mei</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja a tela de finanças: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#controlefinanceiro</li><li>#financasparaempreendedores</li><li>#donadesalao</li><li>#gestaodesalao</li><li>#studiodebeleza</li><li>#empreendedorismofeminino</li><li>#mei</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-9" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 9 <span>· ter, 27/10</span></p>
+          <h3 class="tema">Caderno x Bossa</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Caderno de agenda x Bossa (com todo respeito ao caderno 📒)</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: Caderno x Bossa. Com todo respeito ao caderno 📒</li><li>O caderno não descarrega, você já sabe usar e ele cabe na bolsa. Mérito dele! ✅</li><li>Mas o caderno não avisa quando dois horários batem.</li><li>Não deixa a cliente marcar sozinha às 23h.</li><li>Não monta a cobrança com o Pix pronto para o WhatsApp.</li><li>Não soma o que entrou e o que saiu no mês.</li><li>O Bossa faz tudo isso no celular, pelo navegador, sem instalar nada.</li><li>Compare você mesma: link na bio → Conhecer o sistema</li></ol>
+        <div class="oculto" id="lam-9">Lâmina 1: Capa: Caderno x Bossa. Com todo respeito ao caderno 📒
+
+Lâmina 2: O caderno não descarrega, você já sabe usar e ele cabe na bolsa. Mérito dele! ✅
+
+Lâmina 3: Mas o caderno não avisa quando dois horários batem.
+
+Lâmina 4: Não deixa a cliente marcar sozinha às 23h.
+
+Lâmina 5: Não monta a cobrança com o Pix pronto para o WhatsApp.
+
+Lâmina 6: Não soma o que entrou e o que saiu no mês.
+
+Lâmina 7: O Bossa faz tudo isso no celular, pelo navegador, sem instalar nada.
+
+Lâmina 8: Compare você mesma: link na bio → Conhecer o sistema</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-9" aria-label="Copiar o texto das lâminas do dia 9">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-9" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-9">Caderno de agenda x Bossa (com todo respeito ao caderno 📒)
+
+Não é guerra contra o caderno. Ele segurou muito estúdio por anos e merece respeito. 😄
+
+Só que o estúdio cresce e o caderno fica pequeno: horário rabiscado, cliente que paga depois e some da memória, mês que fecha sem você saber quanto sobrou.
+
+Deslize e compare. Se fizer sentido, veja o Bossa funcionando num estúdio de exemplo antes de decidir qualquer coisa. Você pode até deixar o caderno do lado no começo.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendaonline #donadesalao #manicure #cabeleireira #studiodebeleza #gestaodesalao</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#agendaonline</li><li>#donadesalao</li><li>#manicure</li><li>#cabeleireira</li><li>#studiodebeleza</li><li>#gestaodesalao</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-10" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 10 <span>· qua, 28/10</span></p>
+          <h3 class="tema">Tour pela demonstração</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Vem comigo ver o Bossa por dentro? 👀</p>
+      </div>
+      <p class="nota">Depois de postar, salve esta sequência no destaque “Conheça”.</p>
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 8</summary>
+        <ol class="cenas"><li><span class="cena-visual">Selfie ou o celular na mão.</span></li><li><span class="cena-visual">Gravação da tela: Início da demonstração.</span></li><li><span class="cena-visual">Gravação da tela: agenda da semana.</span></li><li><span class="cena-visual">Gravação da tela: ficha de uma cliente com observação.</span></li><li><span class="cena-visual">Gravação da tela: Cobranças.</span></li><li><span class="cena-visual">Gravação da tela: Finanças.</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Agenda e link” / “Cobrança e finanças”</span></li><li><span class="cena-visual">Print da página inicial do site.</span><span class="figurinha">Link: “Conhecer o sistema”</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-10" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-10">Tela 1: Vem comigo ver o Bossa por dentro? 👀
+
+Tela 2: Aqui é o Início: o resumo do seu dia.
+
+Tela 3: A semana inteira numa tela. Se um horário bate, ela avisa.
+
+Tela 4: Cada cliente com a sua ficha: telefone e observações, tipo alergia ou preferência.
+
+Tela 5: Mensagem de cobrança e Pix prontos para o WhatsApp.
+
+Tela 6: O que entrou, o que saiu e o resumo do mês.
+
+Tela 7: O que você mais usaria?
+
+Tela 8: Crie a conta e entre nesse mesmo estúdio de exemplo. Toca aqui 👇
+
+Link: https://agendaonlinecontabilidade.netlify.app
+
+#studiodebeleza #agendaonline #donadesalao #esteticista #barbearia</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Figurinha de link “Conhecer o sistema” → https://agendaonlinecontabilidade.netlify.app</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#studiodebeleza</li><li>#agendaonline</li><li>#donadesalao</li><li>#esteticista</li><li>#barbearia</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-11" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 11 <span>· qui, 29/10</span></p>
+          <h3 class="tema">Cobrar com Pix sem digitar nada</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">POV: a cliente pediu o Pix e você não precisou digitar nada.</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Print de conversa encenada: “Me passa o Pix?”</span><span class="cena-texto">Texto na tela: “Me passa o Pix? 🙃”</span></li><li><span class="tempo">3–9s</span><span class="cena-visual">Gravação da tela (na sua conta): abrir a cobrança e tocar para enviar pelo WhatsApp.</span><span class="cena-texto">Texto na tela: “Abre a cobrança…”</span></li><li><span class="tempo">9–14s</span><span class="cena-visual">O WhatsApp abre com a mensagem e o código Pix copia e cola já escritos.</span><span class="cena-texto">Texto na tela: “…e a mensagem já vem pronta, com o Pix.”</span></li><li><span class="tempo">14–17s</span><span class="cena-visual">Dedo apertando enviar.</span><span class="cena-texto">Texto na tela: “Você confere e envia.”</span></li><li><span class="tempo">17–21s</span><span class="cena-visual">Tela final com o nome Bossa.</span><span class="cena-texto">Texto na tela: “O dinheiro cai direto na sua chave Pix. Link na bio.”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Som em alta de “satisfação” ou um clique de enviar bem marcado.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-11" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-11">POV: a cliente pediu o Pix e você não precisou digitar nada.
+
+Sem procurar chave, sem digitar valor errado, sem mandar print de dados bancários.
+
+No Bossa a cobrança já sai com o nome da cliente, o valor, a data e o código Pix copia e cola. O WhatsApp abre com tudo escrito: você confere e aperta enviar.
+
+O dinheiro vai direto para a sua chave Pix.
+
+Cobrança pelo WhatsApp com Pix já vem no plano Simples.
+
+👉 Veja funcionando: link da bio → “Conhecer o sistema”.
+
+#pix #manicure #barbearia #salaodebeleza #esteticista #empreendedoradabeleza #profissionaldabeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja funcionando: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#pix</li><li>#manicure</li><li>#barbearia</li><li>#salaodebeleza</li><li>#esteticista</li><li>#empreendedoradabeleza</li><li>#profissionaldabeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-12" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 12 <span>· sex, 30/10</span></p>
+          <h3 class="tema">Ficha da cliente</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Qual cliente tem alergia a amônia? Você lembraria de cabeça?</p>
+      </div>
+      
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Print da ficha de uma cliente na demonstração, com a observação “Alergia a amônia: usar coloração sem amônia.” (dado de exemplo, nome fictício).</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-12" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-12">Qual cliente tem alergia a amônia? Você lembraria de cabeça?
+
+Detalhe esquecido vira problema: a alergia, o café sem açúcar, a preferência por horário no fim da tarde.
+
+No Bossa cada cliente tem a sua ficha, com telefone, e-mail, data de nascimento e observações. Você abre antes do atendimento e já chega sabendo.
+
+Clientes sem limite, em qualquer plano. E a ficha fica guardada no sistema, não perdida num caderno ou numa conversa antiga.
+
+👉 Veja uma ficha de exemplo: link da bio → “Conhecer o sistema”.
+
+#cabeleireira #coloracao #salaodebeleza #esteticista #studiodebeleza #atendimentoaocliente</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja uma ficha de exemplo: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#cabeleireira</li><li>#coloracao</li><li>#salaodebeleza</li><li>#esteticista</li><li>#studiodebeleza</li><li>#atendimentoaocliente</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-13" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 13 <span>· sáb, 31/10</span></p>
+          <h3 class="tema">Quanto faturar para empatar</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Quanto o seu estúdio precisa faturar só para empatar? A conta é simples. 🧮</p>
+      </div>
+      <p class="nota">Os números das lâminas são ilustrativos. Deixe isso escrito na lâmina 4.</p>
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: Quanto o seu estúdio precisa faturar só para empatar?</li><li>Custo fixo: o que você paga mesmo sem atender. Aluguel, luz, internet, contador, sistema.</li><li>Custo variável: o que cresce a cada atendimento. Material, descartáveis, produto, taxa da maquininha.</li><li>Exemplo (números ilustrativos): custos fixos de R$ 2.400,00 por mês. De cada R$ 100,00 que você recebe, R$ 40,00 vão em custo variável. Sobram R$ 60,00.</li><li>A conta: R$ 2.400,00 ÷ 0,60 = R$ 4.000,00. É o que precisa entrar no mês só para pagar tudo.</li><li>Passou de R$ 4.000,00? Aí sim começa o lucro.</li><li>No plano Completo, o Bossa separa custos fixos e variáveis e mostra quanto faturar para empatar.</li><li>Salva e faça a sua conta 📌 · Link na bio</li></ol>
+        <div class="oculto" id="lam-13">Lâmina 1: Capa: Quanto o seu estúdio precisa faturar só para empatar?
+
+Lâmina 2: Custo fixo: o que você paga mesmo sem atender. Aluguel, luz, internet, contador, sistema.
+
+Lâmina 3: Custo variável: o que cresce a cada atendimento. Material, descartáveis, produto, taxa da maquininha.
+
+Lâmina 4: Exemplo (números ilustrativos): custos fixos de R$ 2.400,00 por mês. De cada R$ 100,00 que você recebe, R$ 40,00 vão em custo variável. Sobram R$ 60,00.
+
+Lâmina 5: A conta: R$ 2.400,00 ÷ 0,60 = R$ 4.000,00. É o que precisa entrar no mês só para pagar tudo.
+
+Lâmina 6: Passou de R$ 4.000,00? Aí sim começa o lucro.
+
+Lâmina 7: No plano Completo, o Bossa separa custos fixos e variáveis e mostra quanto faturar para empatar.
+
+Lâmina 8: Salva e faça a sua conta 📌 · Link na bio</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-13" aria-label="Copiar o texto das lâminas do dia 13">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-13" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-13">Quanto o seu estúdio precisa faturar só para empatar? A conta é simples. 🧮
+
+Essa conta separa o estúdio que vive no aperto do estúdio que sabe para onde vai.
+
+Custo fixo é o que você paga mesmo sem atender ninguém. Custo variável cresce a cada atendimento. Com os dois na mão, dá para saber quanto precisa faturar no mês só para empatar. O que passar disso é o que sobra de verdade.
+
+Deslize para ver a conta com um exemplo. Os números são só ilustração: faça com os seus.
+
+No plano Completo, o Bossa separa os custos fixos e variáveis e mostra quanto faturar para empatar.
+
+👉 Salva para fazer a sua conta 📌 e conheça o Bossa: link da bio → “Conhecer o sistema”.
+
+#financasparaempreendedores #controlefinanceiro #gestaodesalao #donadesalao #precificacao #empreendedorismofeminino #mei</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Salva para fazer a sua conta 📌 e conheça o Bossa: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#financasparaempreendedores</li><li>#controlefinanceiro</li><li>#gestaodesalao</li><li>#donadesalao</li><li>#precificacao</li><li>#empreendedorismofeminino</li><li>#mei</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-14" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 14 <span>· dom, 01/11</span></p>
+          <h3 class="tema">Caixinha: maior dor de cabeça</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Domingo de conversa: qual a maior dor de cabeça do seu estúdio? ☕</p>
+      </div>
+      <p class="nota">Sem link hoje: o objetivo é ouvir. Use as respostas para criar posts e para abordar quem respondeu (mensagem 7).</p>
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 5</summary>
+        <ol class="cenas"><li><span class="cena-visual">Foto do seu café ou da sua mesa.</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Cliente que não paga” / “Horário que bate”</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Não saber quanto sobrou” / “WhatsApp fora de hora”</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Caixinha de perguntas</span></li><li><span class="cena-visual">Selfie.</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-14" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-14">Tela 1: Domingo de conversa ☕
+
+Tela 2: O que mais te tira do sério?
+
+Tela 3: E entre esses dois?
+
+Tela 4: Conta aqui a sua maior dor de cabeça no estúdio 👇
+
+Tela 5: Vou responder algumas durante a semana, com dica de verdade 💙
+
+#donadesalao #studiodebeleza #profissionaldabeleza #manicure #cabeleireira</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Responder a caixinha (sem link nesta sequência).</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#donadesalao</li><li>#studiodebeleza</li><li>#profissionaldabeleza</li><li>#manicure</li><li>#cabeleireira</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-15" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 15 <span>· seg, 02/11</span></p>
+          <h3 class="tema">Por que o Bossa existe</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Você abriu um estúdio para cuidar de gente, não de planilha.</p>
+      </div>
+      <p class="nota">Feriado de Finados: post leve, sem chamada forte de venda.</p>
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Foto real de mãos trabalhando (unha, sobrancelha, corte) de uma parceira que autorizou o uso, ou uma foto sua no seu espaço de trabalho. Nada de banco de imagens.</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-15" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-15">Você abriu um estúdio para cuidar de gente, não de planilha.
+
+Ninguém sonha em abrir um estúdio para passar a noite somando nota, procurando quem não pagou ou respondendo mensagem de horário.
+
+O sonho é o atendimento: a cliente que sai feliz, o trabalho bem feito, a agenda com gente que volta.
+
+O Bossa existe para cuidar da parte chata: agenda, cobrança e o dinheiro do mês. Para sobrar mais tempo para o que você ama fazer. 💙
+
+👉 Quando quiser conhecer: link da bio.
+
+#empreendedorismofeminino #profissionaldabeleza #amoroquefaco #studiodebeleza #donadesalao</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Quando quiser conhecer: link da bio.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#empreendedorismofeminino</li><li>#profissionaldabeleza</li><li>#amoroquefaco</li><li>#studiodebeleza</li><li>#donadesalao</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-16" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 16 <span>· ter, 03/11</span></p>
+          <h3 class="tema">3 coisas para organizar o estúdio</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">3 coisas para organizar o seu estúdio essa semana (salva e faz uma por dia) 📌</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Você para a câmera, no seu espaço.</span><span class="cena-texto">Texto na tela: “3 coisas para organizar o estúdio essa semana”</span></li><li><span class="tempo">3–9s</span><span class="cena-visual">Tela de Serviços com preço e duração.</span><span class="cena-texto">Texto na tela: “1. Cada serviço com preço e duração. Duração certa = agenda que não aperta.”</span></li><li><span class="tempo">9–15s</span><span class="cena-visual">A bio do Instagram com o link de agendamento.</span><span class="cena-texto">Texto na tela: “2. Link de agendamento na bio e no WhatsApp.”</span></li><li><span class="tempo">15–21s</span><span class="cena-visual">Tela de Finanças.</span><span class="cena-texto">Texto na tela: “3. Olhe o mês: o que entrou, o que saiu, o que sobrou.”</span></li><li><span class="tempo">21–25s</span><span class="cena-visual">Você: “O Bossa faz as três no celular.”</span><span class="cena-texto">Texto na tela: “Link na bio → Conhecer o sistema”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Sua voz por cima de uma batida leve; números grandes na tela.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-16" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-16">3 coisas para organizar o seu estúdio essa semana (salva e faz uma por dia) 📌
+
+1️⃣ Cadastre cada serviço com preço e duração. Quando a duração está certa, a agenda não aperta e você não atrasa a próxima cliente.
+
+2️⃣ Coloque um link de agendamento na bio e no WhatsApp. A cliente escolhe o serviço, o dia e um horário livre sozinha.
+
+3️⃣ Separe um momento para olhar o mês: o que entrou, o que saiu e quanto sobrou.
+
+No Bossa as três coisas estão no plano Simples, no celular, sem instalar nada.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#dicasparasalao #studiodeunhas #designdesobrancelhas #empreendedoradabeleza #gestaodesalao #agendamentoonline</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#dicasparasalao</li><li>#studiodeunhas</li><li>#designdesobrancelhas</li><li>#empreendedoradabeleza</li><li>#gestaodesalao</li><li>#agendamentoonline</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-17" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 17 <span>· qua, 04/11</span></p>
+          <h3 class="tema">Contas que vencem</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Aluguel, luz, fornecedor, contrato da sala: você sabe o que vence essa semana?</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: Você sabe o que vence essa semana no seu estúdio?</li><li>O que costuma vencer: aluguel, luz, água, internet, fornecedor, maquininha, contador, contrato da sala.</li><li>Conta esquecida vira juros e multa. Prazo de contrato perdido vira dor de cabeça.</li><li>Dica 1: anote toda conta num lugar só, com valor e data.</li><li>Dica 2: separe 5 minutos toda segunda para olhar o que vence na semana.</li><li>No plano Completo, o Bossa guarda as contas a pagar e os prazos de contrato e avisa no Início antes de vencer.</li><li>E a conta paga já sai do caixa, nas finanças.</li><li>Link na bio → Conhecer o sistema</li></ol>
+        <div class="oculto" id="lam-17">Lâmina 1: Capa: Você sabe o que vence essa semana no seu estúdio?
+
+Lâmina 2: O que costuma vencer: aluguel, luz, água, internet, fornecedor, maquininha, contador, contrato da sala.
+
+Lâmina 3: Conta esquecida vira juros e multa. Prazo de contrato perdido vira dor de cabeça.
+
+Lâmina 4: Dica 1: anote toda conta num lugar só, com valor e data.
+
+Lâmina 5: Dica 2: separe 5 minutos toda segunda para olhar o que vence na semana.
+
+Lâmina 6: No plano Completo, o Bossa guarda as contas a pagar e os prazos de contrato e avisa no Início antes de vencer.
+
+Lâmina 7: E a conta paga já sai do caixa, nas finanças.
+
+Lâmina 8: Link na bio → Conhecer o sistema</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-17" aria-label="Copiar o texto das lâminas do dia 17">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-17" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-17">Aluguel, luz, fornecedor, contrato da sala: você sabe o que vence essa semana?
+
+Conta que vence e você só lembra depois é dinheiro jogado fora em juros e multa. 😩
+
+Deslize para ver o que costuma vencer num estúdio e duas dicas simples para não perder prazo.
+
+No plano Completo, o Bossa guarda as contas a pagar e os prazos de contrato, e avisa no Início antes de vencer. Conta paga já sai do caixa nas finanças.
+
+👉 Veja a tela de contas: link da bio → “Conhecer o sistema”.
+
+#contasapagar #gestaodesalao #financasparaempreendedores #donadesalao #studiodebeleza #mei</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja a tela de contas: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#contasapagar</li><li>#gestaodesalao</li><li>#financasparaempreendedores</li><li>#donadesalao</li><li>#studiodebeleza</li><li>#mei</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-18" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 18 <span>· qui, 05/11</span></p>
+          <h3 class="tema">Quiz: Simples ou Completo?</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Simples ou Completo? Descubra em 3 perguntas 👇</p>
+      </div>
+      <p class="nota">Depois de postar, salve no destaque “Planos”.</p>
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 7</summary>
+        <ol class="cenas"><li><span class="cena-visual">Fundo azul liso.</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Sozinha” / “Com equipe”</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Tenho” / “Ainda não”</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Enquete: “Às vezes 😅” / “Nunca”</span></li><li><span class="cena-visual">Print do plano Simples no site.</span></li><li><span class="cena-visual">Print do plano Completo no site.</span></li><li><span class="cena-visual">Print da página inicial.</span><span class="figurinha">Link: “Conhecer o sistema”</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-18" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-18">Tela 1: Simples ou Completo? Descubra em 3 perguntas 👇
+
+Tela 2: Você atende sozinha ou com equipe?
+
+Tela 3: Você tem contador?
+
+Tela 4: Tem conta fixa que às vezes esquece de pagar?
+
+Tela 5: Atende sozinha e quer agenda, link, cobrança com Pix e finanças: Simples, R$ 189,00 por mês.
+
+Tela 6: Tem equipe, contador ou muitas contas: Completo, R$ 329,00 por mês. Tudo do Simples, mais lembretes de cobrança, contas a pagar, custos, relatório para o contador e equipe.
+
+Tela 7: Veja os dois funcionando antes de escolher.
+
+Link: https://agendaonlinecontabilidade.netlify.app
+
+#studiodebeleza #donadesalao #salaodebeleza #barbearia #esteticista</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Figurinha de link “Conhecer o sistema” → https://agendaonlinecontabilidade.netlify.app</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#studiodebeleza</li><li>#donadesalao</li><li>#salaodebeleza</li><li>#barbearia</li><li>#esteticista</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-19" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 19 <span>· sex, 06/11</span></p>
+          <h3 class="tema">Relatório para o contador</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">O contador pediu o movimento do mês e você congelou? 😩</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Print de conversa encenada: “Oi! Me manda o movimento do mês?”</span><span class="cena-texto">Texto na tela: “O contador pedindo o mês…”</span></li><li><span class="tempo">3–6s</span><span class="cena-visual">Pilha de notinhas e um caderno.</span><span class="cena-texto">Texto na tela: “…e você juntando papelzinho.”</span></li><li><span class="tempo">6–13s</span><span class="cena-visual">Tela do relatório do mês na demonstração.</span><span class="cena-texto">Texto na tela: “No Bossa o mês fecha num relatório: planilha e PDF.”</span></li><li><span class="tempo">13–18s</span><span class="cena-visual">Tela do link de acesso para o contador.</span><span class="cena-texto">Texto na tela: “Ou mande um link de acesso para o contador.”</span></li><li><span class="tempo">18–22s</span><span class="cena-visual">Tela final com o nome Bossa.</span><span class="cena-texto">Texto na tela: “Plano Completo · Link na bio”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Som em alta de suspense no começo, alívio no final.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-19" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-19">O contador pediu o movimento do mês e você congelou? 😩
+
+Fim do mês, o contador pede o movimento e começa a caça às notinhas. 🧾
+
+No plano Completo, o Bossa monta o relatório do mês para o contador, em planilha e PDF, com o fechamento do mês. Se preferir, gere um link de acesso e mande direto para ele.
+
+Importante: o Bossa não substitui o seu contador. Ele organiza os números para a conversa com o contador ficar mais fácil.
+
+👉 Veja o relatório de exemplo: link da bio → “Conhecer o sistema”.
+
+#contabilidade #mei #donadesalao #gestaodesalao #financasparaempreendedores #studiodebeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja o relatório de exemplo: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#contabilidade</li><li>#mei</li><li>#donadesalao</li><li>#gestaodesalao</li><li>#financasparaempreendedores</li><li>#studiodebeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-20" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 20 <span>· sáb, 07/11</span></p>
+          <h3 class="tema">Preços sem letra miúda</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Quanto custa o Bossa? Sem letra miúda. 💙</p>
+      </div>
+      <p class="nota">Se o preço mudar nas variáveis da Netlify, atualize este post, o dia 18, a mensagem bônus, a resposta “Tá caro”, o post 3 dos grupos e o destaque “Planos”.</p>
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Arte simples, fundo branco com o azul #1d4ed8, mostrando os dois planos e os preços. Ou o print da seção “Dois planos, sem fidelidade” do site.</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-20" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-20">Quanto custa o Bossa? Sem letra miúda. 💙
+
+Dois planos, pagamento por Pix, sem fidelidade:
+
+🔹 Simples: R$ 189,00 por mês ou R$ 1.890,00 por ano
+Agenda da semana que avisa quando dois horários batem, link de agendamento, clientes sem limite, serviços com preço e duração, cobrança pelo WhatsApp com Pix e finanças do mês.
+
+🔷 Completo: R$ 329,00 por mês ou R$ 2.569,00 por ano
+Tudo do Simples, mais lembrete de quem cobrar (antes, no dia e depois do vencimento), contas a pagar e prazos de contrato, custos fixos e variáveis, relatório do mês para o contador e equipe.
+
+No anual você paga uma vez: no Simples são R$ 378,00 a menos que 12 mensalidades; no Completo, R$ 1.379,00 a menos.
+
+Antes de assinar, você cria a conta e vê tudo funcionando num estúdio de exemplo. Depois de pagar, tem 7 dias para desistir e receber o dinheiro de volta (direito de arrependimento do Código de Defesa do Consumidor). Sem multa para sair.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendaonline #sistemadeagendamento #salaodebeleza #barbearia #studiodebeleza #esteticista #manicure</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#agendaonline</li><li>#sistemadeagendamento</li><li>#salaodebeleza</li><li>#barbearia</li><li>#studiodebeleza</li><li>#esteticista</li><li>#manicure</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-21" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 21 <span>· dom, 08/11</span></p>
+          <h3 class="tema">Link de agendamento em 4 passos</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">O seu link de agendamento pronto em 4 passos (salva para fazer hoje) 📌</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 7</summary>
+        <ol class="laminas"><li>Capa: O seu link de agendamento em 4 passos</li><li>1. Cadastre os serviços com preço e duração.</li><li>2. Escolha os dias e horários em que atende. Dá para ter mais de uma faixa por dia, tipo 9h às 12h e 14h às 19h.</li><li>3. Defina a antecedência mínima (de “sem antecedência” até 2 dias) e até quantos dias para frente dá para marcar.</li><li>4. Escolha o endereço do link, tipo …/agendar/studio-da-ana, e cole na bio e no WhatsApp.</li><li>Pronto: a cliente escolhe o serviço, o dia e um horário livre, e o horário cai direto na sua agenda.</li><li>Link na bio → Conhecer o sistema</li></ol>
+        <div class="oculto" id="lam-21">Lâmina 1: Capa: O seu link de agendamento em 4 passos
+
+Lâmina 2: 1. Cadastre os serviços com preço e duração.
+
+Lâmina 3: 2. Escolha os dias e horários em que atende. Dá para ter mais de uma faixa por dia, tipo 9h às 12h e 14h às 19h.
+
+Lâmina 4: 3. Defina a antecedência mínima (de “sem antecedência” até 2 dias) e até quantos dias para frente dá para marcar.
+
+Lâmina 5: 4. Escolha o endereço do link, tipo …/agendar/studio-da-ana, e cole na bio e no WhatsApp.
+
+Lâmina 6: Pronto: a cliente escolhe o serviço, o dia e um horário livre, e o horário cai direto na sua agenda.
+
+Lâmina 7: Link na bio → Conhecer o sistema</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-21" aria-label="Copiar o texto das lâminas do dia 21">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-21" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-21">O seu link de agendamento pronto em 4 passos (salva para fazer hoje) 📌
+
+Domingo é o melhor dia para deixar isso pronto para a semana. ☕
+
+Deslize para o passo a passo. Você define tudo: os dias e horários em que atende, quanto tempo antes a cliente pode marcar e até quantos dias para frente o link aceita.
+
+Depois é só colar o link na bio e no WhatsApp. Quem quiser marcar escolhe sozinha um horário livre, e ele cai direto na sua agenda.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendamentoonline #linknabio #studiodeunhas #lashdesigner #designdesobrancelhas #barbearia #agendaonline</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#agendamentoonline</li><li>#linknabio</li><li>#studiodeunhas</li><li>#lashdesigner</li><li>#designdesobrancelhas</li><li>#barbearia</li><li>#agendaonline</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-22" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 22 <span>· seg, 09/11</span></p>
+          <h3 class="tema">Quem atende sozinha</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Atende sozinha? O seu dia inteiro cabe no celular. 💅</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–4s</span><span class="cena-visual">Mãos fazendo unha (de uma parceira que autorizou, sem mostrar o rosto da cliente).</span><span class="cena-texto">Texto na tela: “Entre uma cliente e outra…”</span></li><li><span class="tempo">4–8s</span><span class="cena-visual">Celular na bancada com a agenda do dia.</span><span class="cena-texto">Texto na tela: “…você vê quem vem agora,”</span></li><li><span class="tempo">8–12s</span><span class="cena-visual">Ficha da próxima cliente com observação.</span><span class="cena-texto">Texto na tela: “…o que ela prefere,”</span></li><li><span class="tempo">12–16s</span><span class="cena-visual">Tela de cobranças.</span><span class="cena-texto">Texto na tela: “…e quem cobrar hoje.”</span></li><li><span class="tempo">16–20s</span><span class="cena-visual">Tela final com o nome Bossa.</span><span class="cena-texto">Texto na tela: “Bossa · Link na bio”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Música leve em alta; corte a cada frase do texto.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-22" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-22">Atende sozinha? O seu dia inteiro cabe no celular. 💅
+
+Quem atende sozinha é recepcionista, financeiro e profissional ao mesmo tempo. 😮‍💨
+
+Com o Bossa aberto no celular, entre uma cliente e outra você vê a agenda do dia, abre a ficha da próxima cliente e manda a cobrança com Pix pelo WhatsApp.
+
+Sem instalar nada: abre no navegador, com o seu e-mail e a sua senha.
+
+👉 Veja num estúdio de exemplo: link da bio → “Conhecer o sistema”.
+
+#manicure #nailartbrasil #unhasdecoradas #studiodeunhas #autonoma #empreendedoradabeleza #manicureepedicure</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja num estúdio de exemplo: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#manicure</li><li>#nailartbrasil</li><li>#unhasdecoradas</li><li>#studiodeunhas</li><li>#autonoma</li><li>#empreendedoradabeleza</li><li>#manicureepedicure</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-23" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 23 <span>· ter, 10/11</span></p>
+          <h3 class="tema">Como assinar, passo a passo</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Como assinar o Bossa? Passo a passo 👇</p>
+      </div>
+      <p class="nota">Salve no destaque “Planos”. Quando alguém pagar, confirme o Pix logo na área de administração, aba Pagamentos: é isso que deixa a conta ativa.</p>
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 7</summary>
+        <ol class="cenas"><li><span class="cena-visual">Selfie.</span></li><li><span class="cena-visual">Print da tela de criar conta.</span></li><li><span class="cena-visual">Gravação da tela navegando na demonstração.</span></li><li><span class="cena-visual">Print da tela de planos.</span></li><li><span class="cena-visual">Fundo liso.</span></li><li><span class="cena-visual">Fundo liso.</span></li><li><span class="cena-visual">Print da página inicial.</span><span class="figurinha">Link: “Conhecer o sistema”</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-23" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-23">Tela 1: Como assinar o Bossa? Passo a passo 👇
+
+Tela 2: 1. Crie a conta. Leva um minuto, e você entra na demonstração: um estúdio de exemplo, com tudo à mostra.
+
+Tela 3: 2. Na demonstração você navega por tudo. Na hora de marcar, cadastrar ou cobrar de verdade, o sistema te leva para escolher o plano.
+
+Tela 4: 3. Escolha Simples ou Completo, mensal ou anual. O sistema gera um Pix copia e cola.
+
+Tela 5: 4. Pague pelo app do seu banco. Assim que o pagamento é confirmado, a sua conta fica ativa com tudo do seu plano.
+
+Tela 6: Depois de pagar, 7 dias para desistir com o dinheiro de volta. Sem fidelidade e sem multa.
+
+Tela 7: Quer começar? Toca aqui.
+
+Link: https://agendaonlinecontabilidade.netlify.app
+
+#agendaonline #studiodebeleza #donadesalao #pix #salaodebeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Figurinha de link “Conhecer o sistema” → https://agendaonlinecontabilidade.netlify.app</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#agendaonline</li><li>#studiodebeleza</li><li>#donadesalao</li><li>#pix</li><li>#salaodebeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-24" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 24 <span>· qua, 11/11</span></p>
+          <h3 class="tema">Estúdio com equipe</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Tem equipe no estúdio? 3 perguntas que você responde toda semana 🧩</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 7</summary>
+        <ol class="laminas"><li>Capa: Estúdio com equipe: 3 perguntas de toda semana</li><li>1. Quem atende esse horário?</li><li>2. Quem vai faltar na semana que vem?</li><li>3. Quanto eu pago para cada um? E já lancei isso como despesa?</li><li>No plano Completo, a equipe fica no Bossa: quem trabalha com você, quem atende cada horário, as ausências e os pagamentos.</li><li>Os pagamentos da equipe já entram como despesa nas finanças. Sem lançar duas vezes.</li><li>Link na bio → Conhecer o sistema</li></ol>
+        <div class="oculto" id="lam-24">Lâmina 1: Capa: Estúdio com equipe: 3 perguntas de toda semana
+
+Lâmina 2: 1. Quem atende esse horário?
+
+Lâmina 3: 2. Quem vai faltar na semana que vem?
+
+Lâmina 4: 3. Quanto eu pago para cada um? E já lancei isso como despesa?
+
+Lâmina 5: No plano Completo, a equipe fica no Bossa: quem trabalha com você, quem atende cada horário, as ausências e os pagamentos.
+
+Lâmina 6: Os pagamentos da equipe já entram como despesa nas finanças. Sem lançar duas vezes.
+
+Lâmina 7: Link na bio → Conhecer o sistema</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-24" aria-label="Copiar o texto das lâminas do dia 24">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-24" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-24">Tem equipe no estúdio? 3 perguntas que você responde toda semana 🧩
+
+Quando o estúdio passa de uma pessoa, a agenda vira quebra-cabeça. 🧩
+
+Quem atende a cliente das 15h? A Ju vai folgar quinta? Quanto foi pago para cada um esse mês?
+
+No plano Completo do Bossa, você cadastra quem trabalha com você, define quem atende cada horário, anota as ausências e registra os pagamentos, que já entram como despesa nas finanças.
+
+👉 Veja a equipe do estúdio de exemplo: link da bio → “Conhecer o sistema”.
+
+#salaodebeleza #barbearia #gestaodeequipe #donadesalao #clinicadeestetica #gestaodesalao</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Veja a equipe do estúdio de exemplo: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#salaodebeleza</li><li>#barbearia</li><li>#gestaodeequipe</li><li>#donadesalao</li><li>#clinicadeestetica</li><li>#gestaodesalao</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-25" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 25 <span>· qui, 12/11</span></p>
+          <h3 class="tema">Barbearia: “depois eu te passo”</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">“Depois eu te passo o Pix, irmão.” 🙃</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–4s</span><span class="cena-visual">Cadeira de barbeiro, capa sendo retirada (barbearia parceira, com autorização).</span><span class="cena-texto">Texto na tela: ““Depois eu te passo o Pix, irmão.””</span></li><li><span class="tempo">4–7s</span><span class="cena-visual">Tela preta.</span><span class="cena-texto">Texto na tela: “3 dias depois…”</span></li><li><span class="tempo">7–12s</span><span class="cena-visual">Tela de cobranças: a cobrança aparece como atrasada, “Venceu há 3 dias”.</span><span class="cena-texto">Texto na tela: “O Bossa não esquece.”</span></li><li><span class="tempo">12–17s</span><span class="cena-visual">WhatsApp abrindo com a mensagem no tom direto e o Pix copia e cola.</span><span class="cena-texto">Texto na tela: “Mensagem educada, Pix pronto.”</span></li><li><span class="tempo">17–21s</span><span class="cena-visual">Tela final com o nome Bossa.</span><span class="cena-texto">Texto na tela: “Você confere e envia. Link na bio.”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Som em alta de comédia no começo; batida no corte do “3 dias depois”.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-25" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-25">“Depois eu te passo o Pix, irmão.” 🙃
+
+Todo barbeiro já ouviu essa. E todo barbeiro já esqueceu de cobrar depois. 😅
+
+No Bossa, a cobrança fica registrada com a data de vencimento. Passou do dia, ela aparece como atrasada, mostrando há quantos dias venceu.
+
+Na hora de cobrar, a mensagem sai pronta para o WhatsApp com o código Pix, num tom educado. Você confere e manda.
+
+No plano Completo, o Bossa ainda lembra você de quem cobrar: antes, no dia e depois do vencimento.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#barbearia #barbeiro #barbeariabrasil #barbershop #barbeirosbrasil #pix</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#barbearia</li><li>#barbeiro</li><li>#barbeariabrasil</li><li>#barbershop</li><li>#barbeirosbrasil</li><li>#pix</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-26" data-formato="foto">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 26 <span>· sex, 13/11</span></p>
+          <h3 class="tema">Sem instalar nada</h3>
+        </div>
+        <span class="selo selo-foto">Foto</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">O seu estúdio no celular. Sem baixar nada. 📱</p>
+      </div>
+      
+      
+      <div class="campo">
+        <span class="rotulo">A foto</span>
+        <p>Celular sobre a bancada do estúdio, com o Bossa aberto no navegador (agenda da demonstração na tela).</p>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-26" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-26">O seu estúdio no celular. Sem baixar nada. 📱
+
+Celular sem memória? Sem problema: o Bossa não precisa ser instalado.
+
+Ele abre no navegador do celular ou do computador, com o seu e-mail e a sua senha. Agenda, clientes, cobranças e finanças no mesmo lugar, onde você estiver.
+
+Dica: depois de entrar, adicione o site à tela inicial do celular (pelo menu do navegador) para abrir com um toque.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendaonline #sistemadeagendamento #studiodebeleza #salaodebeleza #esteticista #autonoma</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#agendaonline</li><li>#sistemadeagendamento</li><li>#studiodebeleza</li><li>#salaodebeleza</li><li>#esteticista</li><li>#autonoma</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-27" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 27 <span>· sáb, 14/11</span></p>
+          <h3 class="tema">Dúvidas sobre o Bossa</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">As dúvidas de quem está conhecendo o Bossa, respondidas sem enrolação</p>
+      </div>
+      <p class="nota">Depois de postar, compartilhe nos stories e salve no destaque “Dúvidas”.</p>
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: Dúvidas sobre o Bossa, respondidas sem enrolação</li><li>Substitui o meu contador? Não. O Bossa organiza os números e, no plano Completo, prepara o relatório do mês para o contador. Imposto devido e guias continuam com ele.</li><li>Preciso instalar alguma coisa? Não. Abre no navegador do celular ou do computador.</li><li>Ele manda mensagem sozinho para os meus clientes? Não. Ele abre o WhatsApp com a mensagem e o Pix prontos. Você confere e envia.</li><li>Posso ver antes de pagar? Pode. Ao criar a conta você entra num estúdio de exemplo e navega por tudo.</li><li>E se eu me arrepender? Você tem 7 dias, contados do pagamento, para desistir e receber o dinheiro de volta.</li><li>Posso cancelar? Pode. Sem fidelidade e sem multa. Se não renovar, o acesso pausa e os seus dados ficam guardados.</li><li>Serve para o meu negócio? Serve para quem atende com hora marcada: estética, barbearia, salão, unhas, sobrancelha, tatuagem, massagem e outros.</li></ol>
+        <div class="oculto" id="lam-27">Lâmina 1: Capa: Dúvidas sobre o Bossa, respondidas sem enrolação
+
+Lâmina 2: Substitui o meu contador? Não. O Bossa organiza os números e, no plano Completo, prepara o relatório do mês para o contador. Imposto devido e guias continuam com ele.
+
+Lâmina 3: Preciso instalar alguma coisa? Não. Abre no navegador do celular ou do computador.
+
+Lâmina 4: Ele manda mensagem sozinho para os meus clientes? Não. Ele abre o WhatsApp com a mensagem e o Pix prontos. Você confere e envia.
+
+Lâmina 5: Posso ver antes de pagar? Pode. Ao criar a conta você entra num estúdio de exemplo e navega por tudo.
+
+Lâmina 6: E se eu me arrepender? Você tem 7 dias, contados do pagamento, para desistir e receber o dinheiro de volta.
+
+Lâmina 7: Posso cancelar? Pode. Sem fidelidade e sem multa. Se não renovar, o acesso pausa e os seus dados ficam guardados.
+
+Lâmina 8: Serve para o meu negócio? Serve para quem atende com hora marcada: estética, barbearia, salão, unhas, sobrancelha, tatuagem, massagem e outros.</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-27" aria-label="Copiar o texto das lâminas do dia 27">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-27" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-27">As dúvidas de quem está conhecendo o Bossa, respondidas sem enrolação
+
+Deslize e salve 📌
+
+Juntei as perguntas que costumam surgir antes de assinar um sistema, com resposta direta e sem letra miúda.
+
+Ficou alguma pergunta de fora? Deixa nos comentários que eu respondo.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendaonline #sistemadeagendamento #donadesalao #studiodebeleza #esteticista #barbearia</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 6</span>
+        <ul class="tags"><li>#agendaonline</li><li>#sistemadeagendamento</li><li>#donadesalao</li><li>#studiodebeleza</li><li>#esteticista</li><li>#barbearia</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-28" data-formato="stories">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 28 <span>· dom, 15/11</span></p>
+          <h3 class="tema">Feriado: abre ou folga?</h3>
+        </div>
+        <span class="selo selo-stories">Stories</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira tela</span>
+        <p class="gancho">Feriado: o seu estúdio abre hoje?</p>
+      </div>
+      <p class="nota">Feriado da Proclamação da República (domingo, 15/11). Conteúdo leve e de conversa.</p>
+      
+      <details class="direcao" open>
+        <summary>Direção das telas · 5</summary>
+        <ol class="cenas"><li><span class="cena-visual">Fundo liso com 🇧🇷.</span><span class="figurinha">Enquete: “Abre, bora trabalhar” / “Hoje é folga”</span></li><li><span class="cena-visual">Selfie descansando.</span></li><li><span class="cena-visual">Fundo liso.</span><span class="figurinha">Caixinha de perguntas</span></li><li><span class="cena-visual">Fundo liso.</span></li><li><span class="cena-visual">Print da página inicial.</span><span class="figurinha">Link: “Conhecer o sistema”</span></li></ol>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Textos das telas</span>
+          <button type="button" class="copiar" data-alvo="leg-28" aria-label="Copiar: Textos das telas">Copiar</button>
+        </div>
+        <div class="texto" id="leg-28">Tela 1: Feriado de 15 de novembro. O seu estúdio abre hoje?
+
+Tela 2: Se é folga: aproveita! Quem quiser marcar para a semana pode usar o seu link de agendamento.
+
+Tela 3: Qual dia da semana a sua agenda fica mais vazia?
+
+Tela 4: Dica: divulgue o seu link nos stories justo no dia mais vazio. Quem vê já marca sozinha.
+
+Tela 5: Ainda não tem link? Toca aqui.
+
+Link: https://agendaonlinecontabilidade.netlify.app
+
+#feriado #donadesalao #studiodebeleza #agendamentoonline #profissionaldabeleza</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Figurinha de link “Conhecer o sistema” → https://agendaonlinecontabilidade.netlify.app</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 5</span>
+        <ul class="tags"><li>#feriado</li><li>#donadesalao</li><li>#studiodebeleza</li><li>#agendamentoonline</li><li>#profissionaldabeleza</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-29" data-formato="reels">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 29 <span>· seg, 16/11</span></p>
+          <h3 class="tema">Dezembro lotado</h3>
+        </div>
+        <span class="selo selo-reels">Reels</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">Dezembro vem aí. A sua agenda aguenta a correria? 🎄</p>
+      </div>
+      
+      
+      <details class="direcao" open>
+        <summary>Roteiro · 5 cenas</summary>
+        <ol class="cenas"><li><span class="tempo">0–3s</span><span class="cena-visual">Folha de calendário virando para dezembro (ou o calendário do celular).</span><span class="cena-texto">Texto na tela: “Dezembro tá chegando…”</span></li><li><span class="tempo">3–7s</span><span class="cena-visual">Conversa encenada no WhatsApp com várias mensagens “tem horário dia 23?”.</span><span class="cena-texto">Texto na tela: “…e todo mundo quer horário antes das festas.”</span></li><li><span class="tempo">7–13s</span><span class="cena-visual">Tela de configuração do link: aumentar até quantos dias para frente dá para marcar.</span><span class="cena-texto">Texto na tela: “Deixe o link aceitar marcação com mais antecedência.”</span></li><li><span class="tempo">13–18s</span><span class="cena-visual">Agenda da semana cheia, sem horários batendo.</span><span class="cena-texto">Texto na tela: “Cada uma escolhe um horário livre. Nada bate.”</span></li><li><span class="tempo">18–22s</span><span class="cena-visual">Tela final com o nome Bossa.</span><span class="cena-texto">Texto na tela: “Organize agora, antes da correria. Link na bio.”</span></li></ol>
+        <p class="audio"><strong>Áudio:</strong> Música de fim de ano em alta, bem baixinha.</p>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-29" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-29">Dezembro vem aí. A sua agenda aguenta a correria? 🎄
+
+Novembro é a hora de deixar dezembro organizado. 🎄
+
+Nas festas todo mundo quer unha, cabelo, sobrancelha e barba feitos, e o WhatsApp vira fila.
+
+Com o link de agendamento do Bossa, a cliente escolhe o serviço, o dia e um horário livre sozinha. E você pode deixar o link aceitar marcação com bastante antecedência, até 180 dias para frente.
+
+Você atende. O link organiza a fila.
+
+👉 Monte o seu antes da correria: link da bio → “Conhecer o sistema”.
+
+#agendaonline #fimdeano #salaodebeleza #studiodeunhas #barbearia #designdesobrancelhas #agendamentoonline</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Monte o seu antes da correria: link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#agendaonline</li><li>#fimdeano</li><li>#salaodebeleza</li><li>#studiodeunhas</li><li>#barbearia</li><li>#designdesobrancelhas</li><li>#agendamentoonline</li></ul>
+      </div>
+    </article>
+    <article class="post" id="dia-30" data-formato="carrossel">
+      <header class="post-topo">
+        <div>
+          <p class="post-dia">Dia 30 <span>· ter, 17/11</span></p>
+          <h3 class="tema">O que faz e o que não faz</h3>
+        </div>
+        <span class="selo selo-carrossel">Carrossel</span>
+      </header>
+      <div class="campo">
+        <span class="rotulo">Gancho da primeira linha</span>
+        <p class="gancho">O que o Bossa faz. E o que ele não faz. (sinceridade total) 🤝</p>
+      </div>
+      
+      
+      <details class="direcao">
+        <summary>Lâminas · 8</summary>
+        <ol class="laminas"><li>Capa: O que o Bossa faz (e o que ele não faz)</li><li>Faz: agenda da semana que avisa quando dois horários batem, e link para a cliente marcar sozinha.</li><li>Faz: ficha de cada cliente, serviços com preço e duração, cobrança pelo WhatsApp com Pix e finanças do mês.</li><li>No Completo, também: lembrete de quem cobrar, contas a pagar, custos, relatório para o contador e equipe.</li><li>Não faz: não substitui o seu contador.</li><li>Não faz: não manda mensagem sozinho para os seus clientes. Quem envia é você.</li><li>Não precisa: instalar nada, assinar fidelidade ou pagar multa para sair.</li><li>Veja tudo funcionando antes de assinar · Link na bio</li></ol>
+        <div class="oculto" id="lam-30">Lâmina 1: Capa: O que o Bossa faz (e o que ele não faz)
+
+Lâmina 2: Faz: agenda da semana que avisa quando dois horários batem, e link para a cliente marcar sozinha.
+
+Lâmina 3: Faz: ficha de cada cliente, serviços com preço e duração, cobrança pelo WhatsApp com Pix e finanças do mês.
+
+Lâmina 4: No Completo, também: lembrete de quem cobrar, contas a pagar, custos, relatório para o contador e equipe.
+
+Lâmina 5: Não faz: não substitui o seu contador.
+
+Lâmina 6: Não faz: não manda mensagem sozinho para os seus clientes. Quem envia é você.
+
+Lâmina 7: Não precisa: instalar nada, assinar fidelidade ou pagar multa para sair.
+
+Lâmina 8: Veja tudo funcionando antes de assinar · Link na bio</div>
+        <button type="button" class="copiar copiar-secundario" data-alvo="lam-30" aria-label="Copiar o texto das lâminas do dia 30">Copiar lâminas</button>
+      </details>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Legenda completa</span>
+          <button type="button" class="copiar" data-alvo="leg-30" aria-label="Copiar: Legenda completa">Copiar</button>
+        </div>
+        <div class="texto" id="leg-30">O que o Bossa faz. E o que ele não faz. (sinceridade total) 🤝
+
+Prefiro que você saiba exatamente o que está levando.
+
+Deslize: de um lado o que o Bossa faz, do outro o que ele não faz (de propósito).
+
+Ele não substitui o seu contador e não manda mensagem sozinho para os seus clientes: você sempre confere antes. Também não precisa instalar nada e não tem fidelidade.
+
+Antes de assinar, você vê tudo funcionando num estúdio de exemplo. E depois de pagar tem 7 dias para desistir com o dinheiro de volta.
+
+👉 Link da bio → “Conhecer o sistema”.
+
+#agendaonline #sistemadeagendamento #donadesalao #salaodebeleza #studiodebeleza #barbearia #esteticista</div>
+      </div>
+      <div class="campo">
+        <span class="rotulo">CTA</span>
+        <p class="cta">Link da bio → “Conhecer o sistema”.</p>
+      </div>
+      <div class="campo">
+        <span class="rotulo">Hashtags · 7</span>
+        <ul class="tags"><li>#agendaonline</li><li>#sistemadeagendamento</li><li>#donadesalao</li><li>#salaodebeleza</li><li>#studiodebeleza</li><li>#barbearia</li><li>#esteticista</li></ul>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section id="abordagem" aria-labelledby="t-abo">
+    <span class="numero-secao">Parte 2</span>
+    <h2 id="t-abo">10 mensagens de abordagem</h2>
+    <p class="intro">Para o direct ou o WhatsApp comercial do estúdio. Curtas, uma de cada vez, sempre pedindo licença antes de mandar link. Troque tudo o que estiver entre colchetes.</p>
+    <div class="msgs">
+    <article class="msg">
+      <h3>1. Primeiro contato (estúdio que posta o próprio trabalho)</h3>
+      <p class="quando">Depois de curtir e comentar um post de verdade. Troque o colchete por um detalhe real do perfil.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-1" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-1">Oi, [nome]! Tudo bem? Vi o seu trabalho de [detalhe real do post] e ficou lindo. Eu sou o [seu nome] e criei o Bossa, um sistema de agenda e cobrança para estúdios. Posso te mandar o link para você dar uma olhada quando tiver um tempinho? Se não for o momento, tudo bem também 🙂</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>2. Quando ela responde “pode mandar”</h3>
+      <p class="quando">Só depois do sim.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-2" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-2">Obrigado! Aqui está: https://agendaonlinecontabilidade.netlify.app
+
+É só tocar em “Conhecer o sistema” e criar a conta. Você entra num estúdio de exemplo, com agenda, cobranças e finanças preenchidas, e navega por tudo antes de decidir qualquer coisa. Se surgir dúvida, me chama aqui.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>3. Manicure ou nail designer que atende sozinha</h3>
+      <p class="quando">Perfis que dizem “agendamento pelo WhatsApp” na bio.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-3" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-3">Oi, [nome]! Vi que você agenda pelo WhatsApp. Fiz o Bossa pensando em quem atende sozinha: a cliente marca por um link, nos horários que você abrir, e a cobrança sai pronta no WhatsApp com o Pix. Quer que eu te mande para conhecer?</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>4. Barbearia</h3>
+      <p class="quando">Tom mais descontraído, sem gíria forçada.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-4" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-4">Fala, [nome], tudo certo? Curti demais o corte do último post. Sou o [seu nome], do Bossa: agenda da semana que avisa quando dois horários batem, link para o cliente marcar sozinho e cobrança no WhatsApp com Pix. Se fizer sentido para a barbearia, te mando o link para ver funcionando. Se não, sem problema!</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>5. Estúdio com equipe (plano Completo)</h3>
+      <p class="quando">Perfis que mostram a equipe ou têm mais de uma profissional.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-5" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-5">Oi, [nome]! Vi que o [nome do estúdio] tem uma equipe e tanto 👏 Eu fiz o Bossa, um sistema que organiza agenda, cobranças e finanças. No plano Completo ele mostra quem atende cada horário, as ausências e os pagamentos da equipe, que já entram como despesa. Posso te mandar o link para conhecer?</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>6. Estética, sobrancelha ou cílios</h3>
+      <p class="quando">Quem trabalha com ficha da cliente e observações.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-6" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-6">Oi, [nome], tudo bem? Sou o [seu nome], criador do Bossa. Ele junta a agenda, a ficha de cada cliente (com observações, tipo alergia ou preferência) e a cobrança por Pix pelo WhatsApp. Se quiser conhecer, te mando o link e você vê tudo num estúdio de exemplo antes de assinar.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>7. Quem respondeu um story ou enquete sua</h3>
+      <p class="quando">Até 24 horas depois da resposta.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-7" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-7">Oi, [nome]! Vi que você respondeu a enquete sobre [cliente que esquece de pagar]. Você não está sozinha nessa 😅 Se quiser, te mostro como o Bossa monta a mensagem de cobrança com o Pix pronto para você conferir e enviar. Posso te mandar o link?</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>8. Indicação de alguém</h3>
+      <p class="quando">Só cite quem indicou se a pessoa autorizou.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-8" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-8">Oi, [nome]! A [nome de quem indicou] me passou o seu contato e achou que você ia gostar de conhecer o Bossa, um sistema de agenda e cobrança para estúdios. Posso te mandar o link? Se preferir que eu não chame mais, é só falar 🙂</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>9. Quem criou a conta e ficou na demonstração</h3>
+      <p class="quando">Pelo mesmo canal por onde a pessoa chegou até você.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-9" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-9">Oi, [nome]! Aqui é o [seu nome], do Bossa. Vi que você criou a sua conta e passou pela demonstração. Ficou alguma dúvida? Se quiser, te explico rapidinho a diferença entre o Simples e o Completo, ou como funciona o pagamento por Pix.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>10. Retorno único (5 dias sem resposta)</h3>
+      <p class="quando">Uma vez só. Depois disso, não chame de novo.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-10" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-10">Oi, [nome]! Passando uma última vez para não te deixar no vácuo 🙂 Se um dia quiser organizar agenda e cobrança num lugar só, o link é este: https://agendaonlinecontabilidade.netlify.app
+
+Não vou te chamar de novo sobre isso. Sucesso com o estúdio!</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Bônus: quando perguntam “quanto custa?”</h3>
+      <p class="quando">Resposta direta, com os dois planos.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Mensagem</span>
+          <button type="button" class="copiar" data-alvo="abo-bonus" aria-label="Copiar: Mensagem">Copiar</button>
+        </div>
+        <div class="texto" id="abo-bonus">Oi, [nome]! São dois planos, pagos por Pix e sem fidelidade:
+
+• Simples: R$ 189,00 por mês (ou R$ 1.890,00 por ano). Agenda, link de agendamento, clientes, serviços, cobrança no WhatsApp com Pix e finanças.
+
+• Completo: R$ 329,00 por mês (ou R$ 2.569,00 por ano). Tudo do Simples, mais lembretes de cobrança, contas a pagar, custos, relatório para o contador e equipe.
+
+Antes de assinar dá para ver tudo funcionando: https://agendaonlinecontabilidade.netlify.app
+
+E depois de pagar você tem 7 dias para desistir com o dinheiro de volta.</div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section id="objecoes" aria-labelledby="t-obj">
+    <span class="numero-secao">Parte 3</span>
+    <h2 id="t-obj">Respostas para objeções</h2>
+    <p class="intro">Responda com calma e sem pressionar. Se a pessoa disser não, agradeça e encerre.</p>
+    <div class="msgs">
+    <article class="msg">
+      <h3>“Tá caro.”</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Resposta</span>
+          <button type="button" class="copiar" data-alvo="obj-1" aria-label="Copiar: Resposta">Copiar</button>
+        </div>
+        <div class="texto" id="obj-1">Entendo, [nome], faz sentido olhar com calma. O Simples sai R$ 189,00 por mês; no anual são R$ 1.890,00, o que dá R$ 157,50 por mês. Uma forma de pensar: quanto custa para você um horário que ficou vazio ou uma cobrança que você esqueceu de fazer? Você conhece a sua agenda melhor do que ninguém para fazer essa conta. E, se assinar, tem 7 dias depois do pagamento para desistir com o dinheiro de volta, sem fidelidade.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>“Já uso caderno.”</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Resposta</span>
+          <button type="button" class="copiar" data-alvo="obj-2" aria-label="Copiar: Resposta">Copiar</button>
+        </div>
+        <div class="texto" id="obj-2">Caderno funciona, e muita gente se organiza super bem com ele 📒 O que o caderno não faz é avisar quando dois horários batem, deixar a cliente marcar sozinha pelo link, montar a cobrança com o Pix e somar o que entrou no mês. Se quiser comparar, dá uma olhada na demonstração. Você pode até deixar o caderno do lado no começo.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>“Já uso outro app.”</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Resposta</span>
+          <button type="button" class="copiar" data-alvo="obj-3" aria-label="Copiar: Resposta">Copiar</button>
+        </div>
+        <div class="texto" id="obj-3">Que bom que você já tem algo! Não vou falar mal de ninguém 🙂 Se o seu está resolvendo, segue com ele. Se sentir falta de ter a agenda, a cobrança por Pix no WhatsApp e as finanças do mês no mesmo lugar, a demonstração do Bossa mostra tudo funcionando e você compara com calma.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>“Não tenho tempo.”</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Resposta</span>
+          <button type="button" class="copiar" data-alvo="obj-4" aria-label="Copiar: Resposta">Copiar</button>
+        </div>
+        <div class="texto" id="obj-4">Imagino, rotina de estúdio é corrida. Por isso o Bossa abre no navegador, sem instalar nada. Criar a conta leva um minuto e você vê o sistema num estúdio de exemplo no seu tempo, até entre uma cliente e outra. Para começar de verdade, é cadastrar os serviços com preço e duração e mandar o link para as clientes.</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>“Preciso pensar.”</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Resposta</span>
+          <button type="button" class="copiar" data-alvo="obj-5" aria-label="Copiar: Resposta">Copiar</button>
+        </div>
+        <div class="texto" id="obj-5">Claro, pensa com calma! O link fica aqui para quando quiser: https://agendaonlinecontabilidade.netlify.app
+
+A demonstração continua lá para você olhar de novo. Qualquer dúvida, é só me chamar.</div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section id="status" aria-labelledby="t-sta">
+    <span class="numero-secao">Parte 4</span>
+    <h2 id="t-sta">5 textos para o status do WhatsApp</h2>
+    <p class="intro">Um por dia, de preferência junto com um print da demonstração ou um vídeo curto da tela.</p>
+    <div class="msgs">
+    <article class="msg">
+      <h3>Status 1</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do status</span>
+          <button type="button" class="copiar" data-alvo="sta-1" aria-label="Copiar: Texto do status">Copiar</button>
+        </div>
+        <div class="texto" id="sta-1">Cliente pedindo horário às 23h? Manda o link: ela escolhe o serviço, o dia e um horário livre sozinha. 📱
+Bossa 👉 https://agendaonlinecontabilidade.netlify.app</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Status 2</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do status</span>
+          <button type="button" class="copiar" data-alvo="sta-2" aria-label="Copiar: Texto do status">Copiar</button>
+        </div>
+        <div class="texto" id="sta-2">Cobrar cliente sem ficar sem graça: no Bossa a mensagem sai pronta para o WhatsApp, com o Pix copia e cola. Você só confere e envia. 💸</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Status 3</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do status</span>
+          <button type="button" class="copiar" data-alvo="sta-3" aria-label="Copiar: Texto do status">Copiar</button>
+        </div>
+        <div class="texto" id="sta-3">Quanto sobrou no mês? No Bossa você vê o que entrou, o que saiu e o resumo do mês numa tela só. 📊</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Status 4</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do status</span>
+          <button type="button" class="copiar" data-alvo="sta-4" aria-label="Copiar: Texto do status">Copiar</button>
+        </div>
+        <div class="texto" id="sta-4">Duas clientes no mesmo horário? No Bossa a agenda avisa na hora e não deixa bater. ⏰</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Status 5</h3>
+      
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do status</span>
+          <button type="button" class="copiar" data-alvo="sta-5" aria-label="Copiar: Texto do status">Copiar</button>
+        </div>
+        <div class="texto" id="sta-5">Quer ver o Bossa por dentro? Crie a conta e entre num estúdio de exemplo com tudo funcionando. Sem instalar nada.
+👉 https://agendaonlinecontabilidade.netlify.app</div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section id="grupos" aria-labelledby="t-gru">
+    <span class="numero-secao">Parte 5</span>
+    <h2 id="t-gru">3 posts para grupos de profissionais da beleza</h2>
+    <p class="intro">Grupo não é vitrine. Comece pelo que ajuda e só divulgue quando o grupo permitir.</p>
+    <div class="painel">
+      <h3>Regras de convivência</h3>
+      <ul class="lista-regras"><li>Leia as regras fixadas do grupo antes de qualquer post.</li><li>Divulgação só com autorização do administrador, ou no dia em que o grupo permite.</li><li>No máximo um post de divulgação por grupo. Os outros, só conteúdo útil.</li><li>Não chame no privado quem não pediu. Responda no privado só quem disser “me chama”.</li><li>Nunca adicione ninguém em grupo nem em lista de transmissão sem permissão.</li></ul>
+    </div>
+    <div class="msgs" style="margin-top:14px">
+    <article class="msg">
+      <h3>Post 1 · Conteúdo útil (sem link)</h3>
+      <p class="quando">Pode postar em quase todo grupo. Diga com transparência que você desenvolve o Bossa.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do post</span>
+          <button type="button" class="copiar" data-alvo="gru-1" aria-label="Copiar: Texto do post">Copiar</button>
+        </div>
+        <div class="texto" id="gru-1">Oi, pessoal! Tudo bem? 💙
+Deixo aqui 3 mensagens de cobrança educadas, uma para cada momento, para quem fica sem graça de cobrar cliente:
+
+Antes de vencer:
+“Oi, [nome]! Aqui é do [estúdio]. Passando para lembrar do seu atendimento: R$ [valor], com vencimento em [data]. Qualquer dúvida, é só chamar.”
+
+Depois que venceu:
+“Oi, [nome]! Aqui é do [estúdio]. O seu atendimento de R$ [valor] venceu em [data] e ainda consta em aberto por aqui. Consegue acertar hoje? Qualquer dúvida, é só chamar.”
+
+Atraso grande:
+“Oi, [nome]! Aqui é do [estúdio]. O seu atendimento de R$ [valor], com vencimento em [data], segue em aberto. Pode me dizer qual a melhor data para você acertar? Assim eu já me organizo por aqui. Qualquer dúvida, é só chamar.”
+
+Dica: nunca cobre em grupo, em story ou na frente de outras clientes.
+
+Transparência: eu desenvolvo o Bossa, um sistema de agenda e cobrança para estúdios, e essas são as mensagens que ele usa. Mas podem copiar à vontade, com ou sem sistema 🙂</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Post 2 · Pergunta para o grupo (sem link)</h3>
+      <p class="quando">Abre conversa e mostra que você está ouvindo. Responda cada comentário.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do post</span>
+          <button type="button" class="copiar" data-alvo="gru-2" aria-label="Copiar: Texto do post">Copiar</button>
+        </div>
+        <div class="texto" id="gru-2">Pergunta para quem tem estúdio aqui no grupo: como vocês lidam com cliente que pede horário fora do expediente, tipo 23h? Respondem na hora, deixam para a manhã ou usam link de agendamento?
+
+Pergunto porque eu desenvolvo um sistema de agenda para estúdios (o Bossa) e quero entender melhor a rotina de vocês. Não vou deixar link aqui, para respeitar o grupo. Obrigado a quem puder contar 💙</div>
+      </div>
+    </article>
+    <article class="msg">
+      <h3>Post 3 · Apresentação (só com autorização)</h3>
+      <p class="quando">Só depois que o administrador autorizar, ou no dia de divulgação do grupo.</p>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Texto do post</span>
+          <button type="button" class="copiar" data-alvo="gru-3" aria-label="Copiar: Texto do post">Copiar</button>
+        </div>
+        <div class="texto" id="gru-3">Oi, pessoal! Com a autorização do(a) [nome do admin], venho apresentar o Bossa 💙
+
+É um sistema de agenda e cobrança para estúdios: salão, unhas, estética, barbearia, sobrancelha e outros serviços com hora marcada.
+
+✅ Agenda da semana que avisa quando dois horários batem
+✅ Link para a cliente marcar sozinha, nos horários que você abrir
+✅ Ficha de cada cliente e serviços com preço e duração
+✅ Cobrança pelo WhatsApp com o Pix copia e cola pronto
+✅ Finanças: o que entrou, o que saiu e o resumo do mês
+
+Planos: Simples, R$ 189,00 por mês, e Completo, R$ 329,00 por mês (com contas a pagar, custos, relatório para o contador e equipe). Pagamento por Pix, sem fidelidade.
+
+Dá para ver tudo funcionando num estúdio de exemplo antes de assinar: https://agendaonlinecontabilidade.netlify.app
+
+Quem tiver dúvida, me chama no privado. Obrigado pelo espaço!</div>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <section id="bio" aria-labelledby="t-bio">
+    <span class="numero-secao">Parte 6</span>
+    <h2 id="t-bio">Bio do Instagram e destaques</h2>
+    <p class="intro">O nome aparece na busca do Instagram, por isso leva “agenda”. A bio tem 142 caracteres (o limite é 150).</p>
+    <article class="msg">
+      <div class="bio-perfil">
+        <div class="bio-avatar" aria-hidden="true">B</div>
+        <div>
+          <p class="bio-nome">Bossa | Agenda para estúdios</p>
+          <p class="bio-arroba">Categoria sugerida: Software · Botão: WhatsApp</p>
+        </div>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Nome do perfil</span>
+          <button type="button" class="copiar" data-alvo="bio-nome" aria-label="Copiar: Nome do perfil">Copiar</button>
+        </div>
+        <div class="texto" id="bio-nome">Bossa | Agenda para estúdios</div>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Bio</span>
+          <button type="button" class="copiar" data-alvo="bio-texto" aria-label="Copiar: Bio">Copiar</button>
+        </div>
+        <div class="texto" id="bio-texto">Agenda online para salão, unhas, estética e barbearia
+Link de agendamento, cobrança no WhatsApp com Pix e finanças
+Veja o sistema por dentro 👇</div>
+      </div>
+      
+      <div class="copiavel">
+        <div class="copiavel-topo">
+          <span class="rotulo">Link da bio</span>
+          <button type="button" class="copiar" data-alvo="bio-link" aria-label="Copiar: Link da bio">Copiar</button>
+        </div>
+        <div class="texto" id="bio-link">https://agendaonlinecontabilidade.netlify.app</div>
+      </div>
+    </article>
+    <h3 style="margin:24px 0 0;font-size:1.1rem">3 destaques</h3>
+    <div class="destaques">
+    <article class="destaque">
+      <div class="destaque-capa" aria-hidden="true">C</div>
+      <div>
+        <h3>Conheça</h3>
+        <p class="quando">Capa: Ícone de calendário em azul #1d4ed8 sobre fundo branco.</p>
+        <ul><li>O tour pela demonstração (stories do dia 10).</li><li>Um vídeo curto do link de agendamento: a cliente escolhe serviço, dia e horário livre.</li><li>Um print da mensagem de cobrança com o Pix copia e cola.</li><li>Último story: figurinha de link “Conhecer o sistema”.</li></ul>
+      </div>
+    </article>
+    <article class="destaque">
+      <div class="destaque-capa" aria-hidden="true">P</div>
+      <div>
+        <h3>Planos</h3>
+        <p class="quando">Capa: “R$” em azul #1d4ed8 sobre fundo branco.</p>
+        <ul><li>Simples: R$ 189,00 por mês ou R$ 1.890,00 por ano, com o que vem nele.</li><li>Completo: R$ 329,00 por mês ou R$ 2.569,00 por ano, com o que ele acrescenta.</li><li>O quiz “Simples ou Completo?” (dia 18) e o passo a passo para assinar por Pix (dia 23).</li><li>7 dias para desistir com o dinheiro de volta, sem fidelidade.</li></ul>
+      </div>
+    </article>
+    <article class="destaque">
+      <div class="destaque-capa" aria-hidden="true">D</div>
+      <div>
+        <h3>Dúvidas</h3>
+        <p class="quando">Capa: Ponto de interrogação em azul #1d4ed8 sobre fundo branco.</p>
+        <ul><li>Substitui o contador? Não: organiza os números para ele.</li><li>Precisa instalar? Não: abre no navegador.</li><li>Manda mensagem sozinho? Não: você confere e envia.</li><li>Posso cancelar? Pode, sem multa; os dados ficam guardados.</li><li>Repost do carrossel do dia 27.</li></ul>
+      </div>
+    </article>
+    </div>
+  </section>
+
+  <p class="rodape">Feito a partir do que o Bossa faz hoje: agenda, link de agendamento, clientes, serviços, cobrança com Pix e finanças no Simples; lembretes, contas a pagar, custos, relatório para o contador e equipe no Completo. Preços de 19/10/2026. Se mudarem, atualize os dias 18 e 20, a mensagem bônus, a resposta “Tá caro”, o post 3 dos grupos e o destaque “Planos”.</p>
+</main>
+
+<div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var aviso = document.getElementById("aviso");
+  var tempoAviso;
+  function mostrarAviso(texto) {
+    aviso.textContent = texto;
+    aviso.classList.add("visivel");
+    clearTimeout(tempoAviso);
+    tempoAviso = setTimeout(function () { aviso.classList.remove("visivel"); }, 1800);
+  }
+  function copiarPorTextarea(texto) {
+    var area = document.createElement("textarea");
+    area.value = texto;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.top = "-1000px";
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, texto.length);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (erro) { ok = false; }
+    document.body.removeChild(area);
+    return ok;
+  }
+  function copiar(texto) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(texto).then(function () { return true; }, function () { return copiarPorTextarea(texto); });
+    }
+    return Promise.resolve(copiarPorTextarea(texto));
+  }
+  document.addEventListener("click", function (evento) {
+    var botao = evento.target.closest(".copiar");
+    if (!botao) return;
+    var alvo = document.getElementById(botao.getAttribute("data-alvo"));
+    if (!alvo) return;
+    var original = botao.getAttribute("data-original") || botao.textContent;
+    botao.setAttribute("data-original", original);
+    copiar(alvo.textContent).then(function (ok) {
+      if (ok) {
+        botao.textContent = "Copiado ✓";
+        botao.classList.add("copiado");
+        mostrarAviso("Texto copiado. É só colar.");
+      } else {
+        var faixa = document.createRange();
+        faixa.selectNodeContents(alvo);
+        var selecao = window.getSelection();
+        selecao.removeAllRanges();
+        selecao.addRange(faixa);
+        mostrarAviso("Texto selecionado. Toque e segure para copiar.");
+      }
+      setTimeout(function () {
+        botao.textContent = original;
+        botao.classList.remove("copiado");
+      }, 1800);
+    });
+  });
+
+  var filtros = document.querySelectorAll(".filtro");
+  var posts = document.querySelectorAll(".post");
+  var contador = document.getElementById("contador-filtro");
+  var nomes = { reels: "reels", carrossel: "carrosséis", foto: "fotos", stories: "sequências de stories" };
+  function aplicar(filtro) {
+    var visiveis = 0;
+    posts.forEach(function (post) {
+      var mostra = filtro === "todos" || post.getAttribute("data-formato") === filtro;
+      post.hidden = !mostra;
+      if (mostra) visiveis++;
+    });
+    filtros.forEach(function (botao) {
+      botao.setAttribute("aria-pressed", String(botao.getAttribute("data-filtro") === filtro));
+    });
+    contador.textContent = filtro === "todos" ? "Mostrando os 30 posts." : "Mostrando " + visiveis + " " + nomes[filtro] + ".";
+    try { localStorage.setItem("kit-bossa-filtro", filtro); } catch (erro) {}
+  }
+  filtros.forEach(function (botao) {
+    botao.addEventListener("click", function () { aplicar(botao.getAttribute("data-filtro")); });
+  });
+  document.querySelectorAll('.vg-semana a').forEach(function (link) {
+    link.addEventListener("click", function () { aplicar("todos"); });
+  });
+  try {
+    var salvo = localStorage.getItem("kit-bossa-filtro");
+    if (salvo && (salvo === "todos" || nomes[salvo])) aplicar(salvo);
+  } catch (erro) {}
+})();
+</script>
+</body>
+</html>

@@ -6,16 +6,12 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { exigirAdmin } from "@/lib/guardas";
 import { criarSessao } from "@/lib/sessao";
-import {
-  codigoConfere,
-  gerarCodigo,
-  pedidoValido,
-  resumoDoCodigo,
-  validadeAPartirDe,
-} from "@/lib/senha";
+import { codigoConfere, pedidoValido, problemaDaSenha, resumoDoCodigo } from "@/lib/senha";
+import { criarLinkDeSenha, registrarPedidoDeSenha } from "@/lib/pedidos-de-senha";
 import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 
-export type Resposta = { erro?: string; recado?: string } | null;
+/** `campos` devolve o que foi digitado (nunca senha), para a tela não apagar. */
+export type Resposta = { erro?: string; recado?: string; campos?: Record<string, string> } | null;
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -40,13 +36,17 @@ export async function pedirNovaSenha(
 ): Promise<Resposta> {
   const email = texto(dados, "email").toLowerCase();
 
+  /*
+    Sem prometer prazo: quem gera o link é uma pessoa, na administração. Os
+    canais de contato, quando existem, a tela mostra logo abaixo do recado.
+  */
   const mesmaRespostaSempre = {
     recado:
-      "Pedido registrado. Vamos te mandar o link da senha nova pelo WhatsApp do seu cadastro. Se não chegar em alguns minutos, chame a gente.",
+      "Pedido registrado. Assim que a nossa equipe atender o pedido, você recebe o link da senha nova no WhatsApp do seu cadastro.",
   };
 
   if (!EMAIL_VALIDO.test(email)) {
-    return { erro: "Esse e-mail parece incompleto. Pode escrevê-lo novamente?" };
+    return { erro: "Esse e-mail parece incompleto. Pode escrevê-lo novamente?", campos: { email } };
   }
 
   const usuario = await prisma.usuario.findUnique({
@@ -56,23 +56,10 @@ export async function pedirNovaSenha(
   // A conta do estúdio de exemplo nunca ganha senha: responde igual a "não existe".
   if (!usuario || ehContaDeExemplo(usuario)) return mesmaRespostaSempre;
 
-  // Já existe um pedido aberto e no prazo: aproveita, em vez de encher a
-  // administração com uma linha por toque no botão.
-  const aberto = await prisma.pedidoDeSenha.findFirst({
-    where: { usuarioId: usuario.id, usadoEm: null, expiraEm: { gt: new Date() } },
-    select: { id: true },
-  });
-  if (aberto) return mesmaRespostaSempre;
-
-  await prisma.pedidoDeSenha.create({
-    data: {
-      usuarioId: usuario.id,
-      // Sem código ainda: ele nasce quando a administração gera o link.
-      expiraEm: validadeAPartirDe(),
-    },
-  });
-
-  revalidatePath("/painel/admin");
+  // Se a conta já está na fila, o pedido de novo não cria outra linha. Fica na
+  // fila até a administração gerar o link, sem prazo para sumir.
+  const criou = await registrarPedidoDeSenha(prisma, usuario.id, new Date());
+  if (criou) revalidatePath("/painel/admin");
   return mesmaRespostaSempre;
 }
 
@@ -93,24 +80,8 @@ export async function gerarLinkDeSenha(
   });
   if (!usuario || ehContaDeExemplo(usuario)) return { certo: false, motivo: "Não encontramos essa conta." };
 
-  const codigo = gerarCodigo();
-
-  await prisma.$transaction(async (tx) => {
-    // Gerar um link novo derruba os anteriores: só o último vale.
-    await tx.pedidoDeSenha.updateMany({
-      where: { usuarioId, usadoEm: null },
-      data: { usadoEm: new Date() },
-    });
-
-    await tx.pedidoDeSenha.create({
-      data: {
-        usuarioId,
-        codigoHash: resumoDoCodigo(codigo),
-        entregueEm: new Date(),
-        expiraEm: validadeAPartirDe(),
-      },
-    });
-  });
+  // Gerar um link novo derruba os anteriores e tira a conta da fila.
+  const codigo = await criarLinkDeSenha(prisma, usuarioId, new Date());
 
   revalidatePath("/painel/admin");
   return { certo: true, codigo };
@@ -148,18 +119,17 @@ export async function trocarSenha(
   const senha = texto(dados, "senha");
   const repetida = texto(dados, "repetida");
 
-  if (senha.length < 8) {
-    return { erro: "Para ficar seguro, a senha precisa de pelo menos 8 caracteres." };
-  }
-  if (senha !== repetida) {
-    return { erro: "As duas senhas não são iguais. Pode conferir?" };
-  }
-
   const pedido = await conferirCodigo(codigo);
   if (!pedido) {
     return {
       erro: "Esse link não vale mais. Peça outro na tela de entrada e a gente te manda um novo.",
     };
+  }
+
+  const problema = problemaDaSenha(senha, pedido.usuario);
+  if (problema) return { erro: problema };
+  if (senha !== repetida) {
+    return { erro: "As duas senhas não são iguais. Pode conferir?" };
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);

@@ -1,5 +1,7 @@
-import { somarDias } from "@/lib/formato";
+import { dataCurta, paraDataLocal, somarDias } from "@/lib/formato";
 import { montarPix } from "@/lib/pix";
+
+const DIA_MS = 24 * 60 * 60 * 1000;
 
 export const DIAS_POR_CICLO = 30;
 /**
@@ -126,15 +128,27 @@ export function planoPorCodigo(valor: unknown): Plano {
 /** O que existe no banco, só o que as regras de plano precisam ler. */
 export type AssinaturaParaPlano = { status: string; plano: string; validaAte: Date };
 
+/**
+ * O plano pago que está valendo agora, ou null. Só conta assinatura "ativa"
+ * (um Pix já confirmado) dentro da validade: o teste antigo e a demonstração
+ * não são plano pago, e assinatura vencida não tem plano valendo.
+ */
+export function planoValendo(
+  assinatura: AssinaturaParaPlano | null | undefined,
+  agora = new Date(),
+): Plano | null {
+  if (!assinatura) return null;
+  if (assinatura.status !== "ativa") return null;
+  if (assinatura.validaAte.getTime() <= agora.getTime()) return null;
+  return planoPorCodigo(assinatura.plano);
+}
+
 /** As funções do Completo só abrem para quem está com o Completo pago e em dia. */
 export function temPlanoCompleto(
   assinatura: AssinaturaParaPlano | null | undefined,
   agora = new Date(),
 ) {
-  if (!assinatura) return false;
-  if (assinatura.validaAte.getTime() <= agora.getTime()) return false;
-  if (assinatura.status !== "ativa") return false;
-  return planoPorCodigo(assinatura.plano).completo;
+  return planoValendo(assinatura, agora)?.completo ?? false;
 }
 
 /**
@@ -149,6 +163,9 @@ export type AssinaturaResumo = {
   validaAte: Date;
 };
 
+/** A partir de quantos dias para o fim da validade o painel começa a avisar. */
+export const DIAS_PARA_AVISAR_O_FIM = 5;
+
 export type SituacaoAssinatura = {
   status: StatusAssinatura;
   /** Pode usar o painel com os próprios dados (assinatura em dia ou teste antigo valendo). */
@@ -160,13 +177,29 @@ export type SituacaoAssinatura = {
    * assinatura com os próprios dados guardados, como sempre foi.
    */
   demonstracao: boolean;
+  /**
+   * Dias de calendário, no fuso de São Paulo, de hoje até o dia da validade:
+   * 0 quando vence hoje, 1 quando vence amanhã. Contar em horas (24h por dia)
+   * dava "faltam 2 dias" para quem vence amanhã de manhã.
+   */
   diasRestantes: number;
+  /** Assinatura paga e valendo, com {@link DIAS_PARA_AVISAR_O_FIM} dias ou menos pela frente. */
+  venceLogo: boolean;
+  /** O último Pix avisado foi marcado como não localizado e nada mais foi avisado depois. */
+  pixNaoLocalizado?: boolean;
   validaAte: Date;
   recado: string;
 };
 
 export const RECADO_DA_DEMONSTRACAO =
   "Você está vendo um estúdio de exemplo. Para usar com os seus clientes, escolha um plano.";
+
+/** Quantos dias de calendário (em São Paulo) vão de `agora` até `ate`. Nunca negativo. */
+export function diasDeCalendarioAte(ate: Date, agora = new Date()) {
+  const hoje = Date.parse(`${paraDataLocal(agora)}T00:00:00.000Z`);
+  const dia = Date.parse(`${paraDataLocal(ate)}T00:00:00.000Z`);
+  return Math.max(0, Math.round((dia - hoje) / DIA_MS));
+}
 
 export function avaliarAssinatura(
   assinatura: AssinaturaResumo | null | undefined,
@@ -180,6 +213,7 @@ export function avaliarAssinatura(
       emTeste: false,
       demonstracao: true,
       diasRestantes: 0,
+      venceLogo: false,
       validaAte: agora,
       recado: RECADO_DA_DEMONSTRACAO,
     };
@@ -187,10 +221,7 @@ export function avaliarAssinatura(
 
   const validaAte = assinatura.validaAte;
   const dentroDoPrazo = validaAte.getTime() > agora.getTime();
-  const diasRestantes = Math.max(
-    0,
-    Math.ceil((validaAte.getTime() - agora.getTime()) / (24 * 60 * 60 * 1000)),
-  );
+  const diasRestantes = dentroDoPrazo ? diasDeCalendarioAte(validaAte, agora) : 0;
 
   /*
     Só "ativa" quer dizer que um Pix já foi confirmado (é o que a confirmação do
@@ -207,6 +238,7 @@ export function avaliarAssinatura(
       emTeste: false,
       demonstracao: true,
       diasRestantes: 0,
+      venceLogo: false,
       validaAte,
       recado: RECADO_DA_DEMONSTRACAO,
     };
@@ -218,6 +250,7 @@ export function avaliarAssinatura(
 
   const emTeste = status === "teste" && dentroDoPrazo;
   const liberada = dentroDoPrazo && (status === "ativa" || status === "teste");
+  const venceLogo = status === "ativa" && dentroDoPrazo && diasRestantes <= DIAS_PARA_AVISAR_O_FIM;
 
   return {
     status,
@@ -225,26 +258,42 @@ export function avaliarAssinatura(
     emTeste,
     demonstracao: false,
     diasRestantes,
+    venceLogo,
     validaAte,
-    recado: montarRecado(status, dentroDoPrazo, diasRestantes),
+    recado: montarRecado(status, dentroDoPrazo, diasRestantes, validaAte),
   };
+}
+
+/**
+ * "Faltam 3 dias", "amanhã" ou "hoje", para a validade. O Bossa não cobra
+ * sozinho (o Pix é feito à mão a cada período), então a tela fala de validade
+ * ("vale até"), nunca de "renova em".
+ */
+export function quandoVence(diasRestantes: number) {
+  if (diasRestantes <= 0) return "hoje";
+  if (diasRestantes === 1) return "amanhã";
+  return `faltam ${diasRestantes} dias`;
 }
 
 function montarRecado(
   status: StatusAssinatura,
   dentroDoPrazo: boolean,
   diasRestantes: number,
+  validaAte: Date,
 ) {
   if (status === "teste" && dentroDoPrazo) {
+    if (diasRestantes === 0) return "Seu período de teste termina hoje. Que tal garantir o próximo mês agora?";
     return diasRestantes === 1
       ? "Seu período de teste termina amanhã. Que tal garantir o próximo mês agora?"
       : `Você está no período de teste: faltam ${diasRestantes} dias para ele terminar.`;
   }
 
   if (status === "ativa" && dentroDoPrazo) {
-    return diasRestantes <= 5
-      ? `Sua assinatura está em dia e renova em ${diasRestantes} ${diasRestantes === 1 ? "dia" : "dias"}.`
-      : "Sua assinatura está em dia. Obrigado pela confiança!";
+    const data = dataCurta(validaAte);
+    if (diasRestantes > DIAS_PARA_AVISAR_O_FIM) return `Sua assinatura está em dia e vale até ${data}.`;
+    const quando =
+      diasRestantes === 0 ? `vale só até hoje, ${data}` : diasRestantes === 1 ? `vale até amanhã, ${data}` : `vale até ${data} (${quandoVence(diasRestantes)})`;
+    return `Sua assinatura ${quando}. Faça o Pix para continuar usando sem interrupção.`;
   }
 
   if (status === "aguardando") {
@@ -263,6 +312,113 @@ export function novaValidade(
   const base =
     validaAte && validaAte.getTime() > agora.getTime() ? validaAte : agora;
   return somarDias(base, dias);
+}
+
+/** O que sobrou do plano antigo, numa troca de plano, e no que isso virou. */
+export type ConversaoDeSaldo = {
+  /** O plano que estava valendo. */
+  de: CodigoPlano;
+  /** Os dias que faltavam, em dinheiro: dias restantes × valor diário do plano antigo. */
+  creditoCentavos: number;
+  /** O crédito em dias do plano novo, arredondado para baixo. */
+  diasExtras: number;
+};
+
+export type ResultadoDoPagamento = {
+  /** O plano que passa a valer. */
+  plano: CodigoPlano;
+  validaAte: Date;
+  /** Só existe quando a família muda (Simples ↔ Completo) com um plano ainda valendo. */
+  conversao: ConversaoDeSaldo | null;
+};
+
+/**
+ * Valor que sobra de um plano, em centavos, pelo tempo que ainda falta.
+ *
+ * Valor diário = preço do plano ÷ dias do ciclo dele. A conta é feita com o
+ * tempo exato (em milissegundos) e só o resultado é arredondado para baixo,
+ * em centavos inteiros. BigInt porque milissegundos × centavos passa do que um
+ * número comum guarda sem perder precisão quando o preço é alto.
+ */
+function saldoEmCentavos(restanteMs: number, plano: Plano) {
+  if (restanteMs <= 0) return 0;
+  const saldo =
+    (BigInt(Math.floor(restanteMs)) * BigInt(plano.valorCentavos)) / (BigInt(plano.dias) * BigInt(DIA_MS));
+  return Number(saldo);
+}
+
+/**
+ * O que acontece com a assinatura quando um Pix é confirmado. É a regra de
+ * troca de plano, num lugar só (a confirmação do admin e as prévias das telas
+ * usam esta mesma função):
+ *
+ * - Mesma família do plano que está valendo (Simples → Simples, Completo →
+ *   Completo), ou nenhum plano pago valendo: a validade é a maior entre agora
+ *   e a atual, mais os dias do plano pago. Renovar antes da hora não perde dia.
+ * - Família diferente com um plano ainda valendo: o que falta do plano antigo
+ *   vira crédito em dinheiro (dias restantes × valor diário dele), e o crédito
+ *   vira dias extras no plano novo (crédito ÷ valor diário do novo, para
+ *   baixo). A validade é agora + dias do plano novo + dias extras.
+ *
+ * Nos dois casos o plano passa a ser o pago. Antes, os dias do Simples viravam
+ * dias do Completo um por um (R$ 189 + R$ 329 = 60 dias de Completo), e quem
+ * tinha o Completo e pagava o Simples perdia o Completo e o dinheiro dele.
+ */
+export function aplicarPagamento(
+  atual: AssinaturaParaPlano | null | undefined,
+  codigoPago: unknown,
+  agora = new Date(),
+): ResultadoDoPagamento {
+  const novo = planoPorCodigo(codigoPago);
+  const vigente = planoValendo(atual, agora);
+
+  if (!atual || !vigente || vigente.familia === novo.familia) {
+    return {
+      plano: novo.codigo,
+      validaAte: novaValidade(atual?.validaAte ?? null, agora, novo.dias),
+      conversao: null,
+    };
+  }
+
+  const creditoCentavos = saldoEmCentavos(atual.validaAte.getTime() - agora.getTime(), vigente);
+  // crédito ÷ (valor ÷ dias) = crédito × dias ÷ valor, tudo em inteiros.
+  const diasExtras = Math.floor((creditoCentavos * novo.dias) / novo.valorCentavos);
+
+  return {
+    plano: novo.codigo,
+    validaAte: somarDias(agora, novo.dias + diasExtras),
+    conversao: { de: vigente.codigo, creditoCentavos, diasExtras },
+  };
+}
+
+/**
+ * Quanto as assinaturas em dia rendem por mês, em centavos. O anual entra
+ * dividido por doze; a soma dos anuais é dividida uma vez só, para o
+ * arredondamento não se acumular conta a conta.
+ */
+export function receitaMensalCentavos(
+  assinaturas: (AssinaturaParaPlano | null | undefined)[],
+  agora = new Date(),
+) {
+  let mensais = 0;
+  let anuais = 0;
+  for (const assinatura of assinaturas) {
+    const plano = planoValendo(assinatura, agora);
+    if (!plano) continue;
+    if (plano.dias >= 365) anuais += plano.valorCentavos;
+    else mensais += Math.round((plano.valorCentavos * DIAS_POR_CICLO) / plano.dias);
+  }
+  return mensais + Math.round(anuais / 12);
+}
+
+/**
+ * O identificador que vai no código Pix de cada conta (campo 62 do Pix). Antes
+ * era "AGENDA" para todo mundo, e o extrato não dizia de quem era o Pix. Só
+ * letras e números, até 25 caracteres: "BOSSA" + o fim do id da conta.
+ */
+export function identificadorDoPix(usuarioId: string) {
+  const final = usuarioId.replace(/[^A-Za-z0-9]/g, "").slice(-12).toUpperCase();
+  return `BOSSA${final}`;
 }
 
 /**

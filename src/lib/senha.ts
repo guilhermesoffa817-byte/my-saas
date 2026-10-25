@@ -90,3 +90,87 @@ export function mensagemDaNovaSenha({
     `Ele vale por ${MINUTOS_DE_VALIDADE} minutos e só funciona uma vez. Se não foi você quem pediu, pode ignorar.`,
   ].join("\n");
 }
+
+/** O mínimo de caracteres de uma senha. */
+export const TAMANHO_MINIMO_DA_SENHA = 8;
+
+/**
+ * Palavras que, com números ou símbolos em volta, formam as senhas que alguém
+ * tenta primeiro para invadir uma conta ("senha123", "Brasil@2026").
+ */
+const PALAVRAS_MAIS_USADAS = new Set([
+  "senha", "minhasenha", "senhanova", "novasenha", "password", "passw", "pass",
+  "qwerty", "asdf", "abc", "abcd", "admin", "administrador", "mudar", "trocar",
+  "teste", "test", "bossa", "estudio", "salao", "beleza", "brasil", "amor",
+  "deus", "jesus", "familia", "iloveyou", "teamo", "princesa", "flamengo",
+  "corinthians", "palmeiras", "vasco", "gremio", "santos", "cruzeiro",
+  "saopaulo", "botafogo", "fluminense", "internacional", "dragon", "monkey",
+  "welcome", "login", "entrar", "acesso", "usuario", "user",
+]);
+
+/** Fileiras que se digitam sem pensar: alfabeto, números e teclado. */
+const FILEIRAS = [
+  "abcdefghijklmnopqrstuvwxyz",
+  "01234567890",
+  "qwertyuiop",
+  "asdfghjklç",
+  "zxcvbnm",
+  "1qaz2wsx3edc4rfv",
+];
+
+function semAcento(texto: string) {
+  return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/** "abcd", "4321" e "qwer" são pedaços de uma fileira, para a frente ou para trás. */
+function ehPedacoDeFileira(trecho: string) {
+  if (!trecho) return false;
+  const invertido = [...trecho].reverse().join("");
+  return FILEIRAS.some((fileira) => fileira.includes(trecho) || fileira.includes(invertido));
+}
+
+/**
+ * Diz o que há de errado com uma senha, ou `null` se ela serve.
+ *
+ * Não é um medidor de força: só recusa o que qualquer pessoa tentaria primeiro
+ * para entrar numa conta alheia. Senha comprida e sem sentido passa, mesmo sem
+ * símbolo nem letra maiúscula.
+ */
+export function problemaDaSenha(
+  senha: string,
+  dono: { email?: string | null; nome?: string | null } = {},
+): string | null {
+  if (senha.length < TAMANHO_MINIMO_DA_SENHA) {
+    return `Para ficar segura, a senha precisa de pelo menos ${TAMANHO_MINIMO_DA_SENHA} caracteres.`;
+  }
+
+  const limpa = semAcento(senha);
+  const soLetrasENumeros = limpa.replace(/[^a-z0-9ç]/g, "");
+  // Pedaços seguidos de letras ou de números: "abcd1234" vira ["abcd", "1234"].
+  const pedacos = soLetrasENumeros.match(/[a-zç]+|[0-9]+/g) ?? [];
+
+  const repeticao = /^(.{1,4})\1+$/.test(soLetrasENumeros);
+  const sequencia = pedacos.length > 0 && pedacos.length <= 2 && pedacos.every(ehPedacoDeFileira);
+  if (repeticao || sequencia) {
+    return "Sequências e repetições, como 12345678, abcd1234 ou aaaaaaaa, são as primeiras que alguém tenta para invadir uma conta. Escolha outra.";
+  }
+
+  const letras = limpa.replace(/[^a-zç]/g, "");
+  if (letras && PALAVRAS_MAIS_USADAS.has(letras)) {
+    return "Essa senha está entre as mais usadas, e por isso é das primeiras que alguém tenta para invadir uma conta. Escolha outra.";
+  }
+
+  const pessoal = "A senha não pode ter o seu nome nem o seu e-mail. Escolha outra.";
+  const antesDaArroba = semAcento(dono.email ?? "").split("@")[0] ?? "";
+  if (antesDaArroba.length >= 4 && limpa.includes(antesDaArroba)) return pessoal;
+  const partesDoNome = semAcento(dono.nome ?? "")
+    .split(/[^a-zç]+/)
+    .filter((parte) => parte.length >= 4);
+  if (partesDoNome.some((parte) => limpa.includes(parte))) return pessoal;
+
+  if (!letras && soLetrasENumeros.length < 12) {
+    return "Senha só com números é fácil de adivinhar. Misture letras e números.";
+  }
+
+  return null;
+}

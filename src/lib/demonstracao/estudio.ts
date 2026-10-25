@@ -11,15 +11,21 @@
  * (pg_advisory_xact_lock) põe o segundo na fila, e ele, ao entrar, vê que o
  * primeiro já refez e sai sem fazer nada.
  *
+ * Os dados também dependem do que está ligado no servidor: sem a IA, o exemplo
+ * não tem conversa do assistente, documento lido nem custo classificado pela
+ * IA. Quando a chave da IA entra ou sai (num deploy), a próxima visita refaz o
+ * exemplo, mesmo que ele ainda seja de hoje.
+ *
  * Nada aqui é chamado por ação de visitante: só as telas leem esta conta, e as
  * ações gravam sempre na conta da sessão (ver lib/guardas.ts).
  */
 import type { Prisma, PrismaClient } from "@/generated/prisma";
 import { paraDataLocal } from "@/lib/formato";
+import { recursoLigado } from "@/lib/recursos";
 import { carregarDadosDoMes } from "@/lib/relatorio/operacoes";
 import { montarRelatorio } from "@/lib/relatorio/montar";
 import { ID_DO_ESTUDIO_DE_EXEMPLO } from "./conta";
-import { LINK_DO_EXEMPLO, montarEstudioDeExemplo } from "./dados";
+import { LINK_DO_EXEMPLO, montarEstudioDeExemplo, type RecursosDoExemplo } from "./dados";
 
 /** Depois disso a agenda "de hoje" já não parece de hoje. */
 export const HORAS_ATE_REFAZER = 12;
@@ -31,6 +37,30 @@ export function precisaRefazer(criadoEm: Date, agora: Date) {
   return paraDataLocal(criadoEm) !== paraDataLocal(agora);
 }
 
+/** O que está ligado agora neste servidor e muda o que o exemplo mostra. */
+export function recursosDoServidor(): RecursosDoExemplo {
+  return { ia: recursoLigado("assistente"), documentos: recursoLigado("documentos") };
+}
+
+type Banco = Pick<PrismaClient, "documento">;
+
+/**
+ * Se o exemplo gravado foi montado com os mesmos recursos de agora. O aceite
+ * da IA (`iaAceitaEm`) só existe no exemplo montado com IA; os documentos, só
+ * com a leitura ligada. Sem IA não há leitura, então a conta extra só roda
+ * com a IA ligada.
+ */
+export async function montadoComOsMesmosRecursos(
+  db: Banco,
+  conta: { iaAceitaEm: Date | null },
+  recursos: RecursosDoExemplo,
+) {
+  if (Boolean(conta.iaAceitaEm) !== recursos.ia) return false;
+  if (!recursos.ia) return true;
+  const documentos = await db.documento.count({ where: { usuarioId: ID_DO_ESTUDIO_DE_EXEMPLO } });
+  return documentos > 0 === recursos.documentos;
+}
+
 const comAssinatura = { assinatura: true } as const;
 export type ContaDeExemplo = Prisma.UsuarioGetPayload<{ include: typeof comAssinatura }>;
 
@@ -39,15 +69,25 @@ export type ContaDeExemplo = Prisma.UsuarioGetPayload<{ include: typeof comAssin
  * estiverem velhos. Se refazer falhar e já houver uma versão antiga, as telas
  * mostram a antiga: uma demonstração de ontem é melhor que uma tela de erro.
  */
-export async function estudioDeExemplo(db: PrismaClient, agora = new Date()): Promise<ContaDeExemplo> {
+export async function estudioDeExemplo(
+  db: PrismaClient,
+  agora = new Date(),
+  recursos = recursosDoServidor(),
+): Promise<ContaDeExemplo> {
   const atual = await db.usuario.findUnique({
     where: { id: ID_DO_ESTUDIO_DE_EXEMPLO },
     include: comAssinatura,
   });
-  if (atual && !precisaRefazer(atual.criadoEm, agora)) return atual;
+  if (
+    atual &&
+    !precisaRefazer(atual.criadoEm, agora) &&
+    (await montadoComOsMesmosRecursos(db, atual, recursos))
+  ) {
+    return atual;
+  }
 
   try {
-    await refazerEstudioDeExemplo(db, agora);
+    await refazerEstudioDeExemplo(db, agora, false, recursos);
   } catch (erro) {
     if (!atual) throw erro;
     console.error("Não consegui refazer o estúdio de exemplo; mostrando o anterior.", erro);
@@ -64,7 +104,12 @@ export async function estudioDeExemplo(db: PrismaClient, agora = new Date()): Pr
  * Apaga e grava de novo o estúdio de exemplo, se ainda for preciso. Devolve
  * true quando refez, false quando outro pedido já tinha refeito.
  */
-export async function refazerEstudioDeExemplo(db: PrismaClient, agora = new Date(), forcar = false) {
+export async function refazerEstudioDeExemplo(
+  db: PrismaClient,
+  agora = new Date(),
+  forcar = false,
+  recursos = recursosDoServidor(),
+) {
   return db.$transaction(
     async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"demonstracao:estudio-de-exemplo"}, 0))`;
@@ -72,15 +117,22 @@ export async function refazerEstudioDeExemplo(db: PrismaClient, agora = new Date
       // Quem esperou na fila confere de novo: o pedido da frente pode ter refeito.
       const atual = await tx.usuario.findUnique({
         where: { id: ID_DO_ESTUDIO_DE_EXEMPLO },
-        select: { criadoEm: true },
+        select: { criadoEm: true, iaAceitaEm: true },
       });
-      if (atual && !forcar && !precisaRefazer(atual.criadoEm, agora)) return false;
+      if (
+        atual &&
+        !forcar &&
+        !precisaRefazer(atual.criadoEm, agora) &&
+        (await montadoComOsMesmosRecursos(tx, atual, recursos))
+      ) {
+        return false;
+      }
 
       // A conta leva tudo junto em cascata, num comando só (inclusive os
       // pagamentos da equipe, que seguram lançamento e colaborador).
       await tx.usuario.deleteMany({ where: { id: ID_DO_ESTUDIO_DE_EXEMPLO } });
 
-      const dados = montarEstudioDeExemplo(agora);
+      const dados = montarEstudioDeExemplo(agora, recursos);
 
       /*
         O link público é único entre todos os estúdios. Se alguém de verdade já

@@ -33,6 +33,16 @@ export const ROTULO_DA_ORIGEM: Record<OrigemDaNatureza, string> = {
   voce: "Você",
 };
 
+/**
+ * O rótulo da origem na tela. Com a IA desligada no servidor, nada no painel
+ * fala dela: uma classificação antiga que veio da IA (ou a do estúdio de
+ * exemplo) aparece como sugestão automática, que é o que ela é para quem lê.
+ */
+export function rotuloDaOrigem(origem: OrigemDaNatureza, iaLigada: boolean) {
+  if (origem === "ia" && !iaLigada) return "Sugestão automática";
+  return ROTULO_DA_ORIGEM[origem];
+}
+
 /** O que vem do banco ou do formulário é texto: estas conferem antes de confiar. */
 export function ehNatureza(valor: unknown): valor is Natureza {
   return typeof valor === "string" && (NATUREZAS as readonly string[]).includes(valor);

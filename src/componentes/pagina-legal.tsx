@@ -1,30 +1,62 @@
 import Link from "next/link";
+import { LinksDeContato } from "@/componentes/contato";
 import { CabecalhoDoSite, RodapeDoSite } from "@/componentes/site";
+import { canaisDeContato } from "@/lib/contato";
 
 /**
  * A moldura das páginas de privacidade e de termos.
  *
  * Texto longo pede leitura confortável: coluna estreita, letra de 16px no
  * celular, espaço entre os blocos e um sumário no topo para ir direto ao
- * assunto. As marcas [REVISAR COM ADVOGADO] e [PREENCHER] ficam visíveis de
- * propósito, para ninguém publicar a versão final sem a revisão.
+ * assunto.
+ *
+ * Os trechos que ainda pedem revisão jurídica ficam marcados em comentário no
+ * código, com "REVISAR COM ADVOGADO", nunca na tela: quem lê a página é o
+ * cliente, e o texto que ele vê é o que vale.
  */
 
 export type ItemDoSumario = { id: string; titulo: string };
 
+export type QualPagina = "termos" | "privacidade";
+
+const OUTRA_PAGINA: Record<QualPagina, { href: string; rotulo: string }> = {
+  termos: { href: "/privacidade", rotulo: "Política de privacidade" },
+  privacidade: { href: "/termos", rotulo: "Termos de uso" },
+};
+
+/**
+ * O título de cada seção, com o número tirado da posição dela no sumário.
+ *
+ * Assim o sumário e os títulos não desencontram quando uma seção some (a de
+ * inteligência artificial, quando ela está desligada) ou muda de nome: os dois
+ * leem o mesmo texto e a mesma posição.
+ */
+export function numerarSecoes(sumario: ItemDoSumario[]) {
+  return (id: string) => {
+    const posicao = sumario.findIndex((item) => item.id === id);
+    if (posicao < 0) throw new Error(`A seção "${id}" não está no sumário.`);
+    return `${posicao + 1}. ${sumario[posicao].titulo}`;
+  };
+}
+
 export function PaginaLegal({
+  pagina,
   titulo,
   atualizadaEm,
   resumo,
   sumario,
   children,
 }: {
+  pagina: QualPagina;
   titulo: string;
   atualizadaEm: string;
   resumo: React.ReactNode;
   sumario: ItemDoSumario[];
   children: React.ReactNode;
 }) {
+  const outra = OUTRA_PAGINA[pagina];
+  const temContato = canaisDeContato().length > 0;
+
   return (
     <div className="min-h-screen">
       <CabecalhoDoSite />
@@ -32,9 +64,7 @@ export function PaginaLegal({
         <h1 className="font-display text-3xl font-semibold text-balance text-carvao sm:text-4xl">
           {titulo}
         </h1>
-        <p className="mt-2 text-sm text-carvao-suave">
-          Última atualização: {atualizadaEm} · Versão em revisão jurídica
-        </p>
+        <p className="mt-2 text-sm text-carvao-suave">Última atualização: {atualizadaEm}</p>
 
         <div className="mt-8 rounded-2xl border border-areia-escura/70 bg-superficie p-5 leading-relaxed text-carvao">
           {resumo}
@@ -58,16 +88,19 @@ export function PaginaLegal({
 
         <div className="mt-10 space-y-10">{children}</div>
 
-        <p className="mt-12 border-t border-areia-escura/70 pt-6 text-sm text-carvao-suave">
-          Veja também:{" "}
-          <Link href="/privacidade" className="font-semibold text-terracota hover:underline">
-            Política de privacidade
-          </Link>{" "}
-          ·{" "}
-          <Link href="/termos" className="font-semibold text-terracota hover:underline">
-            Termos de uso
-          </Link>
-        </p>
+        <div className="mt-12 space-y-2 border-t border-areia-escura/70 pt-6 text-sm text-carvao-suave">
+          {temContato ? (
+            <p id="fale-com-a-gente">
+              Ficou com alguma dúvida? Fale com a gente: <LinksDeContato className="[&_a]:whitespace-nowrap" />.
+            </p>
+          ) : null}
+          <p>
+            Veja também:{" "}
+            <Link href={outra.href} className="font-semibold text-terracota hover:underline">
+              {outra.rotulo}
+            </Link>
+          </p>
+        </div>
       </main>
       <RodapeDoSite />
     </div>
@@ -92,14 +125,5 @@ export function Secao({
         {children}
       </div>
     </section>
-  );
-}
-
-/** A marca de trecho que precisa passar pelo advogado antes de valer. */
-export function Revisar({ children = "REVISAR COM ADVOGADO" }: { children?: React.ReactNode }) {
-  return (
-    <span className="rounded bg-areia px-1.5 py-0.5 text-xs font-semibold [overflow-wrap:anywhere] text-carvao-suave [box-decoration-break:clone]">
-      [{children}]
-    </span>
   );
 }

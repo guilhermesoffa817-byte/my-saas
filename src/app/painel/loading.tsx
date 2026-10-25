@@ -10,12 +10,12 @@ export default function Carregando() {
       <span className="sr-only">Carregando…</span>
 
       <section className="space-y-3">
-        <Barra className="h-8 w-56" />
+        <Barra className="h-8 w-56 max-w-full" />
         <Barra className="h-4 w-full max-w-xl" />
       </section>
 
       <section className="cartao space-y-4">
-        <Barra className="h-5 w-44" />
+        <Barra className="h-5 w-44 max-w-full" />
         <div className="grid gap-4 sm:grid-cols-2">
           <Barra className="h-11" />
           <Barra className="h-11" />
@@ -26,8 +26,8 @@ export default function Carregando() {
       <section className="space-y-3">
         {[0, 1, 2].map((posicao) => (
           <div key={posicao} className="cartao flex items-start justify-between gap-4">
-            <div className="flex-1 space-y-2.5">
-              <Barra className="h-5 w-40" />
+            <div className="min-w-0 flex-1 space-y-2.5">
+              <Barra className="h-5 w-40 max-w-full" />
               <Barra className="h-4 w-64 max-w-full" />
             </div>
             <Barra className="h-8 w-24 shrink-0" />

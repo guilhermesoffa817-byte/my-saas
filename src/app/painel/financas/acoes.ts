@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirEscritaDoRecurso } from "@/lib/guardas";
-import { deDataLocal, paraDataLocal } from "@/lib/formato";
+import { deDataLocal, lerPercentual, paraCentavos, paraDataLocal } from "@/lib/formato";
 import { apagarLancamento, registrarLancamento } from "@/lib/financas-operacoes";
 
 export type Resposta = { erro?: string; recado?: string } | null;
@@ -12,17 +12,6 @@ export type Resposta = { erro?: string; recado?: string } | null;
 function texto(dados: FormData, campo: string) {
   const valor = dados.get(campo);
   return typeof valor === "string" ? valor.trim() : "";
-}
-
-/** Aceita "1.234,56" e "1234.56"; guarda sempre em centavos. */
-function emCentavos(valor: string) {
-  const limpo = valor.replace(/\s|R\$/g, "");
-  const normalizado = limpo.includes(",")
-    ? limpo.replace(/\./g, "").replace(",", ".")
-    : limpo;
-  const numero = Number(normalizado);
-  if (!Number.isFinite(numero) || numero <= 0) return null;
-  return Math.round(numero * 100);
 }
 
 export async function salvarLancamento(
@@ -34,7 +23,8 @@ export async function salvarLancamento(
   const tipo = texto(dados, "tipo") === "entrada" ? "entrada" : "saida";
   const descricao = texto(dados, "descricao");
   const categoria = texto(dados, "categoria");
-  const valor = emCentavos(texto(dados, "valor"));
+  // A mesma leitura do resto do Bossa: "1.500" é mil e quinhentos.
+  const valor = paraCentavos(texto(dados, "valor"));
   const data = deDataLocal(texto(dados, "data") || paraDataLocal(new Date()));
 
   if (descricao.length < 2) {
@@ -86,15 +76,16 @@ export async function salvarImposto(
   dados: FormData,
 ): Promise<Resposta> {
   const { usuario } = await exigirEscritaDoRecurso("financas");
-  const percentual = Number(texto(dados, "percentual").replace(",", "."));
+  // Até duas casas, como 4,5 ou 6,25: as alíquotas do Simples quase sempre têm.
+  const percentual = lerPercentual(texto(dados, "percentual"));
 
-  if (!Number.isFinite(percentual) || percentual < 0 || percentual > 100) {
-    return { erro: "Informe um percentual entre 0 e 100." };
+  if (percentual === null) {
+    return { erro: "Informe um percentual entre 0 e 100, com até duas casas, como 6 ou 4,5." };
   }
 
   await prisma.usuario.update({
     where: { id: usuario.id },
-    data: { impostoPercentual: Math.round(percentual) },
+    data: { impostoPercentual: percentual },
   });
 
   revalidatePath("/painel/financas");

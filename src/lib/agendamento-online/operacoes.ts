@@ -101,8 +101,11 @@ export type AgendaPublica = {
 export type SituacaoDaPagina =
   | { situacao: "nao_encontrada" }
   | { situacao: "indisponivel" }
-  /** O link do estúdio de exemplo: mostra um aviso e nunca aceita horário. */
-  | { situacao: "demonstracao" }
+  /**
+   * O link do estúdio de exemplo: mostra os passos com os dados de exemplo, para
+   * quem está na demonstração ver o que a cliente vê, mas nunca aceita horário.
+   */
+  | { situacao: "demonstracao"; agenda: AgendaPublica }
   | { situacao: "aberta"; agenda: AgendaPublica };
 
 export async function carregarAgendaPublica(
@@ -147,12 +150,13 @@ export async function carregarAgendaPublica(
 
   const usuario = config.usuario;
   // O estúdio de exemplo é compartilhado pela demonstração: a página dele
-  // existe só para aparecer no painel, e nunca recebe horário de ninguém.
-  if (ehContaDeExemplo(usuario)) return { situacao: "demonstracao" };
+  // mostra os passos, mas nunca recebe horário de ninguém (agendarPeloLink
+  // recusa antes de qualquer gravação).
+  const exemplo = ehContaDeExemplo(usuario);
 
   // Conta com assinatura parada não recebe horário novo. O motivo não aparece
   // para o cliente: é assunto entre o estúdio e o Bossa.
-  if (!avaliarAssinatura(usuario.assinatura, agora).liberada) {
+  if (!exemplo && !avaliarAssinatura(usuario.assinatura, agora).liberada) {
     return { situacao: "indisponivel" };
   }
 
@@ -206,7 +210,7 @@ export async function carregarAgendaPublica(
   const quemAtende = pessoas.length > 0 ? pessoas : [dona];
 
   return {
-    situacao: "aberta",
+    situacao: exemplo ? "demonstracao" : "aberta",
     agenda: {
       usuarioId: usuario.id,
       link,
@@ -499,6 +503,7 @@ export async function agendarPeloLink(
           servicoId: servico.id,
           inicio,
           colaboradorId: livre.quem,
+          precoCentavos: servico.precoCentavos,
           origem: "link",
           observacoes: cliente.nomeDiferente
             ? `${OBSERVACAO_DO_LINK} · nome informado: ${nome}`

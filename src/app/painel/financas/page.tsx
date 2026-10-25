@@ -12,9 +12,13 @@ import {
   inicioDoMes as inicioDoMesNoFuso,
   inicioDoProximoMes,
   paraDataLocal,
+  percentualBonito,
   somarDias,
 } from "@/lib/formato";
+import { impostoEstimado } from "@/lib/relatorio/montar";
 import { mesesFechados } from "@/lib/fechamento/trava";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
+import { iaConfigurada } from "@/lib/ia/cliente";
 import { AvisoDeMesFechado } from "@/componentes/aviso-mes-fechado";
 import { FormularioImposto, FormularioLancamento } from "./formulario";
 import { GraficoPorDiaDaSemana, type DiaDoGrafico } from "./grafico";
@@ -68,7 +72,7 @@ export default async function PaginaFinancas({
           status: "concluido",
           inicio: { gte: inicioDoMes, lt: fimDoMes },
         },
-        select: { servico: { select: { precoCentavos: true } } },
+        select: { precoCentavos: true, servico: { select: { precoCentavos: true } } },
       }),
       prisma.lancamento.findMany({
         where: { usuarioId: usuario.id, data: { gte: inicioDoMes, lt: fimDoMes } },
@@ -82,14 +86,16 @@ export default async function PaginaFinancas({
           status: "concluido",
           inicio: { gte: inicioDoGrafico },
         },
-        select: { inicio: true, servico: { select: { precoCentavos: true } } },
+        select: { inicio: true, precoCentavos: true, servico: { select: { precoCentavos: true } } },
       }),
       mesesFechados(prisma, usuario.id),
     ]);
   const mesFechado = fechados.has(mesAtual);
 
+  // O preço guardado em cada atendimento: mudar o preço do serviço hoje não
+  // reescreve o que já entrou.
   const atendimentosCentavos = atendimentosDoMes.reduce(
-    (soma, item) => soma + item.servico.precoCentavos,
+    (soma, item) => soma + precoDoAtendimento(item),
     0,
   );
   const entradasManuais = lancamentosDoMes
@@ -100,7 +106,8 @@ export default async function PaginaFinancas({
     .reduce((soma, item) => soma + item.valorCentavos, 0);
 
   const entradas = atendimentosCentavos + entradasManuais;
-  const imposto = Math.round((entradas * usuario.impostoPercentual) / 100);
+  // A mesma conta do Relatório, com o percentual de até duas casas.
+  const imposto = impostoEstimado(entradas, usuario.impostoPercentual);
   const sobrou = entradas - saidas - imposto;
 
   // Segunda a domingo, na ordem em que a semana é vivida no estúdio.
@@ -110,7 +117,7 @@ export default async function PaginaFinancas({
     const atual = porDia.get(chave) ?? { atendimentos: 0, centavos: 0 };
     porDia.set(chave, {
       atendimentos: atual.atendimentos + 1,
-      centavos: atual.centavos + atendimento.servico.precoCentavos,
+      centavos: atual.centavos + precoDoAtendimento(atendimento),
     });
   }
 
@@ -165,7 +172,7 @@ export default async function PaginaFinancas({
           tom="neutra"
           atraso={160}
         >
-          {usuario.impostoPercentual}% sobre o que entrou
+          {percentualBonito(usuario.impostoPercentual)}% sobre o que entrou
         </Indicador>
         <Indicador
           titulo="Sobrou para você"
@@ -217,7 +224,9 @@ export default async function PaginaFinancas({
             Custos do mês{temCustos ? null : <SoNoCompleto />}
           </p>
           <p className="mt-0.5 text-sm text-carvao-suave">
-            Fixos, variáveis e quanto faturar para empatar. A IA ajuda a classificar.
+            Fixos, variáveis e quanto faturar para empatar.
+            {/* Só fala da IA quando ela está ligada neste servidor. */}
+            {iaConfigurada() ? " A IA ajuda a classificar." : null}
           </p>
         </div>
         <span className="botao-suave">Ver custos</span>
@@ -268,7 +277,7 @@ export default async function PaginaFinancas({
               conforme o seu regime e confirme com sua contadora.
             </p>
           </div>
-          <FormularioImposto percentual={usuario.impostoPercentual} />
+          <FormularioImposto percentual={percentualBonito(usuario.impostoPercentual)} />
         </div>
       </section>
 

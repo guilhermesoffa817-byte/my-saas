@@ -6,7 +6,8 @@ import { conferirCodigo } from "@/app/acoes/senha";
 import { MINUTOS_DE_VALIDADE } from "@/lib/senha";
 import { FormularioDeNovaSenha } from "./formulario";
 
-export const metadata = { title: "Escolher uma senha nova" };
+// O código no endereço é uma senha de uso único: nada desta página vai para a busca.
+export const metadata = { title: "Escolher uma senha nova", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaNovaSenha({

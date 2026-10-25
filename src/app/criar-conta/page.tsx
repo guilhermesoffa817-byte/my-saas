@@ -6,7 +6,12 @@ import { PLANOS } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
 import { FormularioCriarConta } from "./formulario";
 
-export const metadata = { title: "Criar conta" };
+export const metadata = {
+  title: "Criar conta",
+  description:
+    "Crie a sua conta no Bossa e conheça o sistema num estúdio de exemplo, com agenda, cobranças e finanças funcionando, antes de escolher um plano.",
+  alternates: { canonical: "/criar-conta" },
+};
 
 export default async function PaginaCriarConta({
   searchParams,

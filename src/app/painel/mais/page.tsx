@@ -25,7 +25,10 @@ export default async function PaginaMais() {
 
   return (
     <div className="space-y-6">
-      <TituloDaTela explicacao={usuario.nomeNegocio}>Mais</TituloDaTela>
+      {/* Na demonstração os dados são do estúdio de exemplo, não do negócio da conta. */}
+      <TituloDaTela explicacao={situacao.demonstracao ? "Estúdio de exemplo" : usuario.nomeNegocio}>
+        Mais
+      </TituloDaTela>
 
       <ul className="space-y-3">
         {destinos.map((item) => (

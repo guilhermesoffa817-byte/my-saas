@@ -14,6 +14,7 @@ import {
   somarMeses,
 } from "@/lib/formato";
 import { mesValido } from "@/lib/custos/calculo";
+import { precoDoAtendimento } from "@/lib/preco-do-atendimento";
 import {
   lerResumoGuardado,
   montarRelatorio,
@@ -55,7 +56,7 @@ export async function carregarDadosDoMes(
     db.usuario.findUnique({ where: { id: usuarioId }, select: { impostoPercentual: true } }),
     db.agendamento.findMany({
       where: { usuarioId, status: "concluido", inicio: { gte: de, lt: ate } },
-      select: { inicio: true, servico: { select: { nome: true, precoCentavos: true } } },
+      select: { inicio: true, precoCentavos: true, servico: { select: { nome: true, precoCentavos: true } } },
     }),
     db.lancamento.findMany({
       where: { usuarioId, data: { gte: de, lt: ate } },
@@ -118,7 +119,7 @@ export async function carregarDadosDoMes(
     atendimentos: atendimentos.map((item) => ({
       inicio: item.inicio,
       servico: item.servico.nome,
-      precoCentavos: item.servico.precoCentavos,
+      precoCentavos: precoDoAtendimento(item),
     })),
     lancamentos: lancamentos.map((item) => ({
       data: item.data,

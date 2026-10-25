@@ -5,6 +5,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
+import type { PrismaClient } from "@/generated/prisma";
 import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
 
 const NOME_COOKIE = "sessao_estudio";
@@ -20,17 +21,37 @@ function segredo() {
   return new TextEncoder().encode(valor);
 }
 
-export async function criarSessao(usuarioId: string, versao = 0) {
-  /*
-    A versão viaja dentro do cookie. Quando a senha muda, o número no banco sobe
-    e todo cookie antigo passa a discordar, então quem tinha entrado com a senha
-    velha é posto para fora. Sem isso, trocar a senha não expulsaria ninguém.
-  */
-  const token = await new SignJWT({ sub: usuarioId, v: versao })
+/** O conteúdo do cookie: quem é a pessoa e a versão da sessão dela. */
+export async function assinarSessao(usuarioId: string, versao = 0) {
+  return new SignJWT({ sub: usuarioId, v: versao })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${DURACAO_DIAS}d`)
     .sign(segredo());
+}
+
+/** Lê o cookie de volta. Assinatura errada, vencido ou estragado: `null`. */
+export async function lerSessao(token: string | undefined) {
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, segredo());
+    if (typeof payload.sub !== "string") return null;
+    // Cookie emitido antes desta mudança não traz versão: vale como zero, que
+    // é o padrão de quem nunca trocou a senha. Ninguém é desconectado à toa.
+    const versao = typeof payload.v === "number" ? payload.v : 0;
+    return { id: payload.sub, versao };
+  } catch {
+    return null;
+  }
+}
+
+export async function criarSessao(usuarioId: string, versao = 0) {
+  /*
+    A versão viaja dentro do cookie. Quando a senha muda, ou quando a pessoa
+    toca em Sair, o número no banco sobe e todo cookie antigo passa a
+    discordar, então quem tinha entrado antes é posto para fora.
+  */
+  const token = await assinarSessao(usuarioId, versao);
 
   const armario = await cookies();
   armario.set(NOME_COOKIE, token, {
@@ -42,26 +63,36 @@ export async function criarSessao(usuarioId: string, versao = 0) {
   });
 }
 
+/**
+ * Derruba no banco a sessão lida do cookie: a versão sobe e nenhum cookie com
+ * a versão antiga vale mais, nem uma cópia dele em outro aparelho. Só sobe se
+ * a versão ainda for a do cookie, para um cookie velho não mexer em nada.
+ */
+export async function derrubarSessao(
+  db: Pick<PrismaClient, "usuario">,
+  sessao: { id: string; versao: number },
+) {
+  await db.usuario.updateMany({
+    where: { id: sessao.id, sessaoVersao: sessao.versao },
+    data: { sessaoVersao: { increment: 1 } },
+  });
+}
+
+/**
+ * Sair de verdade. Apagar o cookie só limpa este aparelho: uma cópia do
+ * cookie continuaria entrando por 30 dias. Por isso a sessão cai também no
+ * servidor, o que encerra a conta em todos os aparelhos onde estava aberta.
+ */
 export async function encerrarSessao() {
   const armario = await cookies();
+  const sessao = await lerSessao(armario.get(NOME_COOKIE)?.value);
+  if (sessao) await derrubarSessao(prisma, sessao);
   armario.delete(NOME_COOKIE);
 }
 
 async function idDaSessao() {
   const armario = await cookies();
-  const token = armario.get(NOME_COOKIE)?.value;
-  if (!token) return null;
-
-  try {
-    const { payload } = await jwtVerify(token, segredo());
-    if (typeof payload.sub !== "string") return null;
-    // Cookie emitido antes desta mudança não traz versão: vale como zero, que
-    // é o padrão de quem nunca trocou a senha. Ninguém é desconectado à toa.
-    const versao = typeof payload.v === "number" ? payload.v : 0;
-    return { id: payload.sub, versao };
-  } catch {
-    return null;
-  }
+  return lerSessao(armario.get(NOME_COOKIE)?.value);
 }
 
 /**
@@ -83,7 +114,7 @@ export async function usuarioAtual() {
   const usuario = await buscarUsuario(sessao.id);
   if (!usuario) return null;
 
-  // Senha trocada depois deste cookie: a sessão não vale mais.
+  // Senha trocada ou Sair depois deste cookie: a sessão não vale mais.
   if (usuario.sessaoVersao !== sessao.versao) return null;
 
   // A conta do estúdio de exemplo nunca é dona de sessão, nem com cookie válido.

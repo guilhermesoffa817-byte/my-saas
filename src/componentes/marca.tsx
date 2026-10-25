@@ -1,7 +1,20 @@
 import Link from "next/link";
 import { NOME_DO_PRODUTO } from "@/lib/site";
 
-export function Marca({ href = "/", claro = false }: { href?: string; claro?: boolean }) {
+/**
+ * `encolhe`: abaixo de 340px de largura fica só o escudo, e o nome continua
+ * lá para leitor de tela. É o que deixa o topo das páginas públicas caber
+ * numa linha, sem rolar para o lado, num celular de 320px.
+ */
+export function Marca({
+  href = "/",
+  claro = false,
+  encolhe = false,
+}: {
+  href?: string;
+  claro?: boolean;
+  encolhe?: boolean;
+}) {
   return (
     <Link href={href} className="inline-flex items-center gap-2.5">
       <span
@@ -17,7 +30,7 @@ export function Marca({ href = "/", claro = false }: { href?: string; claro?: bo
       <span
         className={`font-display text-xl font-semibold tracking-tight ${
           claro ? "text-inverso-texto" : "text-carvao"
-        }`}
+        } ${encolhe ? "max-[339px]:sr-only" : ""}`}
       >
         {NOME_DO_PRODUTO}
       </span>

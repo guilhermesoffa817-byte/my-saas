@@ -1,12 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { CenaDoDia } from "@/componentes/cenas";
+import { LinksDeContato } from "@/componentes/contato";
 import { CabecalhoDoSite, RodapeDoSite } from "@/componentes/site";
 import { Icone } from "@/componentes/ui/icones";
 import { NOME_DA_FAMILIA, PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { canaisDeContato, canaisPorExtenso } from "@/lib/contato";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { emReais } from "@/lib/formato";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
-import { recursoLigado } from "@/lib/recursos";
+import { recursoLigado, soNoCompleto, type Recurso } from "@/lib/recursos";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -25,10 +28,32 @@ import {
  * Nenhuma frase aqui promete o que o produto não faz. As listas dos planos vêm
  * de itens-dos-planos.ts, a mesma fonte da tela de assinatura, e um teste
  * confere que elas batem com a liberação de verdade em recursos.ts.
+ *
+ * O que depende de recurso desligado (a IA sem a chave, por exemplo) e o
+ * contato sem canal preenchido somem da página, que é montada no build com as
+ * variáveis da publicação.
  */
 
-/** Pares de problema e solução. Curtos, com a palavra que a dona usaria. */
-const PROBLEMAS = [
+export const metadata: Metadata = {
+  // Só a página inicial aponta para "/": as outras dizem o próprio endereço.
+  alternates: { canonical: "/" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
+};
+
+/**
+ * Pares de problema e solução. Curtos, com a palavra que a dona usaria.
+ *
+ * `recurso` liga a linha a lib/recursos.ts: a linha some quando o recurso está
+ * desligado no servidor e ganha a etiqueta "Completo" quando só esse plano o
+ * libera, para ninguém assinar o Simples esperando o que ele não tem.
+ */
+type Problema = { problema: string; solucao: string; recurso?: Recurso };
+
+const PROBLEMAS: Problema[] = [
   {
     problema: "Dois clientes no mesmo horário",
     solucao: "A agenda avisa na hora e não deixa o horário bater.",
@@ -36,19 +61,22 @@ const PROBLEMAS = [
   {
     problema: "Cliente que esquece de pagar",
     solucao: "A cobrança sai pronta no WhatsApp, com o código Pix. Você confere e envia.",
+    recurso: "cobrar",
   },
   {
     problema: "Conta que vence e você só lembra depois",
     solucao: "As contas a pagar aparecem no Início antes de vencer.",
+    recurso: "vencimentos",
   },
   {
     problema: "Papelada acumulada",
     solucao: "Mande a foto da conta ou do contrato: o Bossa lê valores e datas, e você confere.",
-    precisa: "documentos" as const,
+    recurso: "documentos",
   },
   {
     problema: "Não sabe quanto sobrou no mês",
-    solucao: "Entrou, saiu e sobrou numa tela, com custos fixos e variáveis separados.",
+    solucao: "Entrou, saiu e sobrou numa tela, com o resumo do mês.",
+    recurso: "financas",
   },
   {
     problema: "Cliente querendo marcar às 23h",
@@ -60,7 +88,7 @@ const PROBLEMAS = [
  * As funções, agrupadas do jeito que a dona pensa no trabalho, não como o menu.
  * `completo` marca o que só o plano Completo libera (ver lib/recursos.ts).
  */
-const FUNCOES = [
+const funcoes = () => [
   {
     icone: "calendario",
     titulo: "Agenda e link de agendamento",
@@ -100,7 +128,7 @@ const FUNCOES = [
     texto: "Pergunte “em que dia a agenda fica mais vazia?” e receba a resposta com os seus números.",
     completo: true,
   },
-];
+].filter((funcao) => !funcao.precisa || recursoLigado(funcao.precisa));
 
 const PASSOS = [
   {
@@ -121,7 +149,10 @@ type Pergunta = {
   pergunta: string;
   /** Só aparece quando este recurso está ligado no servidor. */
   precisa?: "assistente" | "documentos";
-  resposta: string;
+  /** Uma função quando o texto depende do que está ligado no servidor. */
+  resposta: string | (() => string);
+  /** Termina com o contato, quando há canal preenchido no servidor. */
+  contato?: boolean;
   link?: { href: string; rotulo: string };
 };
 
@@ -147,14 +178,23 @@ const PERGUNTAS: Pergunta[] = [
   },
   {
     pergunta: "E se eu me arrepender depois de pagar?",
-    resposta: `Você tem ${DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o seu dinheiro de volta. É o direito de arrependimento do Código de Defesa do Consumidor (art. 49). É só nos chamar.`,
+    resposta: `Você tem ${DIAS_PARA_DESISTIR} dias, contados do pagamento, para desistir e receber o seu dinheiro de volta. É o direito de arrependimento do Código de Defesa do Consumidor (art. 49).`,
+    contato: true,
     link: { href: "/termos", rotulo: "Ver os Termos de uso" },
   },
   {
     pergunta: "A inteligência artificial vê os meus clientes?",
     precisa: "assistente",
-    resposta:
-      "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes. Na leitura de documentos, ela lê o arquivo que você enviar. Tudo isso só no plano Completo e só quando você usa.",
+    // A leitura de documentos precisa também do armazenamento: com só a chave
+    // da IA, a resposta não pode citar uma função que não está ligada.
+    resposta: () =>
+      [
+        "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes.",
+        recursoLigado("documentos") ? "Na leitura de documentos, ela lê o arquivo que você enviar." : null,
+        "Tudo isso só no plano Completo e só quando você usa.",
+      ]
+        .filter(Boolean)
+        .join(" "),
     link: { href: "/privacidade", rotulo: "Ver a Política de privacidade" },
   },
   {
@@ -200,18 +240,24 @@ const dadosParaOGoogle = {
 };
 
 /** As mesmas perguntas da tela, no formato que o Google entende. */
-const perguntasParaOGoogle = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: perguntasLigadas().map((item) => ({
-    "@type": "Question",
-    name: item.pergunta,
-    acceptedAnswer: { "@type": "Answer", text: item.resposta },
-  })),
-};
+function perguntasParaOGoogle() {
+  const contato = canaisPorExtenso();
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: perguntasLigadas().map((item) => ({
+      "@type": "Question",
+      name: item.pergunta,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.contato && contato ? `${item.resposta} Para pedir, fale com a gente ${contato}.` : item.resposta,
+      },
+    })),
+  };
+}
 
 /** Os preços e a economia do anual saem de lib/assinatura.ts; os itens, de itens-dos-planos.ts. */
-const PLANOS_DA_VITRINE = [
+const planosDaVitrine = () => [
   {
     nome: NOME_DA_FAMILIA.simples,
     resumo: "Para organizar a agenda, cobrar e ver o dinheiro do mês.",
@@ -243,12 +289,26 @@ function TituloDaSecao({ id, children }: { id: string; children: React.ReactNode
   );
 }
 
+/** A marca de "só no plano Completo", igual nos problemas e nas funções. */
+function EtiquetaCompleto() {
+  return (
+    <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave">
+      Completo
+    </span>
+  );
+}
+
 /** As perguntas frequentes, sem as que falam de recurso desligado neste servidor. */
 function perguntasLigadas() {
-  return PERGUNTAS.filter((item) => !item.precisa || recursoLigado(item.precisa));
+  return PERGUNTAS.filter((item) => !item.precisa || recursoLigado(item.precisa)).map((item) => ({
+    ...item,
+    resposta: typeof item.resposta === "function" ? item.resposta() : item.resposta,
+  }));
 }
 
 export default function PaginaInicial() {
+  const temContato = canaisDeContato().length > 0;
+
   return (
     <div className="min-h-screen">
       <script
@@ -257,7 +317,7 @@ export default function PaginaInicial() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(perguntasParaOGoogle) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(perguntasParaOGoogle()) }}
       />
 
       <CabecalhoDoSite />
@@ -303,12 +363,15 @@ export default function PaginaInicial() {
           <div className="mx-auto max-w-5xl px-4 py-16 sm:px-5 md:py-24">
             <TituloDaSecao id="o-que-muda">O que muda no seu dia</TituloDaSecao>
             <ul className="mt-10 divide-y divide-areia-escura/70 border-y border-areia-escura/70">
-              {PROBLEMAS.filter((item) => !item.precisa || recursoLigado(item.precisa)).map((item) => (
+              {PROBLEMAS.filter((item) => !item.recurso || recursoLigado(item.recurso)).map((item) => (
                 <li
                   key={item.problema}
                   className="grid gap-1 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:gap-8"
                 >
-                  <p className="font-semibold text-carvao">{item.problema}</p>
+                  <p className="font-semibold text-carvao">
+                    {item.problema}
+                    {item.recurso && soNoCompleto(item.recurso) ? <EtiquetaCompleto /> : null}
+                  </p>
                   <p className="flex gap-2.5 leading-relaxed text-carvao-suave">
                     <span aria-hidden className="text-terracota">
                       →
@@ -329,7 +392,7 @@ export default function PaginaInicial() {
             equipe vira despesa, a conta paga sai do caixa.
           </p>
           <ul className="mt-10 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-            {FUNCOES.filter((funcao) => !funcao.precisa || recursoLigado(funcao.precisa)).map((funcao) => (
+            {funcoes().map((funcao) => (
               <li key={funcao.titulo} className="flex gap-4">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-areia text-terracota">
                   <Icone nome={funcao.icone} className="h-5 w-5" />
@@ -337,11 +400,7 @@ export default function PaginaInicial() {
                 <div>
                   <h3 className="font-display font-semibold text-carvao">
                     {funcao.titulo}
-                    {funcao.completo ? (
-                      <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave">
-                        Completo
-                      </span>
-                    ) : null}
+                    {funcao.completo ? <EtiquetaCompleto /> : null}
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{funcao.texto}</p>
                 </div>
@@ -385,7 +444,7 @@ export default function PaginaInicial() {
           </p>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {PLANOS_DA_VITRINE.map((plano) => (
+            {planosDaVitrine().map((plano) => (
               <div
                 key={plano.nome}
                 className={`cartao flex flex-col ${
@@ -475,6 +534,12 @@ export default function PaginaInicial() {
                   </summary>
                   <p className="pb-4 leading-relaxed text-carvao-suave">
                     {item.resposta}
+                    {item.contato && temContato ? (
+                      <>
+                        {" "}
+                        Para pedir, fale com a gente: <LinksDeContato className="[&_a]:whitespace-nowrap" />.
+                      </>
+                    ) : null}
                     {item.link ? (
                       <>
                         {" "}
@@ -505,7 +570,7 @@ export default function PaginaInicial() {
             </p>
             <Link
               href="/criar-conta"
-              className="mt-7 inline-flex min-h-11 items-center rounded-xl bg-superficie px-8 py-3.5 text-base font-semibold text-carvao transition hover:bg-areia"
+              className="mt-7 inline-flex min-h-11 items-center rounded-xl bg-inverso-texto px-8 py-3.5 text-base font-semibold text-inverso transition hover:bg-inverso-texto/90 motion-reduce:transition-none"
             >
               Conhecer o sistema
             </Link>

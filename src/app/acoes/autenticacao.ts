@@ -1,13 +1,29 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { criarSessao, encerrarSessao } from "@/lib/sessao";
 import { apenasDigitos, documentoValido } from "@/lib/formato";
+import { problemaDaSenha } from "@/lib/senha";
+import { telefoneBrasileiroValido } from "@/lib/telefone";
+import { ipDoPedido } from "@/lib/ip";
+import { embaralhar } from "@/lib/agendamento-online/embaralhar";
+import {
+  esquecerErradasDoEmail,
+  reservarTentativa,
+  situacaoDaEntrada,
+  tempoDeEspera,
+} from "@/lib/limite-de-entrada";
 import { PAPEL_DA_DEMONSTRACAO, ehContaDeExemplo, emailReservado } from "@/lib/demonstracao/conta";
 
-export type EstadoFormulario = { erro?: string } | null;
+/**
+ * O que a ação devolve para a tela. Em caso de erro, `campos` traz de volta o
+ * que a pessoa digitou (nunca a senha): o React limpa o formulário quando a
+ * ação termina, e os campos voltam preenchidos por `defaultValue`.
+ */
+export type EstadoFormulario = { erro?: string; campos?: Record<string, string> } | null;
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -33,29 +49,28 @@ export async function criarConta(
   const senha = texto(dados, "senha");
   const indicadoPor = texto(dados, "indicadoPor").toLowerCase().slice(0, 40);
 
+  // Tudo o que a pessoa digitou, menos a senha, para voltar ao formulário.
+  const campos = { nome, nomeNegocio, email, telefone, documento, cep, endereco };
+  const recusar = (erro: string): EstadoFormulario => ({ erro, campos });
+
   if (!nome || !nomeNegocio || !email || !telefone || !documento || !senha) {
-    return { erro: "Ainda falta preencher algum campo. Pode conferir, por favor?" };
+    return recusar("Ainda falta preencher algum campo. Pode conferir, por favor?");
   }
   if (!EMAIL_VALIDO.test(email)) {
-    return { erro: "Esse e-mail parece incompleto. Pode escrevê-lo novamente?" };
+    return recusar("Esse e-mail parece incompleto. Pode escrevê-lo novamente?");
   }
-  if (apenasDigitos(telefone).length < 10) {
-    return { erro: "O WhatsApp precisa ter DDD e número, como (66) 99251-3501." };
+  if (!telefoneBrasileiroValido(telefone)) {
+    return recusar("Esse WhatsApp não parece um número que existe. Confira o DDD e o número, como (66) 99251-3501.");
   }
   if (!documentoValido(documento)) {
-    return {
-      erro: "Esse CPF ou CNPJ não confere. Pode checar os números?",
-    };
+    return recusar("Esse CPF ou CNPJ não confere. Pode checar os números?");
   }
-  if (senha.length < 8) {
-    return { erro: "Para ficar seguro, a senha precisa de pelo menos 8 caracteres." };
-  }
+  const problema = problemaDaSenha(senha, { email, nome });
+  if (problema) return recusar(problema);
 
   const jaExiste = await prisma.usuario.findUnique({ where: { email } });
   if (jaExiste || emailReservado(email)) {
-    return {
-      erro: "Já existe uma conta com esse e-mail. Que tal entrar em vez de criar outra?",
-    };
+    return recusar("Já existe uma conta com esse e-mail. Que tal entrar em vez de criar outra?");
   }
 
   // A primeira conta criada é a da administração, que confere os Pix recebidos.
@@ -104,15 +119,41 @@ export async function criarConta(
   redirect("/painel");
 }
 
+/** O e-mail e o IP de quem tenta entrar, embaralhados: a tabela nunca guarda os dois em texto. */
+async function chavesDaEntrada(email: string) {
+  return {
+    emailHash: embaralhar("email", email),
+    ipHash: embaralhar("ip", `entrar:${ipDoPedido(await headers())}`),
+  };
+}
+
+const ESQUECI = "Se não lembrar a senha, use “Esqueci minha senha”, logo abaixo.";
+
 export async function entrar(
   _anterior: EstadoFormulario,
   dados: FormData,
 ): Promise<EstadoFormulario> {
   const email = texto(dados, "email").toLowerCase();
   const senha = texto(dados, "senha");
+  const campos = { email };
 
   if (!email || !senha) {
-    return { erro: "Preencha o e-mail e a senha para continuar." };
+    return { erro: "Preencha o e-mail e a senha para continuar.", campos };
+  }
+
+  /*
+    O freio vem antes da senha: durante a espera, nem a senha certa entra.
+    Vale também para e-mail sem conta, para a resposta não contar quem tem
+    conta aqui.
+  */
+  const chaves = await chavesDaEntrada(email);
+  // Já conta como errada até a senha conferir: assim pedidos em paralelo não furam o freio.
+  const antes = await reservarTentativa(prisma, chaves, new Date());
+  if (!antes.liberado) {
+    return {
+      erro: `Muitas tentativas com a senha errada. Por segurança, espere ${tempoDeEspera(antes.liberaEm, new Date())} e tente de novo. ${ESQUECI}`,
+      campos,
+    };
   }
 
   const encontrado = await prisma.usuario.findUnique({ where: { email } });
@@ -123,13 +164,26 @@ export async function entrar(
     : await bcrypt.compare(senha, HASH_FALSO);
 
   if (!usuario || !confere) {
-    return { erro: "E-mail ou senha não batem. Tenta de novo com calma?" };
+    const agora = new Date();
+    const depois = await situacaoDaEntrada(prisma, chaves, agora);
+    if (!depois.liberado) {
+      return {
+        erro: `E-mail ou senha não batem. Por segurança, a próxima tentativa fica liberada daqui a ${tempoDeEspera(depois.liberaEm, agora)}. ${ESQUECI}`,
+        campos,
+      };
+    }
+    return { erro: "E-mail ou senha não batem. Tenta de novo com calma?", campos };
   }
 
+  await esquecerErradasDoEmail(prisma, chaves.emailHash);
   await criarSessao(usuario.id, usuario.sessaoVersao);
   redirect("/painel");
 }
 
+/**
+ * Sair encerra a sessão no servidor, não só apaga o cookie deste aparelho:
+ * uma cópia do cookie deixa de valer na mesma hora (ver lib/sessao.ts).
+ */
 export async function sair() {
   await encerrarSessao();
   redirect("/");

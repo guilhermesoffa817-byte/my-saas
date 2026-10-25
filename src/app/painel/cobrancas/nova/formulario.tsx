@@ -61,7 +61,11 @@ export function FormularioDeCobranca({
         rotulo="Valor"
         inputMode="decimal"
         defaultValue={valorSugerido}
-        dica="Veio do preço do serviço. Pode mudar se cobrou outro valor."
+        dica={
+          agendamentoId
+            ? "Veio do preço do atendimento. Pode mudar se combinou outro valor: quando o cliente pagar, é este valor que conta nas Finanças."
+            : "Quando o cliente pagar, este valor entra nas Finanças."
+        }
       />
 
       <Campo

@@ -75,8 +75,11 @@ describe("frases", () => {
     expect(resumoDaSugestao({ porRegra: 2, porIa: 1, semIa: 0, motivoSemIa: null })).toBe(
       "2 despesas classificadas por regra e 1 sugestão da IA.",
     );
-    expect(resumoDaSugestao({ porRegra: 1, porIa: 0, semIa: 3, motivoSemIa: "nao_configurada" })).toMatch(
-      /^1 despesa classificada por regra\. 3 despesas ficaram sem classificação: a IA não está ligada/,
+    const semIa = resumoDaSugestao({ porRegra: 1, porIa: 0, semIa: 3, motivoSemIa: "nao_configurada" });
+    // Com a IA desligada, a frase não pode falar de IA.
+    expect(semIa).not.toMatch(/\bIA\b|intelig/i);
+    expect(semIa).toMatch(
+      /^1 despesa classificada por regra\. 3 despesas ficaram sem classificação: as regras automáticas não reconheceram/,
     );
     expect(resumoDaSugestao({ porRegra: 0, porIa: 0, semIa: 1, motivoSemIa: "franquia" })).toBe(
       "1 despesa ficou sem classificação: a franquia de IA do mês acabou.",
