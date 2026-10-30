@@ -32,14 +32,15 @@ export function CabecalhoDoSite() {
           Entrar
         </Link>
         {/*
-          Não existe teste grátis: quem cria a conta conhece o sistema numa
-          demonstração. No celular estreito o texto encolhe para caber numa
-          linha só, ao lado de "Entrar".
+          Não existe teste grátis: a pessoa conhece o sistema num estúdio de
+          exemplo, sem cadastro. <a>, e não <Link>: a rota grava o cookie da
+          visita e não pode ser pré-carregada. No celular estreito o texto
+          encolhe para caber numa linha só, ao lado de "Entrar".
         */}
-        <Link href="/criar-conta" className="botao px-3.5 whitespace-nowrap sm:px-6">
+        <a href="/demonstracao" className="botao px-3.5 whitespace-nowrap sm:px-6">
           <span className="sm:hidden">Ver o sistema</span>
           <span className="hidden sm:inline">Conhecer o sistema</span>
-        </Link>
+        </a>
       </nav>
     </header>
   );

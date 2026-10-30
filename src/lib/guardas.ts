@@ -6,8 +6,13 @@ import { prisma } from "@/lib/prisma";
 import { usuarioAtual, type UsuarioLogado } from "@/lib/sessao";
 import { avaliarAssinatura, type SituacaoAssinatura } from "@/lib/assinatura";
 import { podeUsar, recursoLigado, type Recurso } from "@/lib/recursos";
-import { DESTINO_DA_DEMONSTRACAO, ehContaDeExemplo } from "@/lib/demonstracao/conta";
+import {
+  DESTINO_DA_DEMONSTRACAO,
+  DESTINO_DO_VISITANTE,
+  ehContaDeExemplo,
+} from "@/lib/demonstracao/conta";
 import { estudioDeExemplo } from "@/lib/demonstracao/estudio";
+import { ehVisitante } from "@/lib/demonstracao/visita";
 import { dataCurta } from "@/lib/formato";
 
 /*
@@ -23,6 +28,11 @@ import { dataCurta } from "@/lib/formato";
     demonstração, mandam para a assinatura. E SEMPRE devolvem a conta da sessão,
     nunca a de exemplo: o estúdio de exemplo é compartilhado por todo mundo e
     nenhum visitante pode mudar nada nele.
+
+  O VISITANTE (quem abriu o exemplo pela página de vendas, sem criar conta,
+  ver lib/demonstracao/visita.ts) não tem conta nenhuma. As portas de leitura
+  mostram a ele o estúdio de exemplo; as de escrita não acham conta da sessão e
+  mandam criar a conta.
 
   Um teste (src/testes/guardas-das-acoes.teste.ts) varre os arquivos "use
   server" e as rotas de API e falha se algum usar uma porta de leitura.
@@ -70,10 +80,41 @@ export async function estudioDaDemonstracao() {
   return estudioDoPedido();
 }
 
+/** A situação de quem olha o exemplo sem conta: a mesma de uma conta nova. */
+function situacaoDoVisitante(): SituacaoAssinatura {
+  return avaliarAssinatura({ status: "demonstracao", validaAte: new Date() });
+}
+
+/**
+ * A conta da sessão. Sem conta: o visitante do exemplo vai criar a dele, e
+ * quem não é visitante vai entrar.
+ */
 export async function exigirUsuario(): Promise<UsuarioLogado> {
   const usuario = await usuarioAtual();
-  if (!usuario) redirect("/entrar");
-  return usuario;
+  if (usuario) return usuario;
+  if (await ehVisitante()) redirect(DESTINO_DO_VISITANTE);
+  redirect("/entrar");
+}
+
+export type Painel = {
+  /** A conta da sessão, ou o estúdio de exemplo para o visitante sem conta. */
+  usuario: UsuarioLogado;
+  situacao: SituacaoAssinatura;
+  /** Quem olha o exemplo sem ter conta. */
+  visitante: boolean;
+};
+
+/**
+ * Para o contorno do painel e as telas que mostram a conta (Mais): aceita a
+ * conta da sessão ou o visitante sem cadastro.
+ */
+export async function exigirPainel(): Promise<Painel> {
+  const conta = await usuarioAtual();
+  if (conta) return { usuario: conta, situacao: await situacaoDoUsuario(conta), visitante: false };
+  if (await ehVisitante()) {
+    return { usuario: await estudioDoPedido(), situacao: situacaoDoVisitante(), visitante: true };
+  }
+  redirect("/entrar");
 }
 
 /**
@@ -117,7 +158,14 @@ export async function situacaoDoUsuario(
 
 /** Porta das telas do painel. Na demonstração, os dados são do estúdio de exemplo. */
 export async function exigirLeitura(): Promise<Leitura> {
-  const conta = await exigirUsuario();
+  const conta = await usuarioAtual();
+  if (!conta) {
+    // O visitante sem conta só olha o exemplo.
+    if (await ehVisitante()) {
+      return { usuario: await estudioDoPedido(), situacao: situacaoDoVisitante(), demonstracao: true };
+    }
+    redirect("/entrar");
+  }
   const situacao = await situacaoDoUsuario(conta);
 
   if (situacao.demonstracao) {
@@ -199,6 +247,14 @@ export async function exigirEscritaNaApi(
   });
 
   const usuario = await usuarioAtual();
+  if (!usuario && (await ehVisitante())) {
+    return recusar(
+      403,
+      "Para fazer isso com os seus clientes, crie a sua conta.",
+      "demonstracao",
+      DESTINO_DO_VISITANTE,
+    );
+  }
   if (!usuario || ehContaDeExemplo(usuario)) {
     return recusar(401, "Entre na sua conta para continuar.", "sessao", "/entrar");
   }

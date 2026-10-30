@@ -86,7 +86,7 @@ describe("cabeçalho do site", () => {
     (pagina) => {
       const cabecalho = /<header[\s\S]*?<\/header>/.exec(html(pagina))![0];
       expect(cabecalho).not.toMatch(/gr[áa]tis/i);
-      const botao = /<a class="([^"]*)" href="\/criar-conta">(.*?)<\/a>/.exec(cabecalho);
+      const botao = /<a href="\/demonstracao" class="([^"]*)">(.*?)<\/a>/.exec(cabecalho);
       expect(botao).not.toBeNull();
       expect(botao![1]).toContain("whitespace-nowrap");
       expect(botao![2]).toContain("Conhecer o sistema");

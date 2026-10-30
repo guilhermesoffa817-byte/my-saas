@@ -7,6 +7,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { prisma } from "@/lib/prisma";
 import type { PrismaClient } from "@/generated/prisma";
 import { ehContaDeExemplo } from "@/lib/demonstracao/conta";
+import { fecharVisita } from "@/lib/demonstracao/visita";
 
 const NOME_COOKIE = "sessao_estudio";
 const DURACAO_DIAS = 30;
@@ -61,6 +62,8 @@ export async function criarSessao(usuarioId: string, versao = 0) {
     path: "/",
     maxAge: DURACAO_DIAS * 24 * 60 * 60,
   });
+  // Quem entrou na própria conta deixa de ser visitante do exemplo.
+  await fecharVisita();
 }
 
 /**

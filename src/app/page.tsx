@@ -132,8 +132,8 @@ const funcoes = () => [
 
 const PASSOS = [
   {
-    titulo: "Crie a conta e conheça",
-    texto: "Leva um minuto. Você entra num estúdio de exemplo, com todas as funções funcionando.",
+    titulo: "Veja o sistema por dentro",
+    texto: "Sem cadastro: abra um estúdio de exemplo, com todas as funções funcionando. Gostou? Crie a sua conta em um minuto.",
   },
   {
     titulo: "Escolha o plano e pague por Pix",
@@ -174,7 +174,7 @@ const PERGUNTAS: Pergunta[] = [
   {
     pergunta: "Posso ver o sistema antes de pagar?",
     resposta:
-      "Pode. Ao criar a conta você entra num estúdio de exemplo, com agenda, cobranças, finanças e equipe preenchidos, e navega por tudo. Para usar com os seus clientes, é só escolher um plano e pagar por Pix.",
+      "Pode, e sem se cadastrar. Toque em “Conhecer o sistema” e você entra num estúdio de exemplo, com agenda, cobranças, finanças e equipe preenchidos, e navega por tudo. Gostou? Crie a sua conta, escolha um plano e pague por Pix.",
   },
   {
     pergunta: "E se eu me arrepender depois de pagar?",
@@ -337,15 +337,16 @@ export default function PaginaInicial() {
               navegador, sem instalar nada.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Link href="/criar-conta" className="botao px-8 py-3.5 text-base">
+              {/* <a>, e não <Link>: a rota grava o cookie da visita e não pode ser pré-carregada. */}
+              <a href="/demonstracao" className="botao px-8 py-3.5 text-base">
                 Conhecer o sistema
-              </Link>
-              <Link href="#planos" className="botao-suave px-6 py-3 text-base">
-                Ver planos
+              </a>
+              <Link href="/criar-conta" className="botao-suave px-6 py-3 text-base">
+                Criar minha conta
               </Link>
             </div>
             <p className="mt-3 text-sm text-carvao-suave">
-              Veja tudo funcionando antes de assinar. {DIAS_PARA_DESISTIR} dias para desistir, com o
+              Sem cadastro: veja tudo funcionando antes de assinar. {DIAS_PARA_DESISTIR} dias para desistir, com o
               seu dinheiro de volta.
             </p>
           </div>
@@ -496,12 +497,12 @@ export default function PaginaInicial() {
                   ))}
                 </ul>
 
-                <Link
-                  href="/criar-conta"
+                <a
+                  href="/demonstracao"
                   className={`mt-7 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
                 >
                   Conhecer o sistema
-                </Link>
+                </a>
               </div>
             ))}
           </div>
@@ -565,15 +566,15 @@ export default function PaginaInicial() {
               Comece hoje. Leva um minuto.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-inverso-texto/80">
-              Veja tudo funcionando num estúdio de exemplo e assine quando fizer sentido. Se mudar
-              de ideia em {DIAS_PARA_DESISTIR} dias, devolvemos o seu dinheiro.
+              Veja tudo funcionando num estúdio de exemplo, sem cadastro, e assine quando fizer
+              sentido. Se mudar de ideia em {DIAS_PARA_DESISTIR} dias, devolvemos o seu dinheiro.
             </p>
-            <Link
-              href="/criar-conta"
+            <a
+              href="/demonstracao"
               className="mt-7 inline-flex min-h-11 items-center rounded-xl bg-inverso-texto px-8 py-3.5 text-base font-semibold text-inverso transition hover:bg-inverso-texto/90 motion-reduce:transition-none"
             >
               Conhecer o sistema
-            </Link>
+            </a>
           </div>
         </section>
       </main>

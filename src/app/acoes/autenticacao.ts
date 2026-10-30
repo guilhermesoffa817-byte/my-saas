@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { criarSessao, encerrarSessao } from "@/lib/sessao";
+import { fecharVisita } from "@/lib/demonstracao/visita";
 import { apenasDigitos, documentoValido } from "@/lib/formato";
 import { problemaDaSenha } from "@/lib/senha";
 import { telefoneBrasileiroValido } from "@/lib/telefone";
@@ -186,5 +187,12 @@ export async function entrar(
  */
 export async function sair() {
   await encerrarSessao();
+  await fecharVisita();
+  redirect("/");
+}
+
+/** O visitante sem conta fecha o estúdio de exemplo e volta para a página de vendas. */
+export async function sairDaVisita() {
+  await fecharVisita();
   redirect("/");
 }
