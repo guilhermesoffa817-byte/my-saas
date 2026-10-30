@@ -298,6 +298,15 @@ describe("página de vendas", () => {
     expect(linhaDoProblema("Cliente que esquece de pagar")).not.toContain("Completo");
   });
 
+  it("todo \"Conhecer o sistema\" abre o exemplo sem cadastro, e criar a conta continua à mão", () => {
+    const pagina = html("inicial");
+    const chamadas = [...pagina.matchAll(/<a [^>]*href="([^"]*)"[^>]*>(?:(?!<\/a>)[\s\S])*Conhecer o sistema/g)];
+    expect(chamadas.length).toBeGreaterThanOrEqual(3);
+    for (const [, destino] of chamadas) expect(destino).toBe("/demonstracao");
+    expect(pagina).toContain('href="/criar-conta"');
+    expect(pagina).toMatch(/sem cadastro/i);
+  });
+
   it("só a página inicial declara o endereço canônico /", () => {
     expect(metadadosDaInicial.alternates?.canonical).toBe("/");
   });
