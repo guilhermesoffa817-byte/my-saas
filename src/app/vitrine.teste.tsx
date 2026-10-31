@@ -86,7 +86,7 @@ describe("cabeçalho do site", () => {
     (pagina) => {
       const cabecalho = /<header[\s\S]*?<\/header>/.exec(html(pagina))![0];
       expect(cabecalho).not.toMatch(/gr[áa]tis/i);
-      const botao = /<a class="([^"]*)" href="\/criar-conta">(.*?)<\/a>/.exec(cabecalho);
+      const botao = /<a href="\/demonstracao" class="([^"]*)">(.*?)<\/a>/.exec(cabecalho);
       expect(botao).not.toBeNull();
       expect(botao![1]).toContain("whitespace-nowrap");
       expect(botao![2]).toContain("Conhecer o sistema");
@@ -296,6 +296,15 @@ describe("página de vendas", () => {
     expect(linha).not.toContain("Completo");
     expect(linha).not.toMatch(/custos/i);
     expect(linhaDoProblema("Cliente que esquece de pagar")).not.toContain("Completo");
+  });
+
+  it("todo \"Conhecer o sistema\" abre o exemplo sem cadastro, e criar a conta continua à mão", () => {
+    const pagina = html("inicial");
+    const chamadas = [...pagina.matchAll(/<a [^>]*href="([^"]*)"[^>]*>(?:(?!<\/a>)[\s\S])*Conhecer o sistema/g)];
+    expect(chamadas.length).toBeGreaterThanOrEqual(3);
+    for (const [, destino] of chamadas) expect(destino).toBe("/demonstracao");
+    expect(pagina).toContain('href="/criar-conta"');
+    expect(pagina).toMatch(/sem cadastro/i);
   });
 
   it("só a página inicial declara o endereço canônico /", () => {

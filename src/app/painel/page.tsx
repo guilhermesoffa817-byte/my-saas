@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { exigirLeitura, exigirUsuario } from "@/lib/guardas";
+import { exigirLeitura } from "@/lib/guardas";
+import { usuarioAtual } from "@/lib/sessao";
 import { chamadaDeHoje } from "@/lib/agenda-do-dia";
 import { podeUsar } from "@/lib/recursos";
 import { agoraDoPedido } from "@/lib/agora";
@@ -69,9 +70,10 @@ export default async function PaginaPainel() {
   const { usuario, demonstracao } = await exigirLeitura();
   /*
     Na demonstração os dados são do estúdio de exemplo, mas quem lê é a dona da
-    conta: a saudação fala com ela, igual ao "Oi" do topo.
+    conta: a saudação fala com ela, igual ao "Oi" do topo. O visitante sem conta
+    não tem nome: recebe só o "Bom dia".
   */
-  const quemLe = demonstracao ? await exigirUsuario() : usuario;
+  const quemLe = demonstracao ? await usuarioAtual() : usuario;
 
   const agora = agoraDoPedido();
   const hoje = hojeNoEstudio(agora);
@@ -194,7 +196,7 @@ export default async function PaginaPainel() {
           {diaDaSemana(agora).replace(/^./, (l) => l.toUpperCase())}, {dataPorExtenso(agora)}
         </p>
         <TituloDaTela>
-          {saudacao(agora)}, {primeiroNome(quemLe.nome)}
+          {quemLe ? `${saudacao(agora)}, ${primeiroNome(quemLe.nome)}` : `${saudacao(agora)}!`}
         </TituloDaTela>
       </section>
 

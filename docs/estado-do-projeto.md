@@ -15,7 +15,9 @@ O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (s
 | Simples | `mensal` / `anual` | R$ 189/mês ou R$ 1.890/ano |
 | Completo | `vip_mensal` / `vip_anual` | R$ 329/mês ou R$ 2.569/ano |
 
-**Demonstração:** não existe teste grátis. Quem cria conta entra num estúdio de exemplo somente leitura, e qualquer escrita leva à tela de compra.
+**Demonstração:** não existe teste grátis. Dá para ver o estúdio de exemplo (somente leitura) de dois jeitos:
+- **Sem cadastro** (30/10/2026): os botões "Conhecer o sistema" da página de vendas levam a `/demonstracao`, que grava o cookie `visita_demonstracao` (`src/lib/demonstracao/visita.ts`) e abre o painel com o exemplo. Qualquer escrita leva a `/criar-conta?demonstracao=1`.
+- **Com conta criada e sem plano:** qualquer escrita leva à tela de compra.
 
 **Pagamento:** Pix manual. A cliente avisa que pagou e o admin confirma em Pagamentos (`/painel/admin`).
 

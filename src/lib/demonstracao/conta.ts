@@ -19,6 +19,9 @@ export const PAPEL_DA_DEMONSTRACAO = "demonstracao";
 /** Para onde vai quem tenta fazer alguma coisa durante a demonstração. */
 export const DESTINO_DA_DEMONSTRACAO = "/painel/assinatura?demonstracao=1";
 
+/** Para onde vai o visitante sem conta que tenta fazer alguma coisa: criar a conta. */
+export const DESTINO_DO_VISITANTE = "/criar-conta?demonstracao=1";
+
 /** Se o usuário é a conta de exemplo. Confere os dois sinais: um basta para recusar. */
 export function ehContaDeExemplo(usuario: { id?: string | null; papel?: string | null } | null | undefined) {
   if (!usuario) return false;

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
+import { exigirPainel } from "@/lib/guardas";
 import { recursosLigados, recursosLiberados } from "@/lib/recursos";
-import { sair } from "@/app/acoes/autenticacao";
+import { sair, sairDaVisita } from "@/app/acoes/autenticacao";
 import { Cartao, TituloDaTela } from "@/componentes/ui/cartao";
 import { BotaoEnviar } from "@/componentes/ui/botao";
 import { Icone } from "@/componentes/ui/icones";
@@ -15,8 +15,7 @@ export const dynamic = "force-dynamic";
  * no computador também, para que um link compartilhado nunca caia em nada.
  */
 export default async function PaginaMais() {
-  const usuario = await exigirUsuario();
-  const situacao = await situacaoDoUsuario(usuario);
+  const { usuario, situacao, visitante } = await exigirPainel();
   // Na demonstração o estúdio de exemplo tem tudo: todas as abas aparecem.
   const destinos = destinosVisiveis(SECUNDARIOS, {
     liberados: situacao.demonstracao ? recursosLigados() : recursosLiberados(usuario),
@@ -52,11 +51,25 @@ export default async function PaginaMais() {
         ))}
       </ul>
 
-      <form action={sair}>
-        <BotaoEnviar variante="suave" className="w-full">
-          Sair da minha conta
-        </BotaoEnviar>
-      </form>
+      {visitante ? (
+        /* Quem olha o exemplo sem conta: o próximo passo é criar a conta. */
+        <div className="space-y-3">
+          <Link href="/criar-conta" className="botao w-full">
+            Gostei, quero criar minha conta
+          </Link>
+          <form action={sairDaVisita}>
+            <BotaoEnviar variante="suave" className="w-full">
+              Sair do exemplo
+            </BotaoEnviar>
+          </form>
+        </div>
+      ) : (
+        <form action={sair}>
+          <BotaoEnviar variante="suave" className="w-full">
+            Sair da minha conta
+          </BotaoEnviar>
+        </form>
+      )}
     </div>
   );
 }

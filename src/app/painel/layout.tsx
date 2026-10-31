@@ -1,11 +1,11 @@
 import { Marca } from "@/componentes/marca";
 import { LinksDeContato } from "@/componentes/contato";
-import { estudioDaDemonstracao, exigirUsuario, situacaoDoUsuario } from "@/lib/guardas";
+import { estudioDaDemonstracao, exigirPainel } from "@/lib/guardas";
 import { RECADO_DA_DEMONSTRACAO } from "@/lib/assinatura";
 import { canaisDeContato } from "@/lib/contato";
 import { recursosLigados, recursosLiberados } from "@/lib/recursos";
 import { primeiroNome } from "@/lib/formato";
-import { sair } from "@/app/acoes/autenticacao";
+import { sair, sairDaVisita } from "@/app/acoes/autenticacao";
 import { BarraDeBaixo, NavegacaoLarga } from "./navegacao";
 import { LinkDaFaixa } from "./faixa";
 import { BotaoTema } from "@/componentes/tema";
@@ -17,8 +17,8 @@ export default async function LayoutPainel({
 }: {
   children: React.ReactNode;
 }) {
-  const usuario = await exigirUsuario();
-  const situacao = await situacaoDoUsuario(usuario);
+  // O visitante sem cadastro chega aqui com o estúdio de exemplo como `usuario`.
+  const { usuario, situacao, visitante } = await exigirPainel();
   // Na demonstração o estúdio de exemplo é Completo: todas as abas aparecem.
   const liberados = situacao.demonstracao ? recursosLigados() : recursosLiberados(usuario);
   /*
@@ -36,7 +36,9 @@ export default async function LayoutPainel({
       : situacao.pixNaoLocalizado
         ? "Exemplo · Pix não localizado"
         : "Você está vendo um exemplo";
-  const faixaLonga = `${RECADO_DA_DEMONSTRACAO}${
+  const faixaLonga = visitante
+    ? "Você está vendo um estúdio de exemplo, com dados inventados. Gostou? Crie a sua conta para usar com os seus clientes."
+    : `${RECADO_DA_DEMONSTRACAO}${
     situacao.status === "aguardando"
       ? " Já recebemos o aviso do seu Pix: assim que conferirmos, o painel passa a ser seu."
       : situacao.pixNaoLocalizado
@@ -56,9 +58,9 @@ export default async function LayoutPainel({
             <BotaoTema />
             {/* No celular, "Sair" mora dentro de "Mais", para a barra do topo
                 não competir com a ação principal da tela. */}
-            <form action={sair} className="hidden md:block">
+            <form action={visitante ? sairDaVisita : sair} className="hidden md:block">
               <button type="submit" className="botao-suave px-4 py-2 text-xs">
-                Sair
+                {visitante ? "Sair do exemplo" : "Sair"}
               </button>
             </form>
           </div>
@@ -82,12 +84,13 @@ export default async function LayoutPainel({
                 <span className="sm:hidden">{faixaCurta}</span>
                 <span className="hidden sm:inline">{faixaLonga}</span>
               </span>
+              {/* Quem não tem conta cria a sua; quem tem escolhe o plano. */}
               <LinkDaFaixa
-                href="/painel/assinatura"
+                href={visitante ? "/criar-conta" : "/painel/assinatura"}
                 className="shrink-0 rounded-full bg-superficie px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-terracota transition hover:opacity-90 motion-reduce:transition-none sm:px-4"
               >
-                <span className="sm:hidden">Escolher plano</span>
-                <span className="hidden sm:inline">Escolher um plano</span>
+                <span className="sm:hidden">{visitante ? "Criar conta" : "Escolher plano"}</span>
+                <span className="hidden sm:inline">{visitante ? "Criar minha conta" : "Escolher um plano"}</span>
               </LinkDaFaixa>
             </div>
           </div>

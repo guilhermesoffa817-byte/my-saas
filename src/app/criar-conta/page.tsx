@@ -16,13 +16,13 @@ export const metadata = {
 export default async function PaginaCriarConta({
   searchParams,
 }: {
-  searchParams: Promise<{ ind?: string }>;
+  searchParams: Promise<{ ind?: string; demonstracao?: string }>;
 }) {
   const usuario = await usuarioAtual();
   if (usuario) redirect("/painel");
 
   // Código de quem indicou, que veio no endereço do link.
-  const { ind } = await searchParams;
+  const { ind, demonstracao } = await searchParams;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -35,6 +35,13 @@ export default async function PaginaCriarConta({
           <h1 className="font-display text-3xl font-semibold text-carvao">
             Vamos organizar o seu estúdio
           </h1>
+          {demonstracao ? (
+            /* Veio do exemplo, depois de tentar fazer alguma coisa sem conta. */
+            <p role="status" className="mt-4 rounded-xl bg-terracota/10 px-4 py-3 text-sm text-carvao">
+              No exemplo dá para olhar tudo, mas não para mudar. Para usar com os seus clientes,
+              crie a sua conta.
+            </p>
+          ) : null}
           <p className="mt-2 text-carvao-suave">
             Assim que criar a conta, você entra num estúdio de exemplo com todas as funções
             funcionando. Para usar com os seus clientes, os planos começam em{" "}
