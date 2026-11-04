@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  CLASSIFICACOES_POR_MES_NO_COMPLETO,
-  PERGUNTAS_POR_MES_NO_COMPLETO,
+  CLASSIFICACOES_POR_MES,
+  PERGUNTAS_POR_MES,
   RECURSOS,
   limiteDeIa,
   podeUsar,
@@ -28,42 +28,47 @@ const comPlano = (plano: string, status = "ativa", validaAte = futuro) => ({
   assinatura: { plano, status, validaAte },
 });
 
-const DO_SIMPLES = ["cobrar", "financas"] as const;
-const DO_COMPLETO = [
-  "lembretes",
-  "vencimentos",
-  "documentos",
-  "relatorio",
-  "equipe",
-  "custos",
-  "assistente",
-] as const;
+const DO_NORMAL = ["cobrar", "financas"] as const;
+const DO_PRO = ["documentos", "vencimentos", "custos", "relatorio"] as const;
+const DO_VIP = ["lembretes", "equipe", "assistente"] as const;
 
 describe("liberação por plano", () => {
-  it("dá cobrança pelo WhatsApp e Finanças aos dois planos", () => {
-    for (const recurso of DO_SIMPLES) {
-      expect(podeUsar(comPlano("mensal"), recurso, AGORA)).toBe(true);
-      expect(podeUsar(comPlano("anual"), recurso, AGORA)).toBe(true);
-      expect(podeUsar(comPlano("vip_mensal"), recurso, AGORA)).toBe(true);
+  it("dá cobrança pelo WhatsApp e Finanças a todos os planos", () => {
+    for (const recurso of DO_NORMAL) {
+      for (const plano of ["mensal", "anual", "pro_mensal", "vip_mensal"]) {
+        expect(podeUsar(comPlano(plano), recurso, AGORA)).toBe(true);
+      }
       expect(podeUsar({ assinatura: null }, recurso, AGORA)).toBe(true);
     }
   });
 
-  it("guarda lembretes, contas, documentos, relatório, equipe, custos e assistente para o Completo", () => {
-    for (const recurso of DO_COMPLETO) {
+  it("leitura de contrato e recibo, contas, custos e relatório abrem do Pro para cima", () => {
+    for (const recurso of DO_PRO) {
       expect(podeUsar(comPlano("mensal"), recurso, AGORA)).toBe(false);
       expect(podeUsar(comPlano("anual"), recurso, AGORA)).toBe(false);
+      expect(podeUsar(comPlano("pro_mensal"), recurso, AGORA)).toBe(true);
+      expect(podeUsar(comPlano("pro_anual"), recurso, AGORA)).toBe(true);
+      expect(podeUsar(comPlano("vip_mensal"), recurso, AGORA)).toBe(true);
+    }
+  });
+
+  it("lembretes de cobrança, equipe e assistente são só do VIP", () => {
+    for (const recurso of DO_VIP) {
+      expect(podeUsar(comPlano("mensal"), recurso, AGORA)).toBe(false);
+      expect(podeUsar(comPlano("pro_mensal"), recurso, AGORA)).toBe(false);
+      expect(podeUsar(comPlano("pro_anual"), recurso, AGORA)).toBe(false);
       expect(podeUsar(comPlano("vip_mensal"), recurso, AGORA)).toBe(true);
       expect(podeUsar(comPlano("vip_anual"), recurso, AGORA)).toBe(true);
     }
   });
 
-  it("cobre todos os recursos da tabela nos dois grupos acima", () => {
-    expect([...DO_SIMPLES, ...DO_COMPLETO].sort()).toEqual([...RECURSOS].sort());
+  it("cobre todos os recursos da tabela nos três grupos acima", () => {
+    expect([...DO_NORMAL, ...DO_PRO, ...DO_VIP].sort()).toEqual([...RECURSOS].sort());
   });
 
-  it("fecha o Completo quando a assinatura vence ou não está ativa", () => {
+  it("fecha os planos maiores quando a assinatura vence ou não está ativa", () => {
     expect(podeUsar(comPlano("vip_mensal", "ativa", passado), "lembretes", AGORA)).toBe(false);
+    expect(podeUsar(comPlano("pro_mensal", "ativa", passado), "relatorio", AGORA)).toBe(false);
     expect(podeUsar(comPlano("vip_mensal", "teste"), "lembretes", AGORA)).toBe(false);
     expect(podeUsar(comPlano("vip_mensal", "demonstracao"), "lembretes", AGORA)).toBe(false);
     expect(podeUsar(comPlano("vip_mensal", "expirada"), "lembretes", AGORA)).toBe(false);
@@ -75,18 +80,22 @@ describe("liberação por plano", () => {
   });
 
   it("lista os recursos liberados de cada plano", () => {
-    expect(recursosLiberados(comPlano("mensal"), AGORA).sort()).toEqual([...DO_SIMPLES].sort());
+    expect(recursosLiberados(comPlano("mensal"), AGORA).sort()).toEqual([...DO_NORMAL].sort());
+    expect(recursosLiberados(comPlano("pro_anual"), AGORA).sort()).toEqual([...DO_NORMAL, ...DO_PRO].sort());
     expect(recursosLiberados(comPlano("vip_anual"), AGORA)).toEqual(RECURSOS);
   });
 });
 
 describe("franquia de IA", () => {
-  it("dá a franquia do Completo e zero para quem não tem o plano em dia", () => {
+  it("dá a franquia ao plano que libera o recurso e zero para os outros", () => {
+    expect(limiteDeIa(comPlano("pro_mensal"), "classificacao", AGORA)).toBe(CLASSIFICACOES_POR_MES);
+    expect(limiteDeIa(comPlano("pro_mensal"), "leitura", AGORA)).toBeGreaterThan(0);
+    expect(limiteDeIa(comPlano("pro_mensal"), "assistente", AGORA)).toBe(0);
     expect(limiteDeIa(comPlano("vip_mensal"), "classificacao", AGORA)).toBe(
-      CLASSIFICACOES_POR_MES_NO_COMPLETO,
+      CLASSIFICACOES_POR_MES,
     );
     expect(limiteDeIa(comPlano("vip_anual"), "assistente", AGORA)).toBe(
-      PERGUNTAS_POR_MES_NO_COMPLETO,
+      PERGUNTAS_POR_MES,
     );
     expect(limiteDeIa(comPlano("mensal"), "classificacao", AGORA)).toBe(0);
     expect(limiteDeIa(comPlano("vip_mensal", "ativa", passado), "assistente", AGORA)).toBe(0);
@@ -98,20 +107,20 @@ describe("recurso desligado no servidor não é liberado para ninguém", () => {
     vi.unstubAllEnvs();
   });
 
-  const completoEmDia = {
+  const vipEmDia = {
     assinatura: { status: "ativa", plano: "vip_mensal", validaAte: new Date(Date.now() + 86_400_000) },
   };
 
-  it("sem a chave da IA, nem quem assina o Completo vê o assistente ou os documentos", () => {
+  it("sem a chave da IA, nem quem assina o VIP vê o assistente ou os documentos", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "");
-    expect(podeUsar(completoEmDia, "assistente")).toBe(false);
-    expect(podeUsar(completoEmDia, "documentos")).toBe(false);
-    expect(podeUsar(completoEmDia, "custos")).toBe(true);
+    expect(podeUsar(vipEmDia, "assistente")).toBe(false);
+    expect(podeUsar(vipEmDia, "documentos")).toBe(false);
+    expect(podeUsar(vipEmDia, "custos")).toBe(true);
     expect(recursosLigados()).not.toContain("assistente");
   });
 
-  it("com a chave da IA, o Completo volta a ver o assistente", () => {
+  it("com a chave da IA, o VIP volta a ver o assistente", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
-    expect(podeUsar(completoEmDia, "assistente")).toBe(true);
+    expect(podeUsar(vipEmDia, "assistente")).toBe(true);
   });
 });

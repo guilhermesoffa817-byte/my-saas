@@ -6,11 +6,19 @@ import { criarConta } from "@/app/acoes/autenticacao";
 import { BotaoEnviar } from "@/componentes/botoes";
 import { Aviso } from "@/componentes/avisos";
 
-export function FormularioCriarConta({ indicadoPor }: { indicadoPor: string | null }) {
+export function FormularioCriarConta({
+  indicadoPor,
+  plano = null,
+}: {
+  indicadoPor: string | null;
+  /** O plano escolhido na página de vendas: depois da conta criada, a tela de pagamento já abre nele. */
+  plano?: string | null;
+}) {
   const [estado, acao] = useActionState(criarConta, null);
 
   return (
     <form action={acao} className="space-y-4">
+      {plano ? <input type="hidden" name="plano" value={plano} /> : null}
       {indicadoPor ? (
         <input type="hidden" name="indicadoPor" value={indicadoPor} />
       ) : null}

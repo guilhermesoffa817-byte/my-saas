@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { exigirEscritaDoRecurso } from "@/lib/guardas";
-import { LEITURAS_POR_MES_NO_COMPLETO } from "@/lib/recursos";
+import { LEITURAS_POR_MES } from "@/lib/recursos";
 import { deDataPura, hojeNoEstudio, paraCentavos } from "@/lib/formato";
 import {
   TAMANHO_MAXIMO_BYTES,
@@ -68,10 +68,10 @@ export async function pedirEnvio(entrada: {
   }
 
   const usadas = await leiturasDoMes(prisma, usuario.id);
-  if (usadas >= LEITURAS_POR_MES_NO_COMPLETO) {
+  if (usadas >= LEITURAS_POR_MES) {
     return {
       certo: false,
-      motivo: `Você já usou as ${LEITURAS_POR_MES_NO_COMPLETO} leituras deste mês. No mês que vem elas voltam.`,
+      motivo: `Você já usou as ${LEITURAS_POR_MES} leituras deste mês. No mês que vem elas voltam.`,
     };
   }
 

@@ -137,7 +137,7 @@ export async function abrirPeloCodigo(
 
   // O estúdio de exemplo nunca abre por link público, nem grava "último acesso".
   if (ehContaDeExemplo(acesso.usuario)) return { situacao: "nao_encontrado" };
-  // O link do contador é do plano Completo (recurso "relatorio") em dia.
+  // O link do contador é do plano Pro ou VIP (recurso "relatorio") em dia.
   if (!podeUsar(acesso.usuario, "relatorio", agora)) return { situacao: "indisponivel" };
 
   await db.acessoDoContador.update({

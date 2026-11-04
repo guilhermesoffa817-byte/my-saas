@@ -1222,7 +1222,7 @@ export function montarEstudioDeExemplo(agora: Date, recursos: RecursosDoExemplo)
         create: {
           status: "ativa",
           plano: "vip_anual",
-          // Completo permanente: a demonstração mostra todas as funções.
+          // VIP permanente: a demonstração mostra todas as funções.
           validaAte: new Date("2100-01-01T00:00:00.000Z"),
         },
       },

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirLeituraDoRecurso } from "@/lib/guardas";
-import { LEITURAS_POR_MES_NO_COMPLETO } from "@/lib/recursos";
+import { LEITURAS_POR_MES } from "@/lib/recursos";
 import { Cartao, Secao, TituloDaTela } from "@/componentes/ui/cartao";
 import { Vazio } from "@/componentes/ui/estados";
 import {
@@ -83,7 +83,7 @@ export default async function PaginaDocumentos() {
       {podeEnviar ? (
         <EnvioDeDocumento
           limiteMb={Math.round(TAMANHO_MAXIMO_BYTES / 1024 / 1024)}
-          restam={Math.max(0, LEITURAS_POR_MES_NO_COMPLETO - usadas)}
+          restam={Math.max(0, LEITURAS_POR_MES - usadas)}
           demonstracao={demonstracao}
         />
       ) : null}
@@ -165,7 +165,7 @@ export default async function PaginaDocumentos() {
       </Secao>
 
       <p className="text-xs leading-relaxed text-carvao-suave">
-        Leituras usadas neste mês: {usadas} de {LEITURAS_POR_MES_NO_COMPLETO}.
+        Leituras usadas neste mês: {usadas} de {LEITURAS_POR_MES}.
       </p>
     </div>
   );
