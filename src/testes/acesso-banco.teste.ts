@@ -347,7 +347,7 @@ describe.skipIf(!TEM_BANCO)("acesso com banco", () => {
       const { criarConta } = await acoes();
       await expect(
         criarConta(null, formulario({ ...cadastro, documento: "11.222.333/0001-81" })),
-      ).rejects.toMatchObject({ destino: "/painel" });
+      ).rejects.toMatchObject({ destino: "/painel?bem-vindo=conta" });
       expect(pedido.cookies.get(COOKIE)).toBeTruthy();
     });
   });
