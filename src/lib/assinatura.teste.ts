@@ -11,7 +11,7 @@ import {
   planoPorCodigo,
   planoValendo,
   receitaMensalCentavos,
-  temPlanoCompleto,
+  temPlanoAoMenos,
 } from "@/lib/assinatura";
 
 const AGORA = new Date("2026-10-16T15:00:00.000Z");
@@ -61,32 +61,45 @@ describe("quem vê a demonstração", () => {
 describe("planos e preços", () => {
   it("usa os preços novos quando o ambiente não define outros", () => {
     // O .env.teste não define preço: valem os padrões do código.
-    expect(PLANOS.mensal.valorCentavos).toBe(18900);
-    expect(PLANOS.anual.valorCentavos).toBe(189000);
-    expect(PLANOS.vip_mensal.valorCentavos).toBe(32900);
-    expect(PLANOS.vip_anual.valorCentavos).toBe(256900);
+    expect(PLANOS.mensal.valorCentavos).toBe(7900);
+    expect(PLANOS.anual.valorCentavos).toBe(79000);
+    expect(PLANOS.pro_mensal.valorCentavos).toBe(12900);
+    expect(PLANOS.pro_anual.valorCentavos).toBe(129000);
+    expect(PLANOS.vip_mensal.valorCentavos).toBe(18900);
+    expect(PLANOS.vip_anual.valorCentavos).toBe(189000);
   });
 
-  it("chama os planos de Simples e Completo, com os mesmos códigos de antes", () => {
-    expect(PLANOS.mensal.nome).toBe("Simples mensal");
-    expect(PLANOS.vip_anual.nome).toBe("Completo anual");
-    expect(planoPorCodigo("vip_mensal").completo).toBe(true);
-    expect(planoPorCodigo("anual").completo).toBe(false);
+  it("chama os planos de Normal, Pro e VIP, com os códigos antigos valendo", () => {
+    expect(PLANOS.mensal.nome).toBe("Normal mensal");
+    expect(PLANOS.pro_anual.nome).toBe("Pro anual");
+    expect(PLANOS.vip_anual.nome).toBe("VIP anual");
+    // Quem tinha o Simples (mensal/anual) está no Normal; quem tinha o Completo (vip_*) está no VIP.
+    expect(planoPorCodigo("anual").familia).toBe("normal");
+    expect(planoPorCodigo("vip_mensal").familia).toBe("vip");
+    expect(planoPorCodigo("pro_mensal").familia).toBe("pro");
     expect(planoPorCodigo("qualquer coisa").codigo).toBe("mensal");
     expect(planoPorCodigo("toString").codigo).toBe("mensal");
   });
 
   it("calcula a economia do anual em vez de prometer meses de brinde", () => {
-    expect(economiaDoAnual("simples")).toBe(18900 * 12 - 189000);
-    expect(economiaDoAnual("completo")).toBe(32900 * 12 - 256900);
-    expect(mensalDoAnual("completo")).toBe(Math.floor(256900 / 12));
+    expect(economiaDoAnual("normal")).toBe(7900 * 12 - 79000);
+    expect(economiaDoAnual("pro")).toBe(12900 * 12 - 129000);
+    expect(economiaDoAnual("vip")).toBe(18900 * 12 - 189000);
+    expect(mensalDoAnual("vip")).toBe(Math.floor(189000 / 12));
   });
 
-  it("só libera o Completo para quem pagou o Completo e está em dia", () => {
-    expect(temPlanoCompleto({ status: "ativa", plano: "vip_anual", validaAte: amanha }, AGORA)).toBe(true);
-    expect(temPlanoCompleto({ status: "ativa", plano: "anual", validaAte: amanha }, AGORA)).toBe(false);
-    expect(temPlanoCompleto({ status: "teste", plano: "vip_anual", validaAte: amanha }, AGORA)).toBe(false);
-    expect(temPlanoCompleto({ status: "ativa", plano: "vip_anual", validaAte: ontem }, AGORA)).toBe(false);
+  it("cada plano libera o seu nível e os de baixo, só pago e em dia", () => {
+    const vip = { status: "ativa", plano: "vip_anual", validaAte: amanha };
+    const pro = { status: "ativa", plano: "pro_mensal", validaAte: amanha };
+    const normal = { status: "ativa", plano: "anual", validaAte: amanha };
+    expect(temPlanoAoMenos(vip, "pro", AGORA)).toBe(true);
+    expect(temPlanoAoMenos(vip, "vip", AGORA)).toBe(true);
+    expect(temPlanoAoMenos(pro, "pro", AGORA)).toBe(true);
+    expect(temPlanoAoMenos(pro, "vip", AGORA)).toBe(false);
+    expect(temPlanoAoMenos(normal, "normal", AGORA)).toBe(true);
+    expect(temPlanoAoMenos(normal, "pro", AGORA)).toBe(false);
+    expect(temPlanoAoMenos({ ...vip, status: "teste" }, "pro", AGORA)).toBe(false);
+    expect(temPlanoAoMenos({ ...vip, validaAte: ontem }, "pro", AGORA)).toBe(false);
   });
 });
 
@@ -114,40 +127,40 @@ describe("o que um Pix confirmado faz com a assinatura", () => {
     expect(resultado.validaAte).toEqual(daqui(33));
   });
 
-  it("subir do Simples para o Completo: o saldo do Simples vira dias de Completo pelo preço do dia", () => {
-    // 30 dias de Simples mensal = R$ 189,00 de crédito. O Completo mensal custa
-    // R$ 329,00 / 30 = R$ 10,966... por dia: o crédito compra 17 dias (para baixo).
+  it("subir do Normal para o VIP: o saldo do Normal vira dias de VIP pelo preço do dia", () => {
+    // 30 dias de Normal mensal = R$ 79,00 de crédito. O VIP mensal custa
+    // R$ 189,00 / 30 = R$ 6,30 por dia: o crédito compra 12 dias (12,5 para baixo).
     const resultado = aplicarPagamento(ativa("mensal", 30), "vip_mensal", AGORA);
     expect(resultado.plano).toBe("vip_mensal");
-    expect(resultado.conversao).toEqual({ de: "mensal", creditoCentavos: 18900, diasExtras: 17 });
-    expect(resultado.validaAte).toEqual(daqui(30 + 17));
+    expect(resultado.conversao).toEqual({ de: "mensal", creditoCentavos: 7900, diasExtras: 12 });
+    expect(resultado.validaAte).toEqual(daqui(30 + 12));
   });
 
-  it("subir não dá mais Completo do que foi pago (antes: R$ 189 + R$ 329 = 60 dias de Completo)", () => {
+  it("subir não dá mais VIP do que foi pago", () => {
     const resultado = aplicarPagamento(ativa("mensal", 30), "vip_mensal", AGORA);
     const dias = (resultado.validaAte.getTime() - AGORA.getTime()) / DIA;
     expect(dias).toBeLessThan(60);
-    // O valor do que ela recebe não passa do que ela pagou: 47 dias × R$ 329/30 ≤ R$ 518.
-    expect(Math.floor((dias * PLANOS.vip_mensal.valorCentavos) / 30)).toBeLessThanOrEqual(18900 + 32900);
+    // O valor do que ela recebe não passa do que ela pagou: 42 dias × R$ 189/30 ≤ R$ 268.
+    expect(Math.floor((dias * PLANOS.vip_mensal.valorCentavos) / 30)).toBeLessThanOrEqual(7900 + 18900);
   });
 
-  it("descer do Completo anual para o Simples mensal: o saldo do Completo vira dias de Simples", () => {
-    // 365 dias de Completo anual = R$ 2.569,00 de crédito; o Simples mensal custa
-    // R$ 6,30 por dia: 407 dias a mais (407,7 para baixo), além dos 30 pagos.
+  it("descer do VIP anual para o Normal mensal: o saldo do VIP vira dias de Normal", () => {
+    // 365 dias de VIP anual = R$ 1.890,00 de crédito; o Normal mensal custa
+    // R$ 2,633... por dia: 717 dias a mais (717,7 para baixo), além dos 30 pagos.
     const resultado = aplicarPagamento(ativa("vip_anual", 365), "mensal", AGORA);
     expect(resultado.plano).toBe("mensal");
-    expect(resultado.conversao).toEqual({ de: "vip_anual", creditoCentavos: 256900, diasExtras: 407 });
-    expect(resultado.validaAte).toEqual(daqui(30 + 407));
+    expect(resultado.conversao).toEqual({ de: "vip_anual", creditoCentavos: 189000, diasExtras: 717 });
+    expect(resultado.validaAte).toEqual(daqui(30 + 717));
   });
 
   it("conta o tempo que falta com as horas, sem dar o dia quebrado de presente", () => {
-    // Faltam 10 dias e 12 horas de Simples mensal: R$ 6,30 × 10,5 = R$ 66,15.
+    // Faltam 10 dias e 12 horas de Normal mensal: R$ 79/30 × 10,5 = R$ 27,65.
     const atual = { status: "ativa", plano: "mensal", validaAte: new Date(AGORA.getTime() + 10.5 * DIA) };
     const resultado = aplicarPagamento(atual, "vip_mensal", AGORA);
-    expect(resultado.conversao?.creditoCentavos).toBe(6615);
-    // 6615 ÷ (32900 ÷ 30) = 6,03 dias: 6.
-    expect(resultado.conversao?.diasExtras).toBe(6);
-    expect(resultado.validaAte).toEqual(daqui(36));
+    expect(resultado.conversao?.creditoCentavos).toBe(2765);
+    // 2765 ÷ (18900 ÷ 30) = 4,39 dias: 4.
+    expect(resultado.conversao?.diasExtras).toBe(4);
+    expect(resultado.validaAte).toEqual(daqui(34));
   });
 
   it("sem plano nenhum (demonstração, conta nova): vale a partir de agora", () => {
@@ -174,7 +187,7 @@ describe("o que um Pix confirmado faz com a assinatura", () => {
     expect(resultado.validaAte).toEqual(daqui(32));
   });
 
-  it("código desconhecido vira o Simples mensal, como em todo o resto", () => {
+  it("código desconhecido vira o Normal mensal, como em todo o resto", () => {
     expect(aplicarPagamento(null, "plano-que-nao-existe", AGORA).plano).toBe("mensal");
   });
 });
@@ -200,8 +213,8 @@ describe("receita por mês do admin", () => {
       { status: "demonstracao", plano: "mensal", validaAte: AGORA },
       null,
     ];
-    // 7 × 189 + 9 × 329 + 1.890 / 12 = R$ 4.441,50
-    expect(receitaMensalCentavos(assinaturas, AGORA)).toBe(444150);
+    // 7 × 79 + 9 × 189 + 790 / 12 = R$ 2.319,83
+    expect(receitaMensalCentavos(assinaturas, AGORA)).toBe(231983);
   });
 });
 

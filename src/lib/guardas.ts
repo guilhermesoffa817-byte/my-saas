@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { usuarioAtual, type UsuarioLogado } from "@/lib/sessao";
 import { avaliarAssinatura, type SituacaoAssinatura } from "@/lib/assinatura";
-import { podeUsar, recursoLigado, type Recurso } from "@/lib/recursos";
+import { etiquetaDoPlano, linkDoPlanoQueLibera, podeUsar, recursoLigado, type Recurso } from "@/lib/recursos";
 import {
   DESTINO_DA_DEMONSTRACAO,
   DESTINO_DO_VISITANTE,
@@ -180,18 +180,18 @@ export async function exigirLeitura(): Promise<Leitura> {
 /**
  * Porta das telas que dependem de plano. A regra de quem pode o quê está em
  * lib/recursos.ts; aqui só se aplica o resultado. Quem não tem o plano vai para
- * a tela de assinatura. Na demonstração tudo abre (o exemplo é Completo).
+ * a tela de assinatura, já no plano que libera. Na demonstração tudo abre (o exemplo é VIP).
  *
  * Recurso desligado neste servidor (a IA sem chave, por exemplo) é outra
  * coisa: não falta plano, falta o recurso. Quem chega por um link antigo vai
- * para o início do painel, e nunca para a oferta do Completo: quem já paga o
- * Completo não pode ouvir "compre o Completo", e a oferta não pode vender o
+ * para o início do painel, e nunca para a oferta de plano: quem já paga o
+ * VIP não pode ouvir "compre o VIP", e a oferta não pode vender o
  * que não está funcionando.
  */
 export async function exigirLeituraDoRecurso(recurso: Recurso): Promise<Leitura> {
   const leitura = await exigirLeitura();
   if (!recursoLigado(recurso)) redirect("/painel");
-  if (!podeUsar(leitura.usuario, recurso)) redirect("/painel/assinatura?completo=1");
+  if (!podeUsar(leitura.usuario, recurso)) redirect(linkDoPlanoQueLibera(recurso));
   return leitura;
 }
 
@@ -217,7 +217,7 @@ export async function exigirEscritaDoRecurso(recurso: Recurso): Promise<Escrita>
   const escrita = await exigirEscrita();
   // Como na leitura: recurso desligado não é falta de plano.
   if (!recursoLigado(recurso)) redirect("/painel");
-  if (!podeUsar(escrita.usuario, recurso)) redirect("/painel/assinatura?completo=1");
+  if (!podeUsar(escrita.usuario, recurso)) redirect(linkDoPlanoQueLibera(recurso));
   return escrita;
 }
 
@@ -276,7 +276,12 @@ export async function exigirEscritaNaApi(
     return recusar(403, "Esta parte não está disponível no momento.", "indisponivel", "/painel");
   }
   if (!podeUsar(usuario, recurso)) {
-    return recusar(403, "Isso faz parte do plano Completo.", "plano", "/painel/assinatura?completo=1");
+    return recusar(
+      403,
+      `Isso faz parte do plano ${etiquetaDoPlano(recurso) ?? "seguinte"}.`,
+      "plano",
+      linkDoPlanoQueLibera(recurso),
+    );
   }
   return { usuario };
 }

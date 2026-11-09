@@ -1,4 +1,4 @@
-import { NOME_DA_FAMILIA, PLANOS, type FamiliaDoPlano } from "@/lib/assinatura";
+import { FAMILIAS, NOME_DA_FAMILIA, planosDaFamilia, type FamiliaDoPlano } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
 import { DESCRICAO_CURTA, ENDERECO_DO_SITE, NOME_DO_PRODUTO, SEGMENTOS } from "@/lib/site";
@@ -11,10 +11,7 @@ import { DESCRICAO_CURTA, ENDERECO_DO_SITE, NOME_DO_PRODUTO, SEGMENTOS } from "@
  */
 export function textoParaIas() {
   const plano = (familia: FamiliaDoPlano) => {
-    const [mensal, anual] =
-      familia === "simples"
-        ? [PLANOS.mensal, PLANOS.anual]
-        : [PLANOS.vip_mensal, PLANOS.vip_anual];
+    const [mensal, anual] = planosDaFamilia(familia);
     return [
       `### ${NOME_DA_FAMILIA[familia]}: ${emReais(mensal.valorCentavos)} por mês ou ${emReais(anual.valorCentavos)} por ano`,
       "",
@@ -37,10 +34,7 @@ export function textoParaIas() {
     "",
     "## Planos",
     "",
-    plano("simples"),
-    "",
-    plano("completo"),
-    "",
+    ...FAMILIAS.flatMap((familia) => [plano(familia), ""]),
     "A assinatura é paga por Pix, dentro do sistema.",
     "",
     "## Como conhecer",

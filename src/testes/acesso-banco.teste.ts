@@ -350,6 +350,27 @@ describe.skipIf(!TEM_BANCO)("acesso com banco", () => {
       ).rejects.toMatchObject({ destino: "/painel" });
       expect(pedido.cookies.get(COOKIE)).toBeTruthy();
     });
+
+    it("quem escolheu o plano na página de vendas vai direto para o Pix dele", async () => {
+      const { criarConta } = await acoes();
+      // A primeira conta é a da administração, que já nasce com tudo: cria antes.
+      await expect(
+        criarConta(null, formulario({ ...cadastro, email: "admin@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "pro" })),
+      ).rejects.toMatchObject({ destino: "/painel" });
+      await expect(
+        criarConta(
+          null,
+          formulario({ ...cadastro, email: "plano.pro@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "pro" }),
+        ),
+      ).rejects.toMatchObject({ destino: "/painel/assinatura?assinar=pro" });
+      // Plano inventado é ignorado: entra no painel como sempre.
+      await expect(
+        criarConta(
+          null,
+          formulario({ ...cadastro, email: "plano.falso@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "ouro" }),
+        ),
+      ).rejects.toMatchObject({ destino: "/painel" });
+    });
   });
 
   describe("pedidos de senha nova", () => {

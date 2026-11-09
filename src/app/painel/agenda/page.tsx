@@ -42,7 +42,7 @@ export default async function PaginaAgenda({
   const segunda = inicioDaSemana(diaEscolhido);
   const fimDaSemana = somarDias(segunda, 7);
 
-  // "Quem atende" só aparece no Completo e quando há alguém na equipe nesse dia.
+  // "Quem atende" só aparece no VIP e quando há alguém na equipe nesse dia.
   const comEquipe = podeUsar(usuario, "equipe");
 
   const [clientes, servicos, daSemana, equipe] = await Promise.all([

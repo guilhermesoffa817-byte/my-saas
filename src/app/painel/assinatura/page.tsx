@@ -6,22 +6,26 @@ import { Aviso, Etiqueta } from "@/componentes/avisos";
 import { LinksDeContato } from "@/componentes/contato";
 import { canaisDeContato } from "@/lib/contato";
 import {
+  FAMILIAS,
   NOME_DA_FAMILIA,
   PIX_CHAVE,
   PIX_NOME,
   PLANOS,
   aplicarPagamento,
   economiaDoAnual,
+  familiaPorTexto,
   identificadorDoPix,
   mensalDoAnual,
   pixCopiaECola,
   planoPorCodigo,
   planoValendo,
+  planosDaFamilia,
+  NIVEL_DA_FAMILIA,
   type CodigoPlano,
   type FamiliaDoPlano,
 } from "@/lib/assinatura";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
-import { oQueOCompletoLibera } from "./completo";
+import { oQueOPlanoLibera } from "./frase-do-plano";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import {
   competenciaPorExtenso,
@@ -50,16 +54,28 @@ const rotuloPagamento = {
   repetido: "Aviso repetido",
 } as const;
 
-const FAMILIAS: FamiliaDoPlano[] = ["simples", "completo"];
-
 export default async function PaginaAssinatura({
   searchParams,
 }: {
-  searchParams: Promise<{ vip?: string; completo?: string; demonstracao?: string }>;
+  searchParams: Promise<{
+    plano?: string;
+    assinar?: string;
+    vip?: string;
+    completo?: string;
+    demonstracao?: string;
+  }>;
 }) {
   const busca = await searchParams;
-  // "vip=1" é o endereço antigo do mesmo recado: links velhos continuam funcionando.
-  const pediuCompleto = Boolean(busca.completo || busca.vip);
+  /*
+    "?plano=pro" ou "?plano=vip": veio de uma função que esse plano libera.
+    "completo=1" e "vip=1" são os endereços antigos (do tempo do plano
+    Completo, que hoje é o VIP): links velhos continuam funcionando.
+  */
+  const pediuPlano: FamiliaDoPlano | null =
+    familiaPorTexto(busca.plano) ?? (busca.completo || busca.vip ? "vip" : null);
+  // "?assinar=pro": escolheu o plano na página de vendas. Abre nele, sem o recado de função bloqueada.
+  const escolheuNaVitrine = familiaPorTexto(busca.assinar);
+  const planoPedido = pediuPlano ?? escolheuNaVitrine;
   const veioDaDemonstracao = Boolean(busca.demonstracao);
   const usuario = await exigirUsuario();
   const situacao = await situacaoDoUsuario(usuario);
@@ -87,12 +103,14 @@ export default async function PaginaAssinatura({
 
   /*
     O plano que já vem marcado é o de hoje (ou o do Pix avisado), nunca o
-    Simples mensal por padrão: quem tinha o Completo e tocava em "Já fiz o Pix"
-    sem olhar avisava o Simples. Sem plano nenhum, quem veio de uma função do
-    Completo encontra o Completo; os outros escolhem, sem nada marcado.
+    Normal mensal por padrão: quem tinha o VIP e tocava em "Já fiz o Pix" sem
+    olhar avisava o Normal. Sem plano nenhum, quem veio de uma função do Pro ou
+    do VIP encontra esse plano marcado; os outros escolhem, sem nada marcado.
   */
   const planoInicial: CodigoPlano | null =
-    planoDoPendente?.codigo ?? ultimoPlanoPago?.codigo ?? (pediuCompleto ? "vip_mensal" : null);
+    planoDoPendente?.codigo ??
+    ultimoPlanoPago?.codigo ??
+    (planoPedido ? planosDaFamilia(planoPedido)[0].codigo : null);
 
   // Sem PIX_CHAVE configurada o QR Code sairia apontando para lugar nenhum,
   // e o cliente pagaria errado. Melhor avisar do que gerar um código quebrado.
@@ -114,24 +132,20 @@ export default async function PaginaAssinatura({
   const seloDoAnual = (familia: FamiliaDoPlano) =>
     economia(familia) > 0 ? `Economize ${emReais(economia(familia))}` : null;
 
-  const sobreOPlano: Record<CodigoPlano, { selo: string | null; vantagens: string[] }> = {
-    mensal: { selo: null, vantagens: textosDoPlano("simples") },
-    anual: {
-      selo: seloDoAnual("simples"),
-      vantagens: [...doAnual("simples"), ...textosDoPlano("simples")],
-    },
-    vip_mensal: { selo: "Tudo liberado", vantagens: textosDoPlano("completo") },
-    vip_anual: {
-      selo: seloDoAnual("completo"),
-      vantagens: [...doAnual("completo"), ...textosDoPlano("completo")],
-    },
+  const sobreOPlano = (plano: (typeof PLANOS)[CodigoPlano]) => {
+    const anual = plano.dias >= 365;
+    return {
+      selo: anual ? seloDoAnual(plano.familia) : plano.familia === "vip" ? "Tudo liberado" : null,
+      vantagens: anual
+        ? [...doAnual(plano.familia), ...textosDoPlano(plano.familia)]
+        : textosDoPlano(plano.familia),
+    };
   };
 
-  // A família do plano marcado vem primeiro; quem veio de uma função do Completo vê o Completo antes.
-  const completoPrimeiro = pediuCompleto || Boolean(planoInicial && PLANOS[planoInicial].completo);
-  const ordem: CodigoPlano[] = completoPrimeiro
-    ? ["vip_mensal", "vip_anual", "mensal", "anual"]
-    : ["mensal", "anual", "vip_mensal", "vip_anual"];
+  // Sempre do mais barato ao mais completo; o plano pedido já vem marcado (planoInicial).
+  const ordem: CodigoPlano[] = FAMILIAS.flatMap((familia) =>
+    planosDaFamilia(familia).map((plano) => plano.codigo),
+  );
 
   /** O que este Pix faria se fosse confirmado hoje, pela mesma regra da confirmação do admin. */
   const previsao = (codigo: CodigoPlano) => {
@@ -167,8 +181,8 @@ export default async function PaginaAssinatura({
             periodo: plano.periodo,
             valor: emReais(plano.valorCentavos),
             dias: plano.dias,
-            selo: sobreOPlano[plano.codigo].selo,
-            vantagens: sobreOPlano[plano.codigo].vantagens,
+            selo: sobreOPlano(plano).selo,
+            vantagens: sobreOPlano(plano).vantagens,
             atual: vigente?.codigo === plano.codigo,
             previsao: previsao(plano.codigo),
             copiaECola,
@@ -178,7 +192,12 @@ export default async function PaginaAssinatura({
       )
     : [];
 
-  const fraseDoCompleto = oQueOCompletoLibera();
+  const fraseDoPlano = pediuPlano ? oQueOPlanoLibera(pediuPlano) : "";
+  // Quem já tem o plano pedido (ou um maior) nunca vê o convite.
+  const mostrarConvite =
+    pediuPlano !== null &&
+    pediuPlano !== "normal" &&
+    (!vigente || NIVEL_DA_FAMILIA[vigente.familia] < NIVEL_DA_FAMILIA[pediuPlano]);
 
   return (
     <div className="space-y-8">
@@ -195,12 +214,14 @@ export default async function PaginaAssinatura({
             seu, começando vazio, só com os seus dados.
           </p>
         </div>
-      ) : pediuCompleto && !vigente?.completo ? (
-        /* Quem já paga o Completo nunca vê este convite. A frase só cita o que está ligado. */
+      ) : mostrarConvite && pediuPlano ? (
+        /* A frase só cita o que está ligado neste servidor. */
         <div className="animar-entrada rounded-2xl border border-terracota/40 bg-terracota/10 px-5 py-4">
-          <p className="font-semibold text-carvao">Essa parte é do plano Completo</p>
-          {fraseDoCompleto ? (
-            <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{fraseDoCompleto}</p>
+          <p className="font-semibold text-carvao">
+            Essa parte é do plano {NOME_DA_FAMILIA[pediuPlano]}
+          </p>
+          {fraseDoPlano ? (
+            <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{fraseDoPlano}</p>
           ) : null}
         </div>
       ) : null}
@@ -229,13 +250,12 @@ export default async function PaginaAssinatura({
         </p>
       </section>
 
-      {/* Os dois planos lado a lado, com o mensal e o anual de cada um. */}
-      <section aria-label="Planos" className="grid gap-4 md:grid-cols-2">
+      {/* Os três planos lado a lado, com o mensal e o anual de cada um. */}
+      <section aria-label="Planos" className="grid gap-4 md:grid-cols-3">
         {FAMILIAS.map((familia) => {
-          const [mensal, anual] =
-            familia === "simples" ? [PLANOS.mensal, PLANOS.anual] : [PLANOS.vip_mensal, PLANOS.vip_anual];
+          const [mensal, anual] = planosDaFamilia(familia);
           const itens = textosDoPlano(familia);
-          const destaque = familia === "completo";
+          const destaque = familia === (planoPedido ?? "pro");
           return (
             <div
               key={familia}
@@ -247,8 +267,10 @@ export default async function PaginaAssinatura({
                 </h2>
                 {vigente?.familia === familia ? (
                   <Etiqueta tom="boa">Seu plano</Etiqueta>
-                ) : destaque ? (
+                ) : familia === "vip" ? (
                   <Etiqueta tom="espera">Tudo liberado</Etiqueta>
+                ) : destaque ? (
+                  <Etiqueta tom="espera">Recomendado</Etiqueta>
                 ) : null}
               </div>
               <p className="mt-3">

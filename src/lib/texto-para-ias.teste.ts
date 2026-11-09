@@ -6,10 +6,11 @@ afterEach(() => {
 });
 
 describe("texto para as IAs (/llms.txt)", () => {
-  it("traz os dois planos com os preços da página de vendas", () => {
+  it("traz os três planos com os preços da página de vendas", () => {
     const texto = textoParaIas();
-    expect(texto).toMatch(/### Simples: R\$\s189,00 por mês ou R\$\s1\.890,00 por ano/);
-    expect(texto).toMatch(/### Completo: R\$\s329,00 por mês ou R\$\s2\.569,00 por ano/);
+    expect(texto).toMatch(/### Normal: R\$\s79,00 por mês ou R\$\s790,00 por ano/);
+    expect(texto).toMatch(/### Pro: R\$\s129,00 por mês ou R\$\s1\.290,00 por ano/);
+    expect(texto).toMatch(/### VIP: R\$\s189,00 por mês ou R\$\s1\.890,00 por ano/);
     expect(texto).toContain("/criar-conta");
   });
 
