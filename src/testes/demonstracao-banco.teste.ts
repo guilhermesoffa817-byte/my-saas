@@ -498,7 +498,7 @@ describe.skipIf(!TEM_BANCO)("demonstração", () => {
     })) {
       cadastro.set(campo, valor);
     }
-    await expect(criarConta(null, cadastro)).rejects.toMatchObject({ destino: "/painel" });
+    await expect(criarConta(null, cadastro)).rejects.toMatchObject({ destino: "/painel?bem-vindo=conta" });
 
     const db = await banco();
     const conta = await db.usuario.findUnique({

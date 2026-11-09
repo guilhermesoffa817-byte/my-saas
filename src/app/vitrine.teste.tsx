@@ -333,7 +333,11 @@ describe("tema", () => {
     const layout = readFileSync(join(__dirname, "layout.tsx"), "utf8");
     const internos = [...layout.matchAll(/from "@\/([^"]+)"/g)].map(([, caminho]) => caminho);
     expect(internos.length).toBeGreaterThan(0);
+    // A medição é um componente desenhado no fim do <body>, não um valor usado no <head>:
+    // o problema do #418 era o texto do script do tema virar referência de arquivo.
+    const componentesDoCorpo = new Set(["componentes/medicao"]);
     for (const caminho of internos) {
+      if (componentesDoCorpo.has(caminho)) continue;
       const arquivo = [".ts", ".tsx"].map((fim) => join(raiz, caminho + fim)).find(existsSync);
       expect(arquivo, caminho).toBeDefined();
       expect(readFileSync(arquivo!, "utf8").trimStart(), caminho).not.toMatch(/^["']use client["']/);

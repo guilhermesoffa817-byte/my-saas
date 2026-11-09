@@ -19,6 +19,7 @@ import {
 } from "@/lib/limite-de-entrada";
 import { PAPEL_DA_DEMONSTRACAO, ehContaDeExemplo, emailReservado } from "@/lib/demonstracao/conta";
 import { familiaPorTexto } from "@/lib/assinatura";
+import { PARAMETRO_DO_EVENTO } from "@/lib/medicao";
 
 /**
  * O que a ação devolve para a tela. Em caso de erro, `campos` traz de volta o
@@ -121,7 +122,13 @@ export async function criarConta(
 
   await criarSessao(usuario.id, usuario.sessaoVersao);
   // Quem escolheu o plano na página de vendas vai direto para o Pix dele.
-  redirect(planoEscolhido && !primeiraConta ? `/painel/assinatura?assinar=${planoEscolhido}` : "/painel");
+  // O "bem-vindo=conta" avisa a medição dos anúncios (src/lib/medicao.ts) que uma conta nasceu.
+  const evento = `${PARAMETRO_DO_EVENTO}=conta`;
+  redirect(
+    planoEscolhido && !primeiraConta
+      ? `/painel/assinatura?assinar=${planoEscolhido}&${evento}`
+      : `/painel?${evento}`,
+  );
 }
 
 /** O e-mail e o IP de quem tenta entrar, embaralhados: a tabela nunca guarda os dois em texto. */

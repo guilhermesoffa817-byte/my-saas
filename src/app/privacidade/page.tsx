@@ -5,6 +5,7 @@ import { PaginaLegal, Secao, numerarSecoes, type ItemDoSumario } from "@/compone
 import { PAGINAS_MAXIMAS, TAMANHO_MAXIMO_BYTES } from "@/lib/arquivos";
 import { canaisDeContato, dadosDoResponsavel } from "@/lib/contato";
 import { DIAS_DE_RETENCAO } from "@/lib/ia/conversas";
+import { idsDeMedicao } from "@/lib/medicao";
 import { recursoLigado } from "@/lib/recursos";
 import { MINUTOS_DE_VALIDADE } from "@/lib/senha";
 import { NOME_DO_PRODUTO } from "@/lib/site";
@@ -43,6 +44,15 @@ export default function PaginaPrivacidade() {
   const classificacao = assistente;
   const comIa = leitura || assistente || classificacao;
   const funcoesDeIa = [leitura, classificacao, assistente].filter(Boolean).length;
+
+  // Ferramentas de medição ligadas na Netlify (src/lib/medicao.ts).
+  const medicao = idsDeMedicao();
+  const ferramentas = [
+    medicao.googleAnalytics ? "Google Analytics" : null,
+    medicao.metaPixel ? "Meta Pixel (Facebook e Instagram)" : null,
+    medicao.clarity ? "Microsoft Clarity" : null,
+  ].filter((nome): nome is string => nome !== null);
+  const comMedicao = ferramentas.length > 0;
 
   const responsavel = dadosDoResponsavel();
   const temContato = canaisDeContato().length > 0;
@@ -90,7 +100,11 @@ export default function PaginaPrivacidade() {
               Os dados dos clientes e da equipe são do estúdio que usa o {NOME_DO_PRODUTO}. Nós só
               guardamos e processamos esses dados para o sistema funcionar.
             </li>
-            <li>Não vendemos dados e não usamos cookies de propaganda.</li>
+            <li>
+              {comMedicao
+                ? "Não vendemos dados. Cookies de medição e de anúncios só com a sua permissão, e só nas páginas públicas do site."
+                : "Não vendemos dados e não usamos cookies de propaganda."}
+            </li>
             {comIa ? (
               <li>
                 A inteligência artificial só funciona nos planos Pro e VIP e só quando você usa.
@@ -278,6 +292,13 @@ export default function PaginaPrivacidade() {
               processamento fora do Brasil.
             </li>
           ) : null}
+          {comMedicao ? (
+            <li>
+              <strong>{ferramentas.join(", ").replace(/, ([^,]*)$/, " e $1")}:</strong> medição de
+              visitas e de anúncios nas páginas públicas, só com a sua permissão (veja Cookies),
+              com processamento fora do Brasil.
+            </li>
+          ) : null}
         </ul>
         <p>
           A assinatura do {NOME_DO_PRODUTO} é paga por Pix direto para a nossa chave, sem empresa de
@@ -420,8 +441,24 @@ export default function PaginaPrivacidade() {
         <p>
           O {NOME_DO_PRODUTO} usa um único cookie, necessário para manter você conectado (dura até 30
           dias ou até você sair). A escolha de tema claro ou escuro fica guardada no próprio
-          navegador. Não há cookies de propaganda nem ferramentas de rastreamento de terceiros.
+          navegador.
+          {comMedicao
+            ? null
+            : " Não há cookies de propaganda nem ferramentas de rastreamento de terceiros."}
         </p>
+        {comMedicao ? (
+          <p>
+            Nas páginas públicas (a página de vendas, o cadastro, a entrada e estas páginas legais),
+            e só se você clicar em <strong>Aceitar</strong> no aviso de cookies, usamos{" "}
+            {ferramentas.join(", ").replace(/, ([^,]*)$/, " e $1")} para saber quantas pessoas
+            visitam o site, de onde vêm e quais anúncios funcionam. Também avisamos essas
+            ferramentas quando alguém cria uma conta ou abre a demonstração, sem nome, e-mail ou
+            telefone. O painel do estúdio, o link de agendamento dos clientes e a página do
+            contador nunca são medidos. Para mudar a sua escolha, limpe os dados deste site no
+            navegador e o aviso aparece de novo.
+            {/* REVISAR COM ADVOGADO: base legal (consentimento) e transferência internacional para Google, Meta e Microsoft. */}
+          </p>
+        ) : null}
       </Secao>
 
       {temSecaoDeContato ? (
