@@ -1,6 +1,6 @@
 # Estado do projeto Bossa
 
-Atualizado em 23/10/2026. Quem retomar o trabalho deve começar por aqui.
+Atualizado em 11/11/2026. Quem retomar o trabalho deve começar por aqui.
 
 ## O produto
 O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (salão, unhas, estética, barbearia, sobrancelha...).
@@ -8,12 +8,18 @@ O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (s
 - Login próprio por cookie (`sessao_estudio`, jose). Cada conta é um estúdio, separado por `usuarioId`.
 - Tailwind v4 com tokens em `src/app/globals.css` (azul `#1d4ed8` no token `terracota`).
 
-**Planos** (`src/lib/assinatura.ts`; os preços podem ser trocados por variáveis de ambiente):
+**Planos** (`src/lib/assinatura.ts`; desde 04/11/2026 são três, e os preços podem ser trocados pelas variáveis `PLANO_*_CENTAVOS` na Netlify; as variáveis antigas `ASSINATURA_*` não valem mais):
 
-| Plano | Códigos | Preço |
-|---|---|---|
-| Simples | `mensal` / `anual` | R$ 189/mês ou R$ 1.890/ano |
-| Completo | `vip_mensal` / `vip_anual` | R$ 329/mês ou R$ 2.569/ano |
+| Plano | Códigos | Preço | O que libera (`src/lib/recursos.ts`) |
+|---|---|---|---|
+| Normal | `mensal` / `anual` | R$ 79/mês ou R$ 790/ano | agenda, link, clientes, serviços, cobrança pelo WhatsApp, finanças |
+| Pro | `pro_mensal` / `pro_anual` | R$ 129/mês ou R$ 1.290/ano | + leitura de contrato e recibo (IA), contas a pagar, custos, relatório/contador |
+| VIP | `vip_mensal` / `vip_anual` | R$ 189/mês ou R$ 1.890/ano | + lembretes de cobrança, equipe, assistente |
+
+- Os códigos antigos foram mantidos: quem tinha o Simples está no Normal e quem tinha o Completo está no VIP. Ninguém perdeu função.
+- "Cobrança automática" de verdade (mandar sozinho e dar baixa sozinho) **não existe**: o VIP vende "cobrança no piloto" (a lista diária de quem cobrar, com mensagem pronta). Fazer a automática exige Asaas ou Mercado Pago.
+- A leitura de contrato e recibo some da vitrine enquanto a IA estiver desligada.
+- Cada plano tem "Assinar o X" na página de vendas: `/criar-conta?plano=pro` → depois do cadastro, `/painel/assinatura?assinar=pro` com o Pix do plano marcado. Função bloqueada leva a `/painel/assinatura?plano=pro|vip`.
 
 **Demonstração:** não existe teste grátis. Dá para ver o estúdio de exemplo (somente leitura) de dois jeitos:
 - **Sem cadastro** (30/10/2026): os botões "Conhecer o sistema" da página de vendas levam a `/demonstracao`, que grava o cookie `visita_demonstracao` (`src/lib/demonstracao/visita.ts`) e abre o painel com o exemplo. Qualquer escrita leva a `/criar-conta?demonstracao=1`.
@@ -62,8 +68,13 @@ O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (s
   - Remarcar sem o campo de quem atende não confere férias ou saída da profissional no dia novo.
   - O link público `/agendar/demonstracao-bossa` só existe depois que alguém abre a demonstração pela primeira vez.
 
+## Novembro
+- PR #13 juntou os três planos (PR #11) com a medição dos anúncios (PR #12: Google Analytics `G-R5PHHWZ27B`, Clarity, Meta Pixel ainda sem id). Cadastro com plano vai para `/painel/assinatura?assinar=X&bem-vindo=conta`.
+- O site agora publica sozinho pela Netlify a cada merge na main (o build roda `prisma migrate deploy`, então falha se o banco estiver pausado).
+- O banco pausou em 21/10, 30/10, 04/11, 06/11 e 09/11 mesmo com o keep-alive diário: consulta direta ao banco não conta como uso para o Supabase. Saída segura: plano Pro do Supabase (US$ 25/mês), decisão do dono.
+
 ## Próximos passos, em ordem
-1. Publicar: depende do dono, ver Infraestrutura.
+1. Banco sem pausar: decidir o plano Pro do Supabase.
 2. Depois de publicar:
    - testar a compra no site no ar;
    - conferir em `/painel/admin` os avisos de Pix "repetidos" que a migração marcou.

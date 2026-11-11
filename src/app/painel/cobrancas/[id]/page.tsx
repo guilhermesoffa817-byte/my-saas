@@ -177,7 +177,7 @@ export default async function PaginaDaCobranca({
                 cobranca.cliente.semLembretes
                   ? "Esse cliente pediu para não receber lembrete, então o Bossa não vai sugerir outro aviso."
                   : !temLembretes
-                    ? "Guardar o histórico de lembretes faz parte do plano Completo. A mensagem você manda do mesmo jeito."
+                    ? "Guardar o histórico de lembretes faz parte do plano VIP. A mensagem você manda do mesmo jeito."
                     : "Nenhum lembrete pendente para hoje. O envio não precisa ser registrado."
               }
             />

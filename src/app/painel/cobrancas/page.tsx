@@ -131,10 +131,10 @@ export default async function PaginaCobrancas({
 
       {!temLembretes ? (
         <Aviso tom="calma">
-          Os lembretes programados fazem parte do plano Completo. Cobrar pelo WhatsApp
-          você já faz no seu plano.{" "}
-          <Link href="/painel/assinatura?completo=1" className="font-semibold underline">
-            Conhecer o Completo
+          Os lembretes de cobrança (quem cobrar a cada dia) fazem parte do plano VIP.
+          Cobrar pelo WhatsApp você já faz no seu plano.{" "}
+          <Link href="/painel/assinatura?plano=vip" className="font-semibold underline">
+            Conhecer o VIP
           </Link>
         </Aviso>
       ) : null}

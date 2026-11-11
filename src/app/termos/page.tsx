@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PaginaLegal, Secao, numerarSecoes, type ItemDoSumario } from "@/componentes/pagina-legal";
-import { PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { FAMILIAS, NOME_DA_FAMILIA, planosDaFamilia, economiaDoAnual } from "@/lib/assinatura";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { canaisDeContato, dadosDoResponsavel } from "@/lib/contato";
 import { emReais } from "@/lib/formato";
 import {
-  CLASSIFICACOES_POR_MES_NO_COMPLETO,
-  LEITURAS_POR_MES_NO_COMPLETO,
-  PERGUNTAS_POR_MES_NO_COMPLETO,
+  CLASSIFICACOES_POR_MES,
+  LEITURAS_POR_MES,
+  PERGUNTAS_POR_MES,
   RECURSOS,
   recursoLigado,
-  soNoCompleto,
+  planoMinimo,
   type Recurso,
 } from "@/lib/recursos";
 import { NOME_DO_PRODUTO } from "@/lib/site";
@@ -73,18 +73,13 @@ export default function PaginaTermos() {
     assistente && "assistente",
   ].filter((funcao): funcao is string => Boolean(funcao));
 
-  const doSimples = [
-    "agenda",
-    "link de agendamento",
-    "ficha de clientes",
-    "serviços",
-    ...RECURSOS.filter((recurso) => !soNoCompleto(recurso) && recursoLigado(recurso)).map(
+  const doPlano = (familia: "normal" | "pro" | "vip") =>
+    RECURSOS.filter((recurso) => planoMinimo(recurso) === familia && recursoLigado(recurso)).map(
       (recurso) => NO_CONTRATO[recurso],
-    ),
-  ];
-  const doCompleto = RECURSOS.filter((recurso) => soNoCompleto(recurso) && recursoLigado(recurso)).map(
-    (recurso) => NO_CONTRATO[recurso],
-  );
+    );
+  const doNormal = ["agenda", "link de agendamento", "ficha de clientes", "serviços", ...doPlano("normal")];
+  const doPro = doPlano("pro");
+  const doVip = doPlano("vip");
 
   const responsavel = dadosDoResponsavel();
   const temContato = canaisDeContato().length > 0;
@@ -141,10 +136,15 @@ export default function PaginaTermos() {
         </p>
         <ul>
           <li>
-            <strong>Simples:</strong> {emLista(doSimples)}.
+            <strong>Normal:</strong> {emLista(doNormal)}.
           </li>
+          {doPro.length ? (
+            <li>
+              <strong>Pro:</strong> tudo do Normal, mais {emLista(doPro)}.
+            </li>
+          ) : null}
           <li>
-            <strong>Completo:</strong> tudo do Simples, mais {emLista(doCompleto)}.
+            <strong>VIP:</strong> tudo do Pro, mais {emLista(doVip)}.
           </li>
         </ul>
       </Secao>
@@ -202,16 +202,24 @@ export default function PaginaTermos() {
           <li>
             Não há teste grátis com os seus dados. Ao criar a conta, você entra numa demonstração:
             um estúdio de exemplo, com dados inventados, em que dá para ver todas as funções dos
-            dois planos. Na demonstração nada é gravado; para cadastrar os seus clientes e usar de
+            três planos. Na demonstração nada é gravado; para cadastrar os seus clientes e usar de
             verdade, é preciso escolher um plano.
           </li>
           <li>
-            Preços de hoje: Simples {emReais(PLANOS.mensal.valorCentavos)} por mês ou{" "}
-            {emReais(PLANOS.anual.valorCentavos)} por ano; Completo{" "}
-            {emReais(PLANOS.vip_mensal.valorCentavos)} por mês ou{" "}
-            {emReais(PLANOS.vip_anual.valorCentavos)} por ano. No anual, a economia em relação a
-            doze mensalidades é de {emReais(economiaDoAnual("simples"))} no Simples e{" "}
-            {emReais(economiaDoAnual("completo"))} no Completo.
+            Preços de hoje:{" "}
+            {FAMILIAS.map((familia, posicao) => {
+              const [mensal, anual] = planosDaFamilia(familia);
+              return (
+                <span key={familia}>
+                  {NOME_DA_FAMILIA[familia]} {emReais(mensal.valorCentavos)} por mês ou{" "}
+                  {emReais(anual.valorCentavos)} por ano
+                  {economiaDoAnual(familia) > 0
+                    ? ` (economia de ${emReais(economiaDoAnual(familia))} no anual)`
+                    : ""}
+                  {posicao < FAMILIAS.length - 1 ? "; " : "."}
+                </span>
+              );
+            })}
           </li>
           <li>
             O pagamento é por Pix. Depois que você avisa o pagamento no painel, conferimos o Pix e
@@ -260,22 +268,22 @@ export default function PaginaTermos() {
       {comIa ? (
         <Secao id="ia" titulo={titulo("ia")}>
           <p>
-            No plano Completo, {POR_EXTENSO[funcoesDeIa.length]}{" "}
+            Nos planos que incluem IA, {POR_EXTENSO[funcoesDeIa.length]}{" "}
             {funcoesDeIa.length === 1 ? "função usa" : "funções usam"} IA, cada uma com uma
             franquia por mês, que renova no primeiro dia de cada mês e não acumula:
           </p>
           <ul>
             {leitura ? (
-              <li>Leitura de documentos: até {LEITURAS_POR_MES_NO_COMPLETO} documentos por mês.</li>
+              <li>Leitura de documentos: até {LEITURAS_POR_MES} documentos por mês.</li>
             ) : null}
             {classificacao ? (
               <li>
-                Classificação de custos: até {CLASSIFICACOES_POR_MES_NO_COMPLETO} despesas por mês.
+                Classificação de custos: até {CLASSIFICACOES_POR_MES} despesas por mês.
                 As regras automáticas não contam.
               </li>
             ) : null}
             {assistente ? (
-              <li>Assistente: até {PERGUNTAS_POR_MES_NO_COMPLETO} perguntas por mês.</li>
+              <li>Assistente: até {PERGUNTAS_POR_MES} perguntas por mês.</li>
             ) : null}
           </ul>
           <p>

@@ -347,8 +347,29 @@ describe.skipIf(!TEM_BANCO)("acesso com banco", () => {
       const { criarConta } = await acoes();
       await expect(
         criarConta(null, formulario({ ...cadastro, documento: "11.222.333/0001-81" })),
-      ).rejects.toMatchObject({ destino: "/painel" });
+      ).rejects.toMatchObject({ destino: "/painel?bem-vindo=conta" });
       expect(pedido.cookies.get(COOKIE)).toBeTruthy();
+    });
+
+    it("quem escolheu o plano na página de vendas vai direto para o Pix dele", async () => {
+      const { criarConta } = await acoes();
+      // A primeira conta é a da administração, que já nasce com tudo: cria antes.
+      await expect(
+        criarConta(null, formulario({ ...cadastro, email: "admin@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "pro" })),
+      ).rejects.toMatchObject({ destino: "/painel?bem-vindo=conta" });
+      await expect(
+        criarConta(
+          null,
+          formulario({ ...cadastro, email: "plano.pro@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "pro" }),
+        ),
+      ).rejects.toMatchObject({ destino: "/painel/assinatura?assinar=pro&bem-vindo=conta" });
+      // Plano inventado é ignorado: entra no painel como sempre.
+      await expect(
+        criarConta(
+          null,
+          formulario({ ...cadastro, email: "plano.falso@estudiobela.com.br", documento: "11.222.333/0001-81", plano: "ouro" }),
+        ),
+      ).rejects.toMatchObject({ destino: "/painel?bem-vindo=conta" });
     });
   });
 

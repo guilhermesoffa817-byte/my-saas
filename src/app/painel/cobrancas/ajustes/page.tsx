@@ -23,10 +23,10 @@ export default async function PaginaAjustesDeCobranca() {
 
       {!temLembretes ? (
         <Aviso tom="calma">
-          Escolher os momentos do lembrete faz parte do plano Completo. A chave Pix
+          Escolher os momentos do lembrete faz parte do plano VIP. A chave Pix
           você cadastra do mesmo jeito.{" "}
-          <Link href="/painel/assinatura?completo=1" className="font-semibold underline">
-            Conhecer o Completo
+          <Link href="/painel/assinatura?plano=vip" className="font-semibold underline">
+            Conhecer o VIP
           </Link>
         </Aviso>
       ) : null}
