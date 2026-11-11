@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { scriptDoTema } from "@/componentes/script-do-tema";
-import { Medicao } from "@/componentes/medicao";
-import { idsDeMedicao, medicaoLigada } from "@/lib/medicao";
+import { MedicaoDoSite } from "@/componentes/medicao-do-site";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -73,8 +72,6 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // Google Analytics, Meta Pixel e Clarity: só com o código na Netlify.
-  const ids = idsDeMedicao();
   return (
     <html
       lang="pt-BR"
@@ -87,7 +84,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         {children}
-        {medicaoLigada(ids) ? <Medicao ids={ids} /> : null}
+        <MedicaoDoSite />
       </body>
     </html>
   );

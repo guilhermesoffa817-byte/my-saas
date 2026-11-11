@@ -340,7 +340,7 @@ export default function PaginaInicial() {
         <section className="mx-auto grid max-w-5xl items-center gap-12 px-4 pt-8 pb-20 sm:px-5 md:grid-cols-[1.15fr_1fr] md:pt-16 md:pb-28">
           <div className="animar-entrada">
             <p className="text-sm font-semibold text-terracota">
-              Sistema de agendamento e cobrança para estúdios
+              Agenda online para salão, barbearia, estética e unhas
             </p>
             <h1 className="mt-3 font-display text-[2.15rem] leading-[1.1] font-semibold text-balance text-carvao sm:text-5xl">
               Sua agenda, suas cobranças e seu dinheiro, resolvidos no celular.
