@@ -1,6 +1,6 @@
 # Estado do projeto Bossa
 
-Atualizado em 23/10/2026. Quem retomar o trabalho deve começar por aqui.
+Atualizado em 11/11/2026. Quem retomar o trabalho deve começar por aqui.
 
 ## O produto
 O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (salão, unhas, estética, barbearia, sobrancelha...).
@@ -68,8 +68,13 @@ O Bossa é um SaaS brasileiro de agenda, cobrança e finanças para estúdios (s
   - Remarcar sem o campo de quem atende não confere férias ou saída da profissional no dia novo.
   - O link público `/agendar/demonstracao-bossa` só existe depois que alguém abre a demonstração pela primeira vez.
 
+## Novembro
+- PR #13 juntou os três planos (PR #11) com a medição dos anúncios (PR #12: Google Analytics `G-R5PHHWZ27B`, Clarity, Meta Pixel ainda sem id). Cadastro com plano vai para `/painel/assinatura?assinar=X&bem-vindo=conta`.
+- O site agora publica sozinho pela Netlify a cada merge na main (o build roda `prisma migrate deploy`, então falha se o banco estiver pausado).
+- O banco pausou em 21/10, 30/10, 04/11, 06/11 e 09/11 mesmo com o keep-alive diário: consulta direta ao banco não conta como uso para o Supabase. Saída segura: plano Pro do Supabase (US$ 25/mês), decisão do dono.
+
 ## Próximos passos, em ordem
-1. Publicar: depende do dono, ver Infraestrutura.
+1. Banco sem pausar: decidir o plano Pro do Supabase.
 2. Depois de publicar:
    - testar a compra no site no ar;
    - conferir em `/painel/admin` os avisos de Pix "repetidos" que a migração marcou.
