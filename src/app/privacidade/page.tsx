@@ -107,7 +107,7 @@ export default function PaginaPrivacidade() {
             </li>
             {comIa ? (
               <li>
-                A inteligência artificial só funciona no plano Completo e só quando você usa.
+                A inteligência artificial só funciona nos planos Pro e VIP e só quando você usa.
                 {assistente
                   ? " O assistente e a classificação de custos nunca recebem nome, telefone ou CPF dos seus clientes."
                   : null}
@@ -216,7 +216,7 @@ export default function PaginaPrivacidade() {
       {comIa ? (
         <Secao id="ia" titulo={titulo("ia")}>
           <p>
-            {POR_EXTENSO[funcoesDeIa]} {funcoesDeIa === 1 ? "função" : "funções"} do plano Completo{" "}
+            {POR_EXTENSO[funcoesDeIa]} {funcoesDeIa === 1 ? "função" : "funções"} dos planos Pro e VIP{" "}
             {funcoesDeIa === 1 ? "usa" : "usam"} o Claude, da Anthropic.{" "}
             {funcoesDeIa === 1 ? "Ela só roda" : "Elas só rodam"} quando o estúdio usa. O resultado
             é sempre uma sugestão: nada entra no financeiro sem alguém conferir.
@@ -425,7 +425,7 @@ export default function PaginaPrivacidade() {
           </li>
           <li>
             <strong>Se você é o estúdio:</strong> corrija ou apague os dados nas próprias telas (
-            {telasParaApagar.join(", ")}). No plano Completo, o relatório do mês sai em planilha.
+            {telasParaApagar.join(", ")}). Nos planos Pro e VIP, o relatório do mês sai em planilha.
             {temContato
               ? " Para receber uma cópia completa dos dados ou encerrar a conta, peça pelo contato abaixo."
               : null}

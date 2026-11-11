@@ -17,8 +17,12 @@ export const PIX_NOME = process.env.PIX_NOME ?? "";
 /*
   Preços em centavos. As variáveis de ambiente (no Netlify) mandam mais que o
   código: se alguma delas estiver preenchida lá, é o valor dela que vale, e os
-  números abaixo só servem quando a variável não existe. Os nomes das variáveis
-  continuam os antigos (VIP = Completo) para não exigir troca de nome no painel.
+  números abaixo só servem quando a variável não existe.
+
+  Os nomes das variáveis são novos (PLANO_*), de propósito: as antigas
+  (ASSINATURA_VALOR_CENTAVOS e companhia) guardavam os preços do Simples e do
+  Completo, e se alguma ainda estiver no Netlify ela não pode puxar o Normal
+  para o preço antigo sem ninguém perceber.
 */
 function centavosDoAmbiente(nome: string, padrao: number) {
   const valor = Number(process.env[nome]);
@@ -26,18 +30,21 @@ function centavosDoAmbiente(nome: string, padrao: number) {
   return Number.isInteger(valor) && valor > 0 ? valor : padrao;
 }
 
-const SIMPLES_MENSAL_CENTAVOS = centavosDoAmbiente("ASSINATURA_VALOR_CENTAVOS", 18900);
-const SIMPLES_ANUAL_CENTAVOS = centavosDoAmbiente("ASSINATURA_ANUAL_CENTAVOS", 189000);
-const COMPLETO_MENSAL_CENTAVOS = centavosDoAmbiente("ASSINATURA_VIP_CENTAVOS", 32900);
-const COMPLETO_ANUAL_CENTAVOS = centavosDoAmbiente("ASSINATURA_VIP_ANUAL_CENTAVOS", 256900);
-
 /**
- * Os códigos são os mesmos de antes ("vip_*" é o Completo). Eles estão gravados
- * nas assinaturas e nos pagamentos de quem já assina: trocar o texto do código
- * mudaria o plano de gente que pagou. Só nome, preço e o que cada um libera mudaram.
+ * Os códigos antigos continuam: "mensal"/"anual" é o Normal (era o Simples) e
+ * "vip_*" é o VIP (era o Completo). Eles estão gravados nas assinaturas e nos
+ * pagamentos de quem já assina: trocar o texto mudaria o plano de quem pagou.
+ * Quem tinha o Simples ganha o Normal, que libera o mesmo; quem tinha o
+ * Completo ganha o VIP, que libera tudo. Ninguém perde nada.
  */
-export type CodigoPlano = "mensal" | "anual" | "vip_mensal" | "vip_anual";
-export type FamiliaDoPlano = "simples" | "completo";
+export type CodigoPlano = "mensal" | "anual" | "pro_mensal" | "pro_anual" | "vip_mensal" | "vip_anual";
+export type FamiliaDoPlano = "normal" | "pro" | "vip";
+
+/** Do mais barato ao mais completo. Cada um tem tudo do anterior. */
+export const FAMILIAS: FamiliaDoPlano[] = ["normal", "pro", "vip"];
+
+/** 1 = Normal, 2 = Pro, 3 = VIP. Serve para "este plano tem pelo menos o Pro". */
+export const NIVEL_DA_FAMILIA: Record<FamiliaDoPlano, number> = { normal: 1, pro: 2, vip: 3 };
 
 export type Plano = {
   codigo: CodigoPlano;
@@ -46,75 +53,70 @@ export type Plano = {
   periodo: string;
   valorCentavos: number;
   dias: number;
-  /** Só o Completo libera lembretes, contas, documentos, custos, relatório, equipe e assistente. */
-  completo: boolean;
 };
 
 export const NOME_DA_FAMILIA: Record<FamiliaDoPlano, string> = {
-  simples: "Simples",
-  completo: "Completo",
+  normal: "Normal",
+  pro: "Pro",
+  vip: "VIP",
 };
 
+function plano(
+  codigo: CodigoPlano,
+  familia: FamiliaDoPlano,
+  anual: boolean,
+  variavel: string,
+  padrao: number,
+): Plano {
+  return {
+    codigo,
+    nome: `${NOME_DA_FAMILIA[familia]} ${anual ? "anual" : "mensal"}`,
+    familia,
+    periodo: anual ? "por ano" : "por mês",
+    valorCentavos: centavosDoAmbiente(variavel, padrao),
+    dias: anual ? 365 : DIAS_POR_CICLO,
+  };
+}
+
+/** O anual custa dez mensalidades nos três planos: dois meses de presente. */
 export const PLANOS: Record<CodigoPlano, Plano> = {
-  mensal: {
-    codigo: "mensal",
-    nome: "Simples mensal",
-    familia: "simples",
-    periodo: "por mês",
-    valorCentavos: SIMPLES_MENSAL_CENTAVOS,
-    dias: DIAS_POR_CICLO,
-    completo: false,
-  },
-  anual: {
-    codigo: "anual",
-    nome: "Simples anual",
-    familia: "simples",
-    periodo: "por ano",
-    valorCentavos: SIMPLES_ANUAL_CENTAVOS,
-    dias: 365,
-    completo: false,
-  },
-  vip_mensal: {
-    codigo: "vip_mensal",
-    nome: "Completo mensal",
-    familia: "completo",
-    periodo: "por mês",
-    valorCentavos: COMPLETO_MENSAL_CENTAVOS,
-    dias: DIAS_POR_CICLO,
-    completo: true,
-  },
-  vip_anual: {
-    codigo: "vip_anual",
-    nome: "Completo anual",
-    familia: "completo",
-    periodo: "por ano",
-    valorCentavos: COMPLETO_ANUAL_CENTAVOS,
-    dias: 365,
-    completo: true,
-  },
+  mensal: plano("mensal", "normal", false, "PLANO_NORMAL_MENSAL_CENTAVOS", 7900),
+  anual: plano("anual", "normal", true, "PLANO_NORMAL_ANUAL_CENTAVOS", 79000),
+  pro_mensal: plano("pro_mensal", "pro", false, "PLANO_PRO_MENSAL_CENTAVOS", 12900),
+  pro_anual: plano("pro_anual", "pro", true, "PLANO_PRO_ANUAL_CENTAVOS", 129000),
+  vip_mensal: plano("vip_mensal", "vip", false, "PLANO_VIP_MENSAL_CENTAVOS", 18900),
+  vip_anual: plano("vip_anual", "vip", true, "PLANO_VIP_ANUAL_CENTAVOS", 189000),
 };
+
+/** O mensal e o anual de um plano, nessa ordem. */
+export function planosDaFamilia(familia: FamiliaDoPlano): [Plano, Plano] {
+  if (familia === "normal") return [PLANOS.mensal, PLANOS.anual];
+  if (familia === "pro") return [PLANOS.pro_mensal, PLANOS.pro_anual];
+  return [PLANOS.vip_mensal, PLANOS.vip_anual];
+}
+
+/** Traduz "normal", "pro" ou "vip" vindo de um link; o resto vira null. */
+export function familiaPorTexto(valor: unknown): FamiliaDoPlano | null {
+  return typeof valor === "string" && (FAMILIAS as string[]).includes(valor)
+    ? (valor as FamiliaDoPlano)
+    : null;
+}
 
 /**
  * Quanto o anual economiza em relação a doze mensalidades do mesmo plano.
  *
- * Calculado, nunca escrito à mão: com os preços de hoje o Simples anual sai por
- * dez mensalidades e o Completo anual por cerca de 7,8. Um texto fixo como
- * "2 meses de brinde" ficaria errado para um dos dois, e errado de novo quando
- * o preço mudar no Netlify. Nunca devolve negativo: se alguém configurar o
- * anual mais caro que doze meses, a tela simplesmente não fala em economia.
+ * Calculado, nunca escrito à mão: um texto fixo como "2 meses de brinde"
+ * ficaria errado quando o preço mudar no Netlify. Nunca devolve negativo: se
+ * alguém configurar o anual mais caro que doze meses, a tela não fala em economia.
  */
 export function economiaDoAnual(familia: FamiliaDoPlano) {
-  const [mensal, anual] =
-    familia === "simples"
-      ? [PLANOS.mensal, PLANOS.anual]
-      : [PLANOS.vip_mensal, PLANOS.vip_anual];
+  const [mensal, anual] = planosDaFamilia(familia);
   return Math.max(0, mensal.valorCentavos * 12 - anual.valorCentavos);
 }
 
 /** O anual dividido por doze, em centavos, arredondado para baixo: "sai por R$ X ao mês". */
 export function mensalDoAnual(familia: FamiliaDoPlano) {
-  const anual = familia === "simples" ? PLANOS.anual : PLANOS.vip_anual;
-  return Math.floor(anual.valorCentavos / 12);
+  return Math.floor(planosDaFamilia(familia)[1].valorCentavos / 12);
 }
 
 /** Traduz o que veio do formulário ou do banco; o que não reconhecer vira mensal. */
@@ -143,12 +145,14 @@ export function planoValendo(
   return planoPorCodigo(assinatura.plano);
 }
 
-/** As funções do Completo só abrem para quem está com o Completo pago e em dia. */
-export function temPlanoCompleto(
+/** Se o plano pago e em dia é pelo menos o pedido (o VIP tem tudo do Pro, que tem tudo do Normal). */
+export function temPlanoAoMenos(
   assinatura: AssinaturaParaPlano | null | undefined,
+  familia: FamiliaDoPlano,
   agora = new Date(),
 ) {
-  return planoValendo(assinatura, agora)?.completo ?? false;
+  const vigente = planoValendo(assinatura, agora);
+  return vigente ? NIVEL_DA_FAMILIA[vigente.familia] >= NIVEL_DA_FAMILIA[familia] : false;
 }
 
 /**
@@ -328,7 +332,7 @@ export type ResultadoDoPagamento = {
   /** O plano que passa a valer. */
   plano: CodigoPlano;
   validaAte: Date;
-  /** Só existe quando a família muda (Simples ↔ Completo) com um plano ainda valendo. */
+  /** Só existe quando o plano muda (Normal, Pro ou VIP) com um plano ainda valendo com um plano ainda valendo. */
   conversao: ConversaoDeSaldo | null;
 };
 
@@ -352,17 +356,16 @@ function saldoEmCentavos(restanteMs: number, plano: Plano) {
  * troca de plano, num lugar só (a confirmação do admin e as prévias das telas
  * usam esta mesma função):
  *
- * - Mesma família do plano que está valendo (Simples → Simples, Completo →
- *   Completo), ou nenhum plano pago valendo: a validade é a maior entre agora
+ * - Mesmo plano que está valendo (Pro mensal → Pro anual, por exemplo), ou
+ *   nenhum plano pago valendo: a validade é a maior entre agora
  *   e a atual, mais os dias do plano pago. Renovar antes da hora não perde dia.
  * - Família diferente com um plano ainda valendo: o que falta do plano antigo
  *   vira crédito em dinheiro (dias restantes × valor diário dele), e o crédito
  *   vira dias extras no plano novo (crédito ÷ valor diário do novo, para
  *   baixo). A validade é agora + dias do plano novo + dias extras.
  *
- * Nos dois casos o plano passa a ser o pago. Antes, os dias do Simples viravam
- * dias do Completo um por um (R$ 189 + R$ 329 = 60 dias de Completo), e quem
- * tinha o Completo e pagava o Simples perdia o Completo e o dinheiro dele.
+ * Nos dois casos o plano passa a ser o pago. Assim ninguém ganha dias de VIP
+ * pagando o Normal, nem perde o dinheiro do VIP ao descer para o Normal.
  */
 export function aplicarPagamento(
   atual: AssinaturaParaPlano | null | undefined,

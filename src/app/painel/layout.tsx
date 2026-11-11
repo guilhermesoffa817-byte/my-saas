@@ -19,7 +19,7 @@ export default async function LayoutPainel({
 }) {
   // O visitante sem cadastro chega aqui com o estúdio de exemplo como `usuario`.
   const { usuario, situacao, visitante } = await exigirPainel();
-  // Na demonstração o estúdio de exemplo é Completo: todas as abas aparecem.
+  // Na demonstração o estúdio de exemplo é VIP: todas as abas aparecem.
   const liberados = situacao.demonstracao ? recursosLigados() : recursosLiberados(usuario);
   /*
     Na demonstração as telas mostram o estúdio de exemplo (outra dona, outro

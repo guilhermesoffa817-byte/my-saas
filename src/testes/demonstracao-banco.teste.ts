@@ -409,10 +409,10 @@ describe.skipIf(!TEM_BANCO)("demonstração", () => {
     expect(await db.servico.count({ where: { usuarioId: conta.id } })).toBe(1);
     expect((await fotoDoExemplo()).resumo).toBe(antes.resumo);
 
-    // O Simples não abre ação do Completo: vai para os planos.
+    // O Normal não abre ação do Pro: vai para os planos, já no Pro.
     const { salvarVencimento } = await import("@/app/painel/vencimentos/acoes");
     await expect(salvarVencimento(null, new FormData())).rejects.toMatchObject({
-      destino: "/painel/assinatura?completo=1",
+      destino: "/painel/assinatura?plano=pro",
     });
   });
 
@@ -427,7 +427,7 @@ describe.skipIf(!TEM_BANCO)("demonstração", () => {
 
     const db = await banco();
     const pagamento = await db.pagamento.findFirst({ where: { usuarioId: conta.id } });
-    expect(pagamento?.valorCentavos).toBe(256900);
+    expect(pagamento?.valorCentavos).toBe(189000);
     expect(await db.pagamento.count({ where: { usuarioId: ID_DO_ESTUDIO_DE_EXEMPLO } })).toBe(0);
   });
 

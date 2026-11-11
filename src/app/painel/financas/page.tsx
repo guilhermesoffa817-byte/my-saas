@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { exigirLeituraDoRecurso } from "@/lib/guardas";
-import { podeUsar } from "@/lib/recursos";
+import { etiquetaDoPlano, linkDoPlanoQueLibera, podeUsar } from "@/lib/recursos";
 import { BotaoConfirmar } from "@/componentes/botoes";
 import { Vazio } from "@/componentes/avisos";
 import {
@@ -44,13 +44,13 @@ export default async function PaginaFinancas({
 }) {
   const { usuario } = await exigirLeituraDoRecurso("financas");
   /*
-    Finanças é do Simples; relatório, contador e custos são do Completo. Para
-    quem tem o Simples, os três cartões continuam aparecendo, mas levam direto
-    aos planos, com a etiqueta dizendo de onde é.
+    Finanças é do Normal; relatório, contador e custos são do Pro. Para quem
+    tem o Normal, os três cartões continuam aparecendo, mas levam direto aos
+    planos, com a etiqueta dizendo de onde é.
   */
   const temRelatorio = podeUsar(usuario, "relatorio");
   const temCustos = podeUsar(usuario, "custos");
-  const NOS_PLANOS = "/painel/assinatura?completo=1";
+  const NOS_PLANOS = linkDoPlanoQueLibera("relatorio");
   const { aviso } = await searchParams;
 
   const agora = new Date();
@@ -431,11 +431,11 @@ function LinhaDoResumo({
   );
 }
 
-/** A etiqueta dos cartões que só o plano Completo abre. */
+/** A etiqueta dos cartões que só o Pro (ou um plano acima) abre. */
 function SoNoCompleto() {
   return (
     <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle font-sans text-[11px] font-semibold text-carvao-suave">
-      Completo
+      {etiquetaDoPlano("relatorio")}
     </span>
   );
 }

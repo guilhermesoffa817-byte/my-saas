@@ -1,16 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { FAMILIAS } from "@/lib/assinatura";
 import {
-  ITENS_DO_COMPLETO,
-  ITENS_DO_SIMPLES,
-  TUDO_DO_SIMPLES,
+  ITENS_DO_NORMAL,
+  ITENS_DO_PRO,
+  ITENS_DO_VIP,
+  ITENS_POR_PLANO,
   textosDoPlano,
 } from "@/lib/itens-dos-planos";
-import {
-  LEITURAS_POR_MES_NO_COMPLETO,
-  PERGUNTAS_POR_MES_NO_COMPLETO,
-  RECURSOS,
-  soNoCompleto,
-} from "@/lib/recursos";
+import { LEITURAS_POR_MES, PERGUNTAS_POR_MES, RECURSOS, planoMinimo } from "@/lib/recursos";
 
 // Os testes de plano partem de um servidor com a IA e o espaço de arquivos
 // ligados. O bloco "só vende o que está ligado" desliga de propósito.
@@ -24,90 +21,79 @@ afterEach(() => {
 });
 
 describe("o que cada plano promete", () => {
-  it("não promete no Simples nada que só o Completo libera", () => {
-    for (const item of ITENS_DO_SIMPLES) {
-      for (const recurso of item.recursos) {
-        expect(soNoCompleto(recurso), `${item.texto} depende de ${recurso}`).toBe(false);
+  it("cada linha está no plano que libera o recurso dela, nem antes nem depois", () => {
+    for (const familia of FAMILIAS) {
+      for (const item of ITENS_POR_PLANO[familia]) {
+        for (const recurso of item.recursos) {
+          expect(planoMinimo(recurso), `${item.texto} depende de ${recurso}`).toBe(familia);
+        }
       }
     }
   });
 
-  it("não fala, no Simples, de função do Completo nem pelo nome", () => {
-    const simples = textosDoPlano("simples").join(" ");
-    expect(simples).not.toMatch(/lembrete|contas a pagar|documento|custos|relat[óo]rio|contador|equipe|assistente/i);
-  });
-
-  it("lista no Completo só o que é do Completo", () => {
-    for (const item of ITENS_DO_COMPLETO) {
+  it("as linhas do Pro e do VIP sempre dependem de algum recurso", () => {
+    for (const item of [...ITENS_DO_PRO, ...ITENS_DO_VIP]) {
       expect(item.recursos.length, item.texto).toBeGreaterThan(0);
-      for (const recurso of item.recursos) {
-        expect(soNoCompleto(recurso), `${item.texto} depende de ${recurso}`).toBe(true);
-      }
     }
   });
 
-  it("mostra todo recurso do Completo em alguma linha do Completo", () => {
-    const anunciados = new Set(ITENS_DO_COMPLETO.flatMap((item) => item.recursos));
-    for (const recurso of RECURSOS.filter(soNoCompleto)) {
-      expect(anunciados.has(recurso), recurso).toBe(true);
-    }
+  it("todo recurso aparece em alguma linha", () => {
+    const anunciados = new Set(FAMILIAS.flatMap((f) => ITENS_POR_PLANO[f].flatMap((i) => i.recursos)));
+    for (const recurso of RECURSOS) expect(anunciados.has(recurso), recurso).toBe(true);
   });
 
-  it("mostra Finanças no Simples, que agora é dele", () => {
-    const anunciados = new Set(ITENS_DO_SIMPLES.flatMap((item) => item.recursos));
-    expect(anunciados.has("financas")).toBe(true);
-    expect(anunciados.has("cobrar")).toBe(true);
+  it("o Normal é agenda e finanças, e não fala de função dos planos maiores", () => {
+    const normal = textosDoPlano("normal").join(" ");
+    expect(normal).toMatch(/Agenda/);
+    expect(normal).toMatch(/Finanças/);
+    expect(normal).not.toMatch(/lembrete|contas a pagar|contrato|recibo|custos|relat[óo]rio|contador|equipe|assistente/i);
+    expect(ITENS_DO_NORMAL.flatMap((i) => i.recursos)).toEqual(expect.arrayContaining(["cobrar", "financas"]));
+  });
+
+  it("o Pro vende a leitura de contrato e recibo; o VIP, a cobrança no piloto", () => {
+    expect(textosDoPlano("pro").join(" ")).toMatch(/contrato, do recibo/);
+    expect(textosDoPlano("vip").join(" ")).toMatch(/Cobrança no piloto/);
+  });
+
+  it("não chama de automática uma cobrança que ainda é enviada pela dona", () => {
+    const tudo = FAMILIAS.flatMap(textosDoPlano).join(" ");
+    expect(tudo).not.toMatch(/autom[áa]tic/i);
   });
 
   it("usa as franquias de verdade, não um número escrito à mão", () => {
-    const completo = textosDoPlano("completo").join(" ");
-    expect(completo).toContain(`até ${LEITURAS_POR_MES_NO_COMPLETO} por mês`);
-    expect(completo).toContain(`até ${PERGUNTAS_POR_MES_NO_COMPLETO} perguntas por mês`);
+    expect(textosDoPlano("pro").join(" ")).toContain(`até ${LEITURAS_POR_MES} por mês`);
+    expect(textosDoPlano("vip").join(" ")).toContain(`até ${PERGUNTAS_POR_MES} perguntas por mês`);
   });
 
-  it("abre a lista do Completo com o Simples e não repete linha", () => {
-    const completo = textosDoPlano("completo");
-    expect(completo[0]).toBe(TUDO_DO_SIMPLES);
-    const todos = [...textosDoPlano("simples"), ...completo];
+  it("abre cada plano com o anterior e não repete linha", () => {
+    expect(textosDoPlano("pro")[0]).toBe("Tudo do Normal");
+    expect(textosDoPlano("vip")[0]).toBe("Tudo do Pro");
+    const todos = FAMILIAS.flatMap(textosDoPlano);
     expect(new Set(todos).size).toBe(todos.length);
   });
 
   it("não promete o que o Bossa não faz", () => {
-    const tudo = [...textosDoPlano("simples"), ...textosDoPlano("completo")].join(" ");
+    const tudo = FAMILIAS.flatMap(textosDoPlano).join(" ");
     expect(tudo).not.toMatch(/garant|aumenta|folha de pagamento|eSocial|substitui/i);
   });
 });
 
 describe("só vende o que está ligado no servidor", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("sem a chave da IA, nem a leitura de documentos nem o assistente aparecem no Completo", () => {
+  it("sem a chave da IA, a leitura some do Pro e o assistente some do VIP", () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
-    const textos = textosDoPlano("completo").join(" | ");
-    expect(textos).not.toMatch(/lida pela IA/);
-    expect(textos).not.toMatch(/Assistente/);
-    // O resto do Completo continua sendo vendido.
-    expect(textos).toMatch(/Custos fixos e variáveis/);
-    expect(textos).toMatch(/Equipe/);
-  });
-
-  it("com a chave da IA e o espaço de arquivos, as duas linhas voltam sozinhas", () => {
-    vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
-    vi.stubEnv("SUPABASE_URL", "https://exemplo.supabase.co");
-    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "chave-de-servico");
-    const textos = textosDoPlano("completo").join(" | ");
-    expect(textos).toMatch(/lida pela IA/);
-    expect(textos).toMatch(/Assistente/);
+    const pro = textosDoPlano("pro").join(" | ");
+    const vip = textosDoPlano("vip").join(" | ");
+    expect(pro).not.toMatch(/lida pela IA/);
+    expect(vip).not.toMatch(/Assistente/);
+    // O resto continua sendo vendido.
+    expect(pro).toMatch(/Custos fixos e variáveis/);
+    expect(vip).toMatch(/Equipe/);
   });
 
   it("com a IA mas sem o espaço de arquivos, o assistente aparece e a leitura não", () => {
-    vi.stubEnv("ANTHROPIC_API_KEY", "chave-de-teste");
     vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
-    const textos = textosDoPlano("completo").join(" | ");
-    expect(textos).toMatch(/Assistente/);
-    expect(textos).not.toMatch(/lida pela IA/);
+    expect(textosDoPlano("vip").join(" | ")).toMatch(/Assistente/);
+    expect(textosDoPlano("pro").join(" | ")).not.toMatch(/lida pela IA/);
   });
 });

@@ -257,7 +257,7 @@ export async function salvarAjustesDeCobranca(
     Caixa de seleção desabilitada não é enviada pelo navegador, e ausência aqui
     significaria "desmarcada". Quem está num plano sem lembretes vê as caixas
     travadas; se as preferências fossem gravadas mesmo assim, salvar a chave Pix
-    apagaria em silêncio a configuração de lembrete de quem um dia assinou o Completo.
+    apagaria em silêncio a configuração de lembrete de quem um dia assinou o VIP (antes chamado Completo).
     Por isso as preferências só são tocadas por quem pode mexer nelas.
   */
   const preferencias = podeUsar(usuario, "lembretes")

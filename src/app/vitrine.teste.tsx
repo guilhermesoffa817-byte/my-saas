@@ -115,7 +115,7 @@ describe("IA ligada: os termos e a privacidade contam o que vai para a IA", () =
   it("privacidade lista a Anthropic e as funções", () => {
     ambiente(IA);
     const lido = texto("privacidade");
-    expect(lido).toContain("Três funções do plano Completo usam o Claude, da Anthropic");
+    expect(lido).toContain("Três funções dos planos Pro e VIP usam o Claude, da Anthropic");
     expect(lido).toContain("Anthropic: a inteligência artificial das funções descritas acima");
     expect(lido).toContain("(Clientes, Equipe, Documentos, Assistente)");
   });
@@ -124,7 +124,7 @@ describe("IA ligada: os termos e a privacidade contam o que vai para a IA", () =
     ambiente(IA, { SUPABASE_URL: "", SUPABASE_SERVICE_ROLE_KEY: "" });
     expect(texto("termos")).toContain("duas funções usam IA");
     expect(texto("termos")).not.toMatch(/leitura de documentos/i);
-    expect(texto("privacidade")).toContain("Duas funções do plano Completo usam o Claude");
+    expect(texto("privacidade")).toContain("Duas funções dos planos Pro e VIP usam o Claude");
     expect(texto("privacidade")).not.toMatch(/Documentos enviados para leitura/);
   });
 
@@ -285,17 +285,26 @@ describe("página de vendas", () => {
     return [...lista.matchAll(/<li[\s\S]*?<\/li>/g)].map(([li]) => li).find((li) => li.includes(problema));
   }
 
-  it("o que é só do Completo leva a etiqueta Completo", () => {
-    expect(linhaDoProblema("Conta que vence e você só lembra depois")).toContain("Completo");
+  it("o que é do Pro ou do VIP leva a etiqueta do plano", () => {
+    expect(linhaDoProblema("Conta que vence e você só lembra depois")).toContain(">Pro<");
+    expect(linhaDoProblema("Esquece de cobrar quem está devendo")).toContain(">VIP<");
     ambiente(IA);
-    expect(linhaDoProblema("Papelada acumulada")).toContain("Completo");
+    expect(linhaDoProblema("Papelada acumulada")).toContain(">Pro<");
   });
 
-  it("o que o Simples resolve não promete custos, que são do Completo", () => {
+  it("o que o Normal resolve não leva etiqueta nem promete custos", () => {
     const linha = linhaDoProblema("Não sabe quanto sobrou no mês")!;
-    expect(linha).not.toContain("Completo");
+    expect(linha).not.toMatch(/>(Pro|VIP)</);
     expect(linha).not.toMatch(/custos/i);
-    expect(linhaDoProblema("Cliente que esquece de pagar")).not.toContain("Completo");
+    expect(linhaDoProblema("Cliente que esquece de pagar")).not.toMatch(/>(Pro|VIP)</);
+  });
+
+  it("cada plano tem o seu botão de assinar, que leva ao cadastro já com o plano", () => {
+    const pagina = html("inicial");
+    for (const plano of ["normal", "pro", "vip"]) {
+      expect(pagina).toContain(`href="/criar-conta?plano=${plano}"`);
+    }
+    expect(pagina).toMatch(/Três planos/);
   });
 
   it("todo \"Conhecer o sistema\" abre o exemplo sem cadastro, e criar a conta continua à mão", () => {
@@ -324,7 +333,11 @@ describe("tema", () => {
     const layout = readFileSync(join(__dirname, "layout.tsx"), "utf8");
     const internos = [...layout.matchAll(/from "@\/([^"]+)"/g)].map(([, caminho]) => caminho);
     expect(internos.length).toBeGreaterThan(0);
+    // A medição é um componente desenhado no fim do <body>, não um valor usado no <head>:
+    // o problema do #418 era o texto do script do tema virar referência de arquivo.
+    const componentesDoCorpo = new Set(["componentes/medicao"]);
     for (const caminho of internos) {
+      if (componentesDoCorpo.has(caminho)) continue;
       const arquivo = [".ts", ".tsx"].map((fim) => join(raiz, caminho + fim)).find(existsSync);
       expect(arquivo, caminho).toBeDefined();
       expect(readFileSync(arquivo!, "utf8").trimStart(), caminho).not.toMatch(/^["']use client["']/);

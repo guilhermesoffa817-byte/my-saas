@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Marca } from "@/componentes/marca";
 import { usuarioAtual } from "@/lib/sessao";
-import { PLANOS } from "@/lib/assinatura";
+import { NOME_DA_FAMILIA, PLANOS, familiaPorTexto, planosDaFamilia } from "@/lib/assinatura";
 import { emReais } from "@/lib/formato";
 import { FormularioCriarConta } from "./formulario";
 
@@ -16,13 +16,14 @@ export const metadata = {
 export default async function PaginaCriarConta({
   searchParams,
 }: {
-  searchParams: Promise<{ ind?: string; demonstracao?: string }>;
+  searchParams: Promise<{ ind?: string; demonstracao?: string; plano?: string }>;
 }) {
-  const usuario = await usuarioAtual();
-  if (usuario) redirect("/painel");
+  // Código de quem indicou, que veio no endereço do link, e o plano escolhido na página de vendas.
+  const { ind, demonstracao, plano } = await searchParams;
+  const escolhido = familiaPorTexto(plano);
 
-  // Código de quem indicou, que veio no endereço do link.
-  const { ind, demonstracao } = await searchParams;
+  const usuario = await usuarioAtual();
+  if (usuario) redirect(escolhido ? `/painel/assinatura?assinar=${escolhido}` : "/painel");
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -42,6 +43,13 @@ export default async function PaginaCriarConta({
               crie a sua conta.
             </p>
           ) : null}
+          {escolhido ? (
+            <p role="status" className="mt-4 rounded-xl bg-terracota/10 px-4 py-3 text-sm text-carvao">
+              Plano escolhido: <strong>{NOME_DA_FAMILIA[escolhido]}</strong>, por{" "}
+              {emReais(planosDaFamilia(escolhido)[0].valorCentavos)} por mês. Depois de criar a conta,
+              você já vai para o Pix desse plano.
+            </p>
+          ) : null}
           <p className="mt-2 text-carvao-suave">
             Assim que criar a conta, você entra num estúdio de exemplo com todas as funções
             funcionando. Para usar com os seus clientes, os planos começam em{" "}
@@ -49,7 +57,7 @@ export default async function PaginaCriarConta({
           </p>
 
           <div className="cartao mt-7">
-            <FormularioCriarConta indicadoPor={ind ?? null} />
+            <FormularioCriarConta indicadoPor={ind ?? null} plano={escolhido} />
           </div>
 
           <p className="mt-6 text-center text-sm text-carvao-suave">

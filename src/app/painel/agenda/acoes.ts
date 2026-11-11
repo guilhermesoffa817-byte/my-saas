@@ -142,7 +142,7 @@ export async function remarcarHorario(_anterior: Resposta, dados: FormData): Pro
 }
 
 /**
- * "Quem atende" é da Equipe, que é do Completo. O id vem do formulário, então antes
+ * "Quem atende" é da Equipe, que é do VIP. O id vem do formulário, então antes
  * de gravar confere-se que a pessoa é deste estúdio, trabalha nesse dia e não
  * tem ausência registrada nele.
  */
@@ -152,7 +152,7 @@ async function conferirQuemAtende(
   inicio: Date,
 ) {
   if (!podeUsar(usuario, "equipe")) {
-    return "Escolher quem atende faz parte do plano Completo.";
+    return "Escolher quem atende faz parte do plano VIP.";
   }
   const dia = paraDataLocal(inicio);
   const data = deDataPura(dia)!;

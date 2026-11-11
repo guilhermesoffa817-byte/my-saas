@@ -4,12 +4,12 @@ import { CenaDoDia } from "@/componentes/cenas";
 import { LinksDeContato } from "@/componentes/contato";
 import { CabecalhoDoSite, RodapeDoSite } from "@/componentes/site";
 import { Icone } from "@/componentes/ui/icones";
-import { NOME_DA_FAMILIA, PLANOS, economiaDoAnual } from "@/lib/assinatura";
+import { FAMILIAS, NOME_DA_FAMILIA, economiaDoAnual, planosDaFamilia, type FamiliaDoPlano } from "@/lib/assinatura";
 import { canaisDeContato, canaisPorExtenso } from "@/lib/contato";
 import { DIAS_PARA_DESISTIR } from "@/lib/leis";
 import { emReais } from "@/lib/formato";
 import { textosDoPlano } from "@/lib/itens-dos-planos";
-import { recursoLigado, soNoCompleto, type Recurso } from "@/lib/recursos";
+import { etiquetaDoPlano, recursoLigado, type Recurso } from "@/lib/recursos";
 import {
   DESCRICAO_CURTA,
   ENDERECO_DO_SITE,
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
  * Pares de problema e solução. Curtos, com a palavra que a dona usaria.
  *
  * `recurso` liga a linha a lib/recursos.ts: a linha some quando o recurso está
- * desligado no servidor e ganha a etiqueta "Completo" quando só esse plano o
- * libera, para ninguém assinar o Simples esperando o que ele não tem.
+ * desligado no servidor e ganha a etiqueta "Pro" ou "VIP" quando só esses
+ * planos o liberam, para ninguém assinar o Normal esperando o que ele não tem.
  */
 type Problema = { problema: string; solucao: string; recurso?: Recurso };
 
@@ -64,13 +64,18 @@ const PROBLEMAS: Problema[] = [
     recurso: "cobrar",
   },
   {
+    problema: "Esquece de cobrar quem está devendo",
+    solucao: "Todo dia o Bossa mostra quem cobrar, antes e depois do vencimento, com a mensagem pronta.",
+    recurso: "lembretes",
+  },
+  {
     problema: "Conta que vence e você só lembra depois",
     solucao: "As contas a pagar aparecem no Início antes de vencer.",
     recurso: "vencimentos",
   },
   {
     problema: "Papelada acumulada",
-    solucao: "Mande a foto da conta ou do contrato: o Bossa lê valores e datas, e você confere.",
+    solucao: "Mande a foto do contrato, do recibo ou da conta: o Bossa lê valores e datas, e você confere.",
     recurso: "documentos",
   },
   {
@@ -86,20 +91,20 @@ const PROBLEMAS: Problema[] = [
 
 /**
  * As funções, agrupadas do jeito que a dona pensa no trabalho, não como o menu.
- * `completo` marca o que só o plano Completo libera (ver lib/recursos.ts).
+ * `recurso` liga o cartão ao plano que o libera (ver lib/recursos.ts), para a etiqueta.
  */
-const funcoes = () => [
+const funcoes = () => ([
   {
     icone: "calendario",
     titulo: "Agenda e link de agendamento",
     texto: "A semana numa tela e um link para o cliente marcar nos horários que você abrir.",
-    completo: false,
+    recurso: null,
   },
   {
     icone: "dinheiro",
     titulo: "Cobranças e finanças",
-    texto: "Quem cobrar hoje, com mensagem e Pix prontos para o WhatsApp, e o que entrou e saiu no mês.",
-    completo: false,
+    texto: "Cobrança com mensagem e Pix prontos para o WhatsApp, e o que entrou e saiu no mês.",
+    recurso: "financas",
   },
   {
     icone: "papel",
@@ -107,28 +112,34 @@ const funcoes = () => [
     texto: recursoLigado("documentos")
       ? "Contas a pagar no lugar certo, e a foto do contrato vira datas e valores para conferir."
       : "Contas e prazos de contrato no lugar certo, avisados no Início antes de vencer.",
-    completo: true,
+    recurso: "vencimentos",
   },
   {
     icone: "grafico",
     titulo: "Custos e relatório para o contador",
     texto: "Custos fixos e variáveis, quanto faturar para empatar e o mês fechado para o contador.",
-    completo: true,
+    recurso: "relatorio",
+  },
+  {
+    icone: "sino",
+    titulo: "Cobrança no piloto",
+    texto: "Todo dia, a lista de quem cobrar (antes, no dia e depois do vencimento), com mensagem e Pix prontos.",
+    recurso: "lembretes",
   },
   {
     icone: "cracha",
     titulo: "Equipe",
     texto: "Quem trabalha com você, quem atende cada horário e pagamentos que já entram como despesa.",
-    completo: true,
+    recurso: "equipe",
   },
   {
     icone: "conversa",
     titulo: "Assistente que entende o seu negócio",
     precisa: "assistente" as const,
     texto: "Pergunte “em que dia a agenda fica mais vazia?” e receba a resposta com os seus números.",
-    completo: true,
+    recurso: "assistente",
   },
-].filter((funcao) => !funcao.precisa || recursoLigado(funcao.precisa));
+] satisfies { icone: string; titulo: string; texto: string; recurso: Recurso | null; precisa?: Recurso }[]).filter((funcao) => !funcao.precisa || recursoLigado(funcao.precisa));
 
 const PASSOS = [
   {
@@ -137,7 +148,7 @@ const PASSOS = [
   },
   {
     titulo: "Escolha o plano e pague por Pix",
-    texto: "Simples ou Completo, mensal ou anual. O painel passa a ser seu assim que o Pix é confirmado.",
+    texto: "Normal, Pro ou VIP, mensal ou anual. O painel passa a ser seu assim que o Pix é confirmado.",
   },
   {
     titulo: "Cadastre os serviços e mande o link",
@@ -191,7 +202,7 @@ const PERGUNTAS: Pergunta[] = [
       [
         "No assistente e na classificação de custos, a IA recebe totais e descrições sem dados pessoais, nunca nome, telefone ou CPF dos seus clientes.",
         recursoLigado("documentos") ? "Na leitura de documentos, ela lê o arquivo que você enviar." : null,
-        "Tudo isso só no plano Completo e só quando você usa.",
+        "A leitura e a classificação vêm a partir do Pro, o assistente no VIP, e a IA só entra quando você usa.",
       ]
         .filter(Boolean)
         .join(" "),
@@ -229,7 +240,7 @@ const dadosParaOGoogle = {
     "@type": "BusinessAudience",
     audienceType: SEGMENTOS.join(", "),
   },
-  offers: [PLANOS.mensal, PLANOS.vip_mensal].map((plano) => ({
+  offers: FAMILIAS.map((familia) => planosDaFamilia(familia)[0]).map((plano) => ({
     "@type": "Offer",
     name: plano.nome,
     price: (plano.valorCentavos / 100).toFixed(2),
@@ -256,27 +267,27 @@ function perguntasParaOGoogle() {
   };
 }
 
+const RESUMO_DO_PLANO: Record<FamiliaDoPlano, string> = {
+  normal: "Para organizar a agenda, cobrar e ver o dinheiro do mês.",
+  pro: "Para quem também cuida de contratos, recibos, contas e do contador.",
+  vip: "Para não esquecer de cobrar ninguém e trabalhar com equipe.",
+};
+
 /** Os preços e a economia do anual saem de lib/assinatura.ts; os itens, de itens-dos-planos.ts. */
-const planosDaVitrine = () => [
-  {
-    nome: NOME_DA_FAMILIA.simples,
-    resumo: "Para organizar a agenda, cobrar e ver o dinheiro do mês.",
-    mensal: PLANOS.mensal.valorCentavos,
-    anual: PLANOS.anual.valorCentavos,
-    economia: economiaDoAnual("simples"),
-    itens: textosDoPlano("simples"),
-    destaque: false,
-  },
-  {
-    nome: NOME_DA_FAMILIA.completo,
-    resumo: "Para cuidar também das contas, da equipe, dos custos e do contador.",
-    mensal: PLANOS.vip_mensal.valorCentavos,
-    anual: PLANOS.vip_anual.valorCentavos,
-    economia: economiaDoAnual("completo"),
-    itens: textosDoPlano("completo"),
-    destaque: true,
-  },
-];
+const planosDaVitrine = () =>
+  FAMILIAS.map((familia) => {
+    const [mensal, anual] = planosDaFamilia(familia);
+    return {
+      familia,
+      nome: NOME_DA_FAMILIA[familia],
+      resumo: RESUMO_DO_PLANO[familia],
+      mensal: mensal.valorCentavos,
+      anual: anual.valorCentavos,
+      economia: economiaDoAnual(familia),
+      itens: textosDoPlano(familia),
+      destaque: familia === "pro",
+    };
+  });
 
 function TituloDaSecao({ id, children }: { id: string; children: React.ReactNode }) {
   return (
@@ -289,11 +300,13 @@ function TituloDaSecao({ id, children }: { id: string; children: React.ReactNode
   );
 }
 
-/** A marca de "só no plano Completo", igual nos problemas e nas funções. */
-function EtiquetaCompleto() {
+/** A marca de "a partir do plano Pro/VIP", igual nos problemas e nas funções. */
+function EtiquetaDoPlano({ recurso }: { recurso: Recurso | null | undefined }) {
+  const nome = recurso ? etiquetaDoPlano(recurso) : null;
+  if (!nome) return null;
   return (
     <span className="ml-2 inline-block rounded-full border border-areia-escura px-2 py-px align-middle text-[11px] font-semibold text-carvao-suave">
-      Completo
+      {nome}
     </span>
   );
 }
@@ -371,7 +384,7 @@ export default function PaginaInicial() {
                 >
                   <p className="font-semibold text-carvao">
                     {item.problema}
-                    {item.recurso && soNoCompleto(item.recurso) ? <EtiquetaCompleto /> : null}
+                    <EtiquetaDoPlano recurso={item.recurso} />
                   </p>
                   <p className="flex gap-2.5 leading-relaxed text-carvao-suave">
                     <span aria-hidden className="text-terracota">
@@ -401,7 +414,7 @@ export default function PaginaInicial() {
                 <div>
                   <h3 className="font-display font-semibold text-carvao">
                     {funcao.titulo}
-                    {funcao.completo ? <EtiquetaCompleto /> : null}
+                    <EtiquetaDoPlano recurso={funcao.recurso} />
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-carvao-suave">{funcao.texto}</p>
                 </div>
@@ -439,12 +452,12 @@ export default function PaginaInicial() {
           aria-labelledby="titulo-planos"
           className="mx-auto max-w-5xl scroll-mt-8 px-4 py-16 sm:px-5 md:py-24"
         >
-          <TituloDaSecao id="titulo-planos">Dois planos, sem fidelidade</TituloDaSecao>
+          <TituloDaSecao id="titulo-planos">Três planos, sem fidelidade</TituloDaSecao>
           <p className="mt-3 max-w-xl text-carvao-suave">
             Pagamento por Pix. No anual você paga uma vez e economiza no ano.
           </p>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
             {planosDaVitrine().map((plano) => (
               <div
                 key={plano.nome}
@@ -455,6 +468,8 @@ export default function PaginaInicial() {
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="font-display text-xl font-semibold text-carvao">{plano.nome}</h3>
                   {plano.destaque ? (
+                    <span className="etiqueta bg-terracota text-acento-texto">Recomendado</span>
+                  ) : plano.familia === "vip" ? (
                     <span className="etiqueta bg-terracota text-acento-texto">Tudo liberado</span>
                   ) : null}
                 </div>
@@ -498,10 +513,16 @@ export default function PaginaInicial() {
                 </ul>
 
                 <a
-                  href="/demonstracao"
+                  href={`/criar-conta?plano=${plano.familia}`}
                   className={`mt-7 w-full ${plano.destaque ? "botao" : "botao-suave"}`}
                 >
-                  Conhecer o sistema
+                  Assinar o {plano.nome}
+                </a>
+                <a
+                  href="/demonstracao"
+                  className="mt-3 text-center text-sm font-semibold text-terracota hover:underline"
+                >
+                  Conhecer o sistema antes
                 </a>
               </div>
             ))}

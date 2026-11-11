@@ -108,9 +108,9 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
       sessao.usuario = conta;
 
       expect((await avisar("mensal"))?.recado).toMatch(/Obrigado por avisar/);
-      const resposta = await avisar("vip_anual", "Mudei de ideia, paguei o Completo anual");
+      const resposta = await avisar("vip_anual", "Mudei de ideia, paguei o VIP anual");
       expect(resposta?.recado).toBe(
-        `Atualizamos o seu aviso para Completo anual (${emReais(256900)}). Vamos conferir o Pix com esse valor.`,
+        `Atualizamos o seu aviso para VIP anual (${emReais(189000)}). Vamos conferir o Pix com esse valor.`,
       );
 
       const db = await banco();
@@ -120,7 +120,7 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
         status: "aguardando",
         plano: "vip_anual",
         valorCentavos: PLANOS.vip_anual.valorCentavos,
-        observacao: "Mudei de ideia, paguei o Completo anual",
+        observacao: "Mudei de ideia, paguei o VIP anual",
       });
     });
 
@@ -296,20 +296,20 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
       perto(assinatura.validaAte, validaAte.getTime() + 365 * DIA);
     });
 
-    it("subir: Simples mensal recém-pago + Completo mensal não vira 60 dias de Completo", async () => {
+    it("subir: Normal mensal recém-pago + VIP mensal não vira 60 dias de VIP", async () => {
       const conta = await novaConta({ status: "ativa", plano: "mensal", validaAte: new Date(Date.now() + 30 * DIA) });
       const assinatura = await pagar(conta, "vip_mensal");
       expect(assinatura.plano).toBe("vip_mensal");
-      // 30 dias de Simples (R$ 189) viram 17 dias de Completo, mais os 30 pagos.
-      perto(assinatura.validaAte, Date.now() + 47 * DIA);
+      // 30 dias de Normal (R$ 79) viram 12 dias de VIP, mais os 30 pagos.
+      perto(assinatura.validaAte, Date.now() + 42 * DIA);
     });
 
-    it("descer: quem tem o Completo anual e paga o Simples mensal não perde o dinheiro do Completo", async () => {
+    it("descer: quem tem o VIP anual e paga o Normal mensal não perde o dinheiro do VIP", async () => {
       const conta = await novaConta({ status: "ativa", plano: "vip_anual", validaAte: new Date(Date.now() + 365 * DIA) });
       const assinatura = await pagar(conta, "mensal");
       expect(assinatura.plano).toBe("mensal");
-      // R$ 2.569 de saldo ÷ R$ 6,30 por dia = 407 dias de Simples, mais os 30 pagos.
-      perto(assinatura.validaAte, Date.now() + 437 * DIA);
+      // R$ 1.890 de saldo ÷ R$ 2,63 por dia = 717 dias de Normal, mais os 30 pagos.
+      perto(assinatura.validaAte, Date.now() + 747 * DIA);
     });
 
     it("sem plano ativo (demonstração): o plano pago começa agora", async () => {
@@ -358,12 +358,15 @@ describe.skipIf(!TEM_BANCO)("assinatura", () => {
       expect(await porta.resposta?.json()).toMatchObject({ codigo: "indisponivel", destino: "/painel" });
     });
 
-    it("quem tem o Simples e abre uma parte do Completo que está ligada continua indo para os planos", async () => {
+    it("quem tem o Normal e abre uma parte do VIP ou do Pro que está ligada vai para o plano que libera", async () => {
       vi.stubEnv("ANTHROPIC_API_KEY", "");
       sessao.usuario = await novaConta({ status: "ativa", plano: "mensal", validaAte: new Date(Date.now() + 20 * DIA) });
       const { exigirLeituraDoRecurso } = await import("@/lib/guardas");
       await expect(exigirLeituraDoRecurso("equipe")).rejects.toMatchObject({
-        destino: "/painel/assinatura?completo=1",
+        destino: "/painel/assinatura?plano=vip",
+      });
+      await expect(exigirLeituraDoRecurso("relatorio")).rejects.toMatchObject({
+        destino: "/painel/assinatura?plano=pro",
       });
       // E o desligado, nem para ela vira oferta.
       await expect(exigirLeituraDoRecurso("assistente")).rejects.toMatchObject({ destino: "/painel" });
